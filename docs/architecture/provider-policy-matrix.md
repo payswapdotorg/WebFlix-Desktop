@@ -10,6 +10,8 @@ Status: rollout gate. **pending-verification** is the initial status for every u
 - User authentication is per connected account; viewer-only use should stay anonymous where permitted.
 - Record official docs/terms URL, date reviewed, reviewer, allowed operations, prohibited operations, quota, fields/retention, test evidence and open risks.
 - If terms are uncertain or source behavior is not source-backed, keep the operation unavailable/unknown instead of shipping a guess.
+- YouTube is the first external integration priority. Its desired interface breadth does not bypass current API Terms/Developer Policies; document sufficient independent value, required player/ad behavior, API-data limits, auth scopes and every unsupported operation before release.
+- Do not use the old WebFlix 2.0 operator cookies as user identity, and do not ship automated scraping/private endpoint/cookie replay as an implicit fallback for unsupported operations. Any alternative user-mediated path must have its own explicit technical and policy review.
 
 ## Matrix
 
@@ -17,7 +19,7 @@ Status: rollout gate. **pending-verification** is the initial status for every u
 |---|---|---|---|
 | Local files/folders | Index, metadata, local playback, collections, resume | Allow local-only prototype with explicit directory selection | Path safety, permissions, metadata parser tests, corrupt/missing-file behavior |
 | User-provided torrent/magnet | Discover metadata, download, verify, local stream | Allow only user-initiated, rights-aware, visible and cancellable flows | Engine license/audit, destination/loopback security, no auto-execution, legal scope and GUI tests |
-| YouTube | Search/metadata, official embed, supported user-authorized account actions, permitted local content | Supported APIs/embeds first; other access pending review | Current developer policies, auth scopes, quota, region coverage, actual desktop tests, no shared operator identity |
+| YouTube (P0: first platform interface) | Browse/search/metadata, official player/embed, user-owned subscriptions/playlists/history/comments/likes/creator actions where individually supported | Priority integration; use official API/OAuth and official player first. Each user's authorization is isolated. Desired parity is pursued only through operations allowed by current policy; unsupported capabilities remain explicit. | Current developer policies and API Terms; independent-value assessment or compliance audit where needed; least-privilege OAuth scopes; preserve standard player and required ads; API-data storage/derived-metric restrictions; per-user account isolation; quota/region coverage; actual desktop tests; no shared operator identity or undocumented automation. Docs: https://developers.google.com/youtube/terms/developer-policies-guide; https://developers.google.com/youtube/terms/api-services-terms-of-service; https://www.youtube.com/t/terms |
 | Instagram | Public discovery, official website/embed, eligible account actions | Unknown until operation-specific review | Current official API/embedding terms, eligible account types, limitations and tests |
 | TikTok | Supported public discovery, official embed, eligible account actions | Unknown until operation-specific review | Current developer/platform terms, regional availability and authorization gates |
 | Snapchat | Supported public content/official external experience | Unknown until operation-specific review | Current official developer capabilities, public access and embed restrictions |
@@ -31,6 +33,14 @@ Status: rollout gate. **pending-verification** is the initial status for every u
 | General programmatic ad networks/OpenRTB | Bid/auction requests/responses, deals or authorized integration | Not a global searchable ad catalog; integration-specific only | Contract, consent/privacy signals, commercial access, security and actual coverage |
 | Independent reviews | Link/search/aggregate supported sources | Source-specific links/summaries unless collection is authorized | Terms, attribution, freshness, duplication handling, verification-signal availability and retention |
 | Other providers | Source-specific operations | Unknown | Same review and acceptance process |
+
+## Platform rollout priority
+
+1. **P0 — YouTube user interface:** the first integration and the most complete supported account experience we can provide. Build a concrete capability inventory rather than assuming parity.
+2. **P1 — next social platforms:** select from Instagram, TikTok, X, Snapchat and other candidates after comparing official capability, authorization, user value, regional availability, costs and policy constraints.
+3. **P2 — broader entertainment providers:** official streaming-service surfaces, torrents/local media, and specialist sources as separately gated integrations.
+
+The intent is to become a primary user interface, not a shared identity provider. A social platform's OAuth grant only permits the scopes/functions it names; it does not imply permission to scrape, bypass controls, download protected media, remove ads, or automate otherwise restricted website behavior.
 
 ## Required record for each operation
 
