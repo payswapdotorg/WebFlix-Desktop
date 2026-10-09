@@ -26,3 +26,11 @@ TL2 must update this file before dispatching new work. The table is the authorit
 ## Completed work
 
 This section starts empty for code/features. Architecture documents created during repository setup are recorded in their GitHub commit history; they do not imply that product feature requirements are implemented or tested.
+
+## Repository setup completed
+
+| Work ID | Owner | Base SHA | Head SHA | Scope | Status | Evidence |
+|---|---|---|---|---|---|---|
+| REPO-LOCK-000 | Architecture setup | 29628c9acdb81b703bbd4080c207a0e7ce5e276e | 4d6a3c41c79d4bcc224ccb2a42def684304ef2f3 | Product README, WebFlix-specific AGENTS rules, architecture lock, upstream baseline, capability/data/security/provider policies, accepted ADRs, requirements matrix, roadmap, TL2 handoff, work protocol/ledger/template, desktop acceptance, local-development guidance and PR evidence template | docs-locked | See commit https://github.com/payswapdotorg/WebFlix-Desktop/commit/4d6a3c41c79d4bcc224ccb2a42def684304ef2f3. Documentation was read back from main. No product code, desktop build or test suite is claimed as executed by this setup task. |
+
+The row above records repository documentation setup only. TL2-BOOT-001 remains responsible for reconfirming the actual remote/base, running and documenting baseline gates, auditing inherited runtime identity and completing Phase 0 contract freeze.
