@@ -31,6 +31,18 @@ Test from a clean WebFlix development profile with no imported ZCode settings/se
 12. Architecture and automated gates pass on the exact merged SHA.
 13. Packaged artifact launches and passes the same core scenario on a documented target OS.
 
+## YouTube-first desktop acceptance
+
+In addition to the local-first scenario above, test the first external-platform slice with a dedicated test user's own YouTube account and a fresh WebFlix profile:
+
+1. Connect the test account using the approved authorization flow. The UI shows the connected provider identity/scopes without exposing tokens or cookies.
+2. Search/browse real YouTube content through an approved path, see source attribution and open an item using the correct official playback experience.
+3. Verify the specific supported account operation(s) against the same test user's YouTube account; no shared operator account, background credential substitution or cross-profile action is possible.
+4. Test unauthenticated, missing-scope, expired/revoked, network error, quota/rate-limit and unsupported-operation states. Reconnect and disconnect/revoke behavior is accurate.
+5. Verify required player behaviors and advertisements are not removed or blocked. Ensure YouTube-derived data is not presented as an unlabelled mixed-platform metric.
+6. Check WebFlix's independent value rationale and current policy mapping. Where intended API-client behavior remains uncertain, do not call it accepted until TL2 records compliance guidance/audit decision.
+7. Record tested surfaces and unsupported parity gaps individually; do not make a broad “full YouTube parity” claim based on one working video.
+
 ## Provider acceptance
 
 For every provider operation:
