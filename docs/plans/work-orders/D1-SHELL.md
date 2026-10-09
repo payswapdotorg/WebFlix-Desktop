@@ -1,6 +1,6 @@
 # WORK ORDER — D1-SHELL (Worker 1, Phase 1)
 
-You are Worker 1 on the WebFlix-Desktop three-worker team. TL2 has frozen the Phase-1 contracts (freeze commit: `__FREEZE_SHA__` — substitute the SHA given in your dispatch message if different). Your lane: **WebFlix desktop shell and product identity**.
+You are Worker 1 on the WebFlix-Desktop three-worker team. TL2 has frozen the Phase-1 contracts (freeze commit: `5549208` — substitute the SHA given in your dispatch message if different). Your lane: **WebFlix desktop shell and product identity**.
 
 ## 0. Binding rules
 
@@ -15,7 +15,7 @@ You are Worker 1 on the WebFlix-Desktop three-worker team. TL2 has frozen the Ph
 ```bash
 cd ~ && rm -rf d1 && mkdir d1 && cd d1
 git clone https://github.com/payswapdotorg/WebFlix-Desktop.git repo
-cd repo && git checkout __FREEZE_SHA__ && git checkout -b d1-shell
+cd repo && git checkout 5549208 && git checkout -b d1-shell
 git rev-parse HEAD
 ```
 
@@ -37,7 +37,7 @@ Non-goals: any YouTube data wiring beyond contract-typed stubs (D3), any persist
 ## 3. Final report (your LAST chat message)
 
 ```
-# D1-SHELL RELAY BUNDLE — Worker 1 — base __FREEZE_SHA__
+# D1-SHELL RELAY BUNDLE — Worker 1 — base 5549208
 ## 1. Branch and commits (branch name, head SHA, one-line per commit)
 ## 2. Changed files by deliverable (path list)
 ## 3. Commands run (command | exit | totals | new-vs-baseline)
