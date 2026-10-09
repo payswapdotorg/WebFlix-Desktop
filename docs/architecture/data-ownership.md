@@ -28,6 +28,9 @@ There is one authoritative owner for each fact. A cached projection is not anoth
 
 - Local profiles do not share library state unless the user chooses to share it.
 - Every provider account has a stable internal ID and isolated credential scope. UI cannot choose arbitrary credentials or provider identity.
+- WebFlix is initially YouTube-first: each user links their own YouTube account through a reviewed supported authorization mechanism. One user's authorization, history, likes, subscriptions, playlists and writes must never be attributed to another user.
+- The connected-account record stores provider, stable internal account ID, granted scopes, status/expiry and revocation state. Tokens/cookies remain inside the credential boundary; renderer code receives account-safe status, not raw secrets.
+- Keep unauthenticated public viewing separate from account-linked features; missing authorization cannot be patched by silently using another user's session.
 - No inherited ZCode session, account, project API key or profile is imported automatically.
 - The old WebFlix 2.0 operator session is not an identity for desktop users.
 - Development/test profiles use isolated directories and cannot point to production data unless an explicit guarded flow exists.
