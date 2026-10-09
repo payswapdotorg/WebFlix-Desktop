@@ -53,10 +53,11 @@ Assign the Phase 0 rows in work-claims.md to workers 1–3 simultaneously. They 
 - Record a contract-freeze SHA and update Phase 1 claims.
 
 ### D. Implement Phase 1 in parallel
-Dispatch D1-SHELL, D2-LOCAL and D3-PLAYBACK as disjoint lanes per desktop-roadmap.md.
-- Worker 1: distinct WebFlix identity, secure Electron shell and navigation.
-- Worker 2: canonical product contracts/domain/application and migration-backed local library.
-- Worker 3: connector/capability registry and real local-file playback path.
+Dispatch D1-SHELL, D2-LOCAL and D3-YOUTUBE as disjoint lanes per desktop-roadmap.md.
+- Worker 1: distinct WebFlix identity, secure Electron shell, navigation and YouTube-oriented product shell.
+- Worker 2: canonical product contracts/domain/application, provider account ownership/credential ports and migration-backed local library/progress.
+- Worker 3: connector/capability registry and the first real per-user YouTube authorization, browse/search/watch and supported account-operation path. Use the official API/player or another explicitly reviewed authorized path; keep unsupported operations honest.
+- Worker 2's local media path remains the local/offline baseline. Worker 3 does not edit Worker 2's persistence files.
 - No worker edits shared root/policy/contracts without TL2 coordination. Keep public interfaces stable after freeze.
 
 ### E. Integrate and prove the YouTube-first vertical slice
