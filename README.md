@@ -2,9 +2,11 @@
 
 **WebFlix is a desktop-first Universal Entertainment OS.** This repository is the authoritative source of truth for its product requirements, architecture, contracts, implementation plan, tests, security boundaries and release evidence.
 
-WebFlix is built from the desktop/application substrate in [zai-org/ZCode](https://github.com/zai-org/ZCode), with the existing [WebFlix 2.0 web app](https://github.com/payswapdotorg/WebFlix-2.0) retained as a behavioral and integration reference. It is not a renamed ZCode product and not a thin Electron wrapper around the old Next.js app.
+WebFlix is built from the desktop/application substrate in [zai-org/ZCode](https://github.com/zai-org/ZCode). The initial platform goal is to make WebFlix a meaningful alternative interface to YouTube using each user's own authorized YouTube account where supported. After that first integration is proven, generalize the connector and account model to become a primary interface for more major social platforms. The existing [WebFlix 2.0 web app](https://github.com/payswapdotorg/WebFlix-2.0) is a behavioral and integration reference, not a runtime dependency or a shared-account backend.
 
 ## Product direction
+
+**Delivery order:** (1) a source-reviewed, per-user YouTube interface; (2) the next major social platforms selected by capability, user value and integration feasibility; (3) the wider entertainment OS capabilities. The architecture remains provider-neutral so the YouTube-first implementation does not become a hard-coded single-provider domain.
 
 - One catalog and federated search across supported media providers.
 - Long-form video, shorts, livestreams, podcasts and creator content.
@@ -16,6 +18,8 @@ WebFlix is built from the desktop/application substrate in [zai-org/ZCode](https
 - A desktop-first experience with platform-neutral domain contracts for future web/mobile clients.
 
 These are target capabilities, not claims that each integration is already working. The requirements matrix and evidence ledger are the status authority.
+
+YouTube integration must use each user's own authorization and preserve the standard playback/advertising experience required by the applicable YouTube terms. The goal is broad useful interface coverage, but API access does not authorize a feature-for-feature clone by itself: WebFlix must provide sufficient independent value, clearly distinguish platform data, and verify each operation against current policy. See the [YouTube API developer policies](https://developers.google.com/youtube/terms/developer-policies-guide) and record the integration decision in the provider policy matrix.
 
 ## Repository source of truth
 
