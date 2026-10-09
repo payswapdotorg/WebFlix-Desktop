@@ -1,0 +1,82 @@
+# STAGED (TL2): package-root registrations to apply to architecture-policy.yaml
+# AT THE CONTRACT-FREEZE COMMIT (not before — Phase-0 tree stays read-only).
+# Source of truth: docs/plans/contract-freeze.md §1 (package roots) + §4 (lane map).
+# Apply = append these module entries + promote desktop to managed per
+# AUDIT-DESKTOP §7, then delete this staging file in the same commit.
+
+modules:
+  - id: webflix-contracts
+    roots: [packages/webflix-contracts/src]
+    managed: true
+    requires: []
+    publicEntrypoints: [packages/webflix-contracts/src/index.ts]
+    layers: { contracts: contracts }
+    layerOrder: [contracts]
+    owner: tl2-shape/w2-impl
+  - id: webflix-domain
+    roots: [packages/webflix-domain/src]
+    managed: true
+    requires: [webflix-contracts]
+    publicEntrypoints: [packages/webflix-domain/src/index.ts]
+    layers: { domain: domain }
+    layerOrder: [domain]
+    owner: worker-2
+  - id: webflix-application
+    roots: [packages/webflix-application/src]
+    managed: true
+    requires: [webflix-contracts, webflix-domain]
+    publicEntrypoints: [packages/webflix-application/src/index.ts]
+    layers: { app: app }
+    layerOrder: [app]
+    owner: worker-2
+  - id: local-library
+    roots: [packages/local-library/src]
+    managed: true
+    requires: [webflix-contracts, webflix-domain]
+    publicEntrypoints: [packages/local-library/src/index.ts]
+    layers: { adapters: adapters }
+    layerOrder: [adapters]
+    owner: worker-2
+  - id: catalog
+    roots: [packages/catalog/src]
+    managed: true
+    requires: [webflix-contracts]
+    publicEntrypoints: [packages/catalog/src/index.ts]
+    layers: { domain: domain }
+    layerOrder: [domain]
+    owner: worker-3
+  - id: connectors
+    roots: [packages/connectors/src]
+    managed: true
+    requires: [webflix-contracts, catalog]
+    publicEntrypoints: [packages/connectors/src/index.ts]
+    layers: { adapters: adapters }
+    layerOrder: [adapters]
+    owner: worker-3
+  - id: playback
+    roots: [packages/playback/src]
+    managed: true
+    requires: [webflix-contracts, catalog]
+    publicEntrypoints: [packages/playback/src/index.ts]
+    layers: { app: app }
+    layerOrder: [app]
+    owner: worker-3
+  - id: webflix-shell
+    roots: [packages/webflix-shell/src]
+    managed: true
+    requires: [webflix-contracts, webflix-application]
+    publicEntrypoints: [packages/webflix-shell/src/index.ts]
+    layers: { clients: clients }
+    layerOrder: [clients]
+    owner: worker-1
+  - id: desktop   # promote per AUDIT-DESKTOP §7 (host module; inward direction)
+    roots: [packages/desktop/src]
+    managed: true
+    requires: [webflix-contracts, webflix-application]
+    publicEntrypoints:
+      - packages/desktop/src/preload/index.ts
+      - packages/shared/src/channels.ts
+      - packages/desktop/scripts/desktop-product-identity.mjs
+    layers: { clients: clients }
+    layerOrder: [clients]
+    owner: worker-1
