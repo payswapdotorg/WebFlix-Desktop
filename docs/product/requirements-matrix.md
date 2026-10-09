@@ -27,8 +27,8 @@ Only the evidence in the final columns may justify advancing a status. A require
 | WF-007 | Resume and history | WebFlix resume/watched state survives restart and is distinct from provider history | planned | Persistence and user/profile isolation tests |
 | WF-008 | Unified catalog | Canonical catalog items linked to provider assets with source/provenance | planned | Duplicate/ambiguous match tests; source references preserved |
 | WF-009 | Federated search | Search eligible connected sources concurrently; show source coverage and partial failure | planned | Mixed-source paging, timeout, auth, no-results and partial-results tests |
-| WF-010 | YouTube | Source-aware discovery/playback and authorized account actions only where supported | audit-pending | Current policy review, per-user auth, actual desktop smoke and clear capability limits |
-| WF-011 | Social creator sources | Supported Instagram, TikTok, Snapchat and X flows via official API/embed/authorized surfaces | planned | Each operation reviewed and tested separately; no blanket parity claims |
+| WF-010 | YouTube-first interface | The user's own YouTube account, with the broadest supported browse/search/watch and account actions achievable through reviewed paths | audit-pending | First external platform; user-specific OAuth/session isolation; capability-by-capability parity matrix; required player/ads preserved; independent-value and API-data policy review; actual desktop smoke |
+| WF-011 | Other social platform interfaces | After the YouTube-first slice, generalize the provider/account model to Instagram, TikTok, Snapchat, X and other selected platforms | planned | Select providers by user value, supported operations, authorization, regional access, policy/cost and actual desktop smoke; no blanket parity claims |
 | WF-012 | Streaming services | Netflix, Prime Video and Paramount+ official website/player/deep-link paths where permitted | planned | Correct isolated/external experience; no DRM bypass/raw-stream promise |
 | WF-013 | Torrent discovery | User-provided/legal catalog/torrent/magnet discovery with provenance | planned | Engine/rights review, malformed metadata and no-auto-execution tests |
 | WF-014 | Torrent downloads | Visible/cancellable jobs, destination selection, progress, verification, pause/resume | planned | Interrupted job, quota, permission, path safety and recovery tests |
@@ -52,6 +52,8 @@ Only the evidence in the final columns may justify advancing a status. A require
 | WF-032 | Future web/mobile | Reuse platform-neutral contracts and application layer | planned | Separate clients call same use cases; not a Phase 1 blocker |
 | WF-033 | Architecture enforcement | New modules managed in architecture policy; no cycles/deep imports | audit-pending | Changed-file architecture gate blocks new violations |
 | WF-034 | Release safety | Reproducible package identity, signed/verified update path and notices | audit-pending | Distribution/identity audit and target-platform smoke tests |
+
+| WF-035 | YouTube-first rollout strategy | Build the first first-class social-platform interface around users' own YouTube accounts, then reuse the architecture for other major platforms | planned | TL2 accepts source-backed policy/capability matrix, per-user auth model, independent-value rationale and first end-to-end desktop workflow |
 
 ## Current initial evidence state
 
