@@ -5,16 +5,18 @@ Owner: TL2.
 
 ## 1. Product definition
 
-WebFlix is a desktop-first Universal Entertainment OS for discovering, playing, organizing, understanding, transforming and evaluating media across supported sources. It includes long and short videos, live content, podcasts, local files, user-authorized torrent content, source-aware collections, recommendation systems, media-intelligence tools and a separate Ad Center.
+WebFlix is a desktop-first Universal Entertainment OS for discovering, playing, organizing, understanding, transforming and evaluating media across supported sources. The product rollout is YouTube-first: make WebFlix a meaningful alternative interface to YouTube for each user's own authorized account, then reuse the proven provider/account architecture to become a primary interface for other major social platforms. The broader product includes long and short videos, live content, podcasts, local files, user-authorized torrent content, source-aware collections, recommendation systems, media-intelligence tools and a separate Ad Center.
 
-Public viewing should not require a WebFlix account where the source permits unauthenticated viewing. A connected provider account is needed only for capabilities that genuinely require one. Future web/mobile clients reuse platform-neutral contracts.
+Public viewing should not require a WebFlix account where a source permits unauthenticated viewing. A user must connect their own provider account only for capabilities that require authorization. No operator account or cookie jar is shared among users. Future web/mobile clients reuse platform-neutral contracts.
 
-The old WebFlix 2.0 app is a behavioral and technical reference. This fork is the authoritative product repository. Neither the old app's data model nor the ZCode coding-workspace product model is the WebFlix domain model.
+The existing WebFlix 2.0 app is a behavioral and technical reference; its YouTube-specific code is evidence to evaluate, not automatically an approved integration. This fork is the authoritative product repository. Neither the old app's data model nor the ZCode coding-workspace product model is the WebFlix domain model.
+
+**YouTube policy gate:** broad interface coverage is a product goal, not blanket authorization to clone every native surface. Current YouTube API policies require sufficient independent value when an API client mimics YouTube's experience and prohibit diminishing/removing required player behaviors (including required ads), API-data misuse, unauthorized downloading and other restricted behavior. TL2 must document which operations use official APIs, official embeds or another explicitly reviewed/authorized path, request only user-authorized scopes, and obtain compliance review/audit where the use case is uncertain. Do not ship an automated scraping, private-endpoint or cookie-replay workaround merely because a feature is absent from the supported API. See the linked policy sources in §14 and ADR-0003.
 
 ## 2. Binding decisions
 
 1. **Product identity:** WebFlix is its own product. Before distribution, isolate inherited ZCode app IDs, protocol schemes, updater channels, telemetry identity and data paths. Internal package names may be migrated incrementally; do not mass-rename them without caller and release evidence.
-2. **Provider neutrality:** the domain never treats YouTube or another provider as the canonical media model.
+2. **YouTube-first, provider-neutral:** YouTube is the first integration target and the authority for YouTube-owned account state. The shared domain remains provider-neutral so the same architecture can later support other social platforms.
 3. **Local-first:** local library operations, local playback and preferences must work without an account or Internet connection.
 4. **Capability truthfulness:** search, metadata, playback, download, captions, comments, account actions and ad-history access are separate capabilities.
 5. **Ownership:** each fact has one declared owner. Provider engagement/history remains provider-owned; WebFlix collections, local progress, preferences and derived-artifact metadata are WebFlix-owned unless sync policy says otherwise.
@@ -23,7 +25,7 @@ The old WebFlix 2.0 app is a behavioral and technical reference. This fork is th
 8. **Trust boundary:** UI calls validated use cases and narrow platform capabilities. Remote webpages and media metadata never receive privileged IPC or direct filesystem/process access.
 9. **Evidence first:** source origin, timestamp, region/coverage, rights/retention assertions and uncertainty are first-class fields wherever relevant.
 10. **Independent Ad Center:** ads, observations, claims, offers, reviews and qualification assessments are not VideoDTOs and do not silently enter ordinary recommendations.
-11. **No hidden operator identity:** never port the existing WebFlix 2.0 operator-cookie/broker pattern as a shared multi-user identity. Provider sessions are per-user and isolated.
+11. **Per-user provider identity:** every connected account belongs to the user/profile that authorized it and is isolated from other users. Never port the old WebFlix 2.0 operator-cookie/broker pattern as a shared identity. Use supported OAuth/API mechanisms or separately reviewed authorized user-mediated paths; never save a user's provider password.
 12. **Incremental substrate reuse:** reuse ZCode infrastructure when behavior and licensing are understood; do not broadly rewrite upstream before the first working vertical slice.
 13. **No dead controls:** a visible control works, is disabled with a reason, or reports a clear unsupported state.
 14. **Proof-based completion:** a file, mock, typecheck or green deploy alone does not prove that a provider or desktop workflow works.
@@ -117,13 +119,18 @@ See capability-registry.md and provider-policy-matrix.md.
 
 ## 13. First usable milestone
 
-The packaged Electron app launches under WebFlix identity, opens a real local media file, supports basic playback/progress, saves a local library entry/collection, restarts/resumes, and handles offline/unsupported states honestly. It must not require login/cloud. Then add one real external source through the connector contract.
+The first product milestone is a YouTube-first desktop vertical slice: the packaged Electron app launches under WebFlix identity; a user can connect their own YouTube account through an approved authorization path; browse/search/watch supported YouTube content through the best policy-compliant playback path; and use the explicitly supported account functions without another user's session being involved. A parallel local-first foundation must open a real local file, preserve WebFlix-owned library/progress state, restart/resume, and handle offline/unsupported states honestly. Do not claim full parity if any desired operation is unavailable through an approved path; record the limitation and decide it through the policy gate.
+
+YouTube API clients must preserve required player behaviors and ads and deliver sufficient independent value under current policies. A source-backed implementation plan must distinguish available API operations, official embeds, authorized website/deep-link operations, unavailable features and anything requiring compliance guidance. After this YouTube-first milestone is proven, the next social-platform integration is chosen from current capability, authorization, policy and user-value evidence.
 
 ## 14. Policy references
 
 - Existing WebFlix source: https://github.com/payswapdotorg/WebFlix-2.0
 - ZCode upstream: https://github.com/zai-org/ZCode
 - YouTube API policies: https://developers.google.com/youtube/terms/developer-policies-guide
+- YouTube API Services policies: https://developers.google.com/youtube/terms/developer-policies
+- YouTube Terms of Service: https://www.youtube.com/t/terms
+- YouTube API Compliance Audit guidance: https://developers.google.com/youtube/terms/developer-policies-guide
 - YouTube API terms: https://developers.google.com/youtube/terms/api-services-terms-of-service
 - YouTube IFrame API: https://developers.google.com/youtube/iframe_api_reference
 - Electron security: https://www.electronjs.org/docs/latest/tutorial/security/
