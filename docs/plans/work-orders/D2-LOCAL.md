@@ -18,6 +18,7 @@ git clone https://github.com/payswapdotorg/WebFlix-Desktop.git repo
 cd repo && git checkout __FREEZE_SHA__ && git checkout -b d2-local
 git rev-parse HEAD
 ```
+
 Read first: AGENTS.md, docs/adr/architecture-lock.md (§3 dependency direction, §7 store rules), docs/adr/0003-youtube-first-per-user-identity.md (§2 per-user account model), docs/adr/data-ownership.md, docs/plans/contract-freeze.md (§1 package roots, §2 locked shapes, §4 lane map, §6 decisions), docs/plans/audits/AUDIT-DATA.md (YOUR audit — its findings are your implementation notes), docs/plans/worker-protocol.md.
 
 ## 2. Deliverables (from desktop-roadmap.md Lane D2 + AUDIT-DATA folds)
@@ -43,6 +44,7 @@ Non-goals: any provider connector (D3), any UI (D1), any Electron host code, tel
 ## 6. Known limits and handoffs (what D1/D3/TL2 must know)
 ## 7. Contract deviations found (or "none — shapes implemented as locked")
 ```
+
 End with the exact line: `D2-LOCAL COMPLETE`
 
 Narrate progress in chat as you go (TL2 monitors the live transcript). One final self-contained report message. If a locked shape cannot be implemented as specified, STOP and report in chat — do not silently deviate.

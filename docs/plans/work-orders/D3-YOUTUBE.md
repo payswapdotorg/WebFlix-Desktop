@@ -17,6 +17,7 @@ git clone https://github.com/payswapdotorg/WebFlix-Desktop.git repo
 cd repo && git checkout __FREEZE_SHA__ && git checkout -b d3-youtube
 git rev-parse HEAD
 ```
+
 Read first: AGENTS.md, docs/adr/architecture-lock.md, docs/adr/0002-provider-capabilities-and-playback.md, docs/adr/0003-youtube-first-per-user-identity.md, docs/adr/capability-registry.md, docs/adr/provider-policy-matrix.md, docs/plans/contract-freeze.md (§2.2 playback, §2.3 capability, §2.5 account, §4 lane map, §6 decisions), docs/plans/audits/AUDIT-SOURCES.md (YOUR audit — its capability/policy tables are your seed data), docs/plans/worker-protocol.md.
 
 ## 2. Deliverables (from desktop-roadmap.md Lane D3 + ADR-0003)
@@ -42,6 +43,7 @@ Non-goals: persistence schema (D2), UI (D1), any second provider (Phase 3), any 
 ## 6. Authorization flow design (flow, token boundary, refresh/revocation)
 ## 7. Known limits and handoffs (what D1/D2/TL2 must know; live-smoke status)
 ```
+
 End with the exact line: `D3-YOUTUBE COMPLETE`
 
 Narrate progress in chat as you go (TL2 monitors the live transcript). One final self-contained report message. If a policy constraint blocks a roadmap-desired operation, render it honestly as unsupported and flag it in your report — never improvise an undocumented mechanism.

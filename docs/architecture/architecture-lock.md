@@ -47,24 +47,24 @@ Domain/application packages cannot import Electron, React renderer components, N
 
 Follow workspace conventions, but create explicit product modules. TL2 must lock actual package roots and update architecture policy declarations as each root is introduced.
 
-| Area | Responsibility |
-|---|---|
-| packages/desktop | Electron main, preload/IPC, lifecycle, native menus and release identity |
-| packages/ui | Presentation components, themes and accessibility; no domain authority |
+| Area                             | Responsibility                                                                           |
+| -------------------------------- | ---------------------------------------------------------------------------------------- |
+| packages/desktop                 | Electron main, preload/IPC, lifecycle, native menus and release identity                 |
+| packages/ui                      | Presentation components, themes and accessibility; no domain authority                   |
 | packages/shared and packages/rpc | Inherited platform/transport facilities; product payloads remain versioned and validated |
-| packages/webflix-contracts | Public DTOs, schemas, events, capability and port contracts |
-| packages/webflix-domain | Canonical entities and ownership/policy rules |
-| packages/webflix-application | Search, playback, library, recommendation, transformation and Ad Center use cases |
-| packages/catalog | Canonical identity, provider asset references and provenance |
-| packages/connectors | Provider manifests, capability checks, lifecycle and adapters |
-| packages/playback | Plan resolution, player lifecycle, queue and resume orchestration |
-| packages/local-library | Indexing, collections, local files, progress and metadata |
-| packages/downloads | Authorized jobs, pause/resume, verification and destination policy |
-| packages/media-engines | Swappable media probing, thumbnails, subtitle and local processing engines |
-| packages/recommendations | Ranking, feedback, objectives, experiments and explanations |
-| packages/media-intelligence | Captions, transcription, summaries, overviews, translation, dubbing/TTS and Q&A |
-| packages/ad-center | Ad discovery, identity, claims, evidence, reviews, offers and qualification |
-| packages/services | Reusable host services where appropriate; never a catch-all product domain |
+| packages/webflix-contracts       | Public DTOs, schemas, events, capability and port contracts                              |
+| packages/webflix-domain          | Canonical entities and ownership/policy rules                                            |
+| packages/webflix-application     | Search, playback, library, recommendation, transformation and Ad Center use cases        |
+| packages/catalog                 | Canonical identity, provider asset references and provenance                             |
+| packages/connectors              | Provider manifests, capability checks, lifecycle and adapters                            |
+| packages/playback                | Plan resolution, player lifecycle, queue and resume orchestration                        |
+| packages/local-library           | Indexing, collections, local files, progress and metadata                                |
+| packages/downloads               | Authorized jobs, pause/resume, verification and destination policy                       |
+| packages/media-engines           | Swappable media probing, thumbnails, subtitle and local processing engines               |
+| packages/recommendations         | Ranking, feedback, objectives, experiments and explanations                              |
+| packages/media-intelligence      | Captions, transcription, summaries, overviews, translation, dubbing/TTS and Q&A          |
+| packages/ad-center               | Ad discovery, identity, claims, evidence, reviews, offers and qualification              |
+| packages/services                | Reusable host services where appropriate; never a catch-all product domain               |
 
 The exact package creation sequence can be adapted after the baseline audit, but dependency direction and ownership cannot be silently weakened.
 

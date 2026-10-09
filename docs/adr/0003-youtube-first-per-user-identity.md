@@ -9,6 +9,7 @@
 The product intent is to make WebFlix a primary alternative interface for YouTube first, then expand to additional major social platforms. The existing WebFlix 2.0 app demonstrates many YouTube-facing surfaces but currently relies in places on a single operator session and a CDP-driven broker. That is not the user/account model for the desktop product.
 
 Current YouTube API Developer Policies say API clients that mimic YouTube experiences must add sufficient independent value; API clients must not diminish or remove required standard player behavior, block required advertisements, or use API access to enable restricted downloads/background playback. They also limit data combining/derived metrics and require transparency/privacy protections. The official policies and Terms of Service are authoritative and can change:
+
 - https://developers.google.com/youtube/terms/developer-policies-guide
 - https://developers.google.com/youtube/terms/developer-policies
 - https://developers.google.com/youtube/terms/api-services-terms-of-service

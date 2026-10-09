@@ -46,6 +46,7 @@ In addition to the local-first scenario above, test the first external-platform 
 ## Provider acceptance
 
 For every provider operation:
+
 - Current official docs/policy are linked in provider-policy-matrix.md with reviewer/date.
 - Manifest declares supported media, operations, auth scopes, regions, quota, retention and known failures.
 - Contract/adapter tests cover success and error statuses.

@@ -6,23 +6,23 @@ Status: Binding. Any new data store or sync feature maps its data to a row below
 
 There is one authoritative owner for each fact. A cached projection is not another truth. Provider-sourced content has source provenance and retrieval time. Cross-provider links are claims with confidence/evidence, not a fact established by similar titles alone.
 
-| Data class | Default owner | Scope | Sync/cloud default |
-|---|---|---|---|
-| Source account likes, follows, subscriptions, comments, billing and remote playlists | External provider | Linked provider account | Never mirrored as editable truth; read/cache only as permitted |
-| WebFlix library entry, collection, note, pinned item, local playlist | WebFlix | WebFlix profile/device | Local-only initially |
-| Playback resume point and personal watched state | WebFlix | Profile/device unless user syncs | Local-only initially; separate from provider history |
-| External playback progress write | External provider | Explicit linked account | Only via explicit capability and authorization |
-| Provider metadata and availability | Provider is source; WebFlix keeps provenance-bound projection | Source asset/region/time | Cache according to source terms, TTL and deletion policy |
-| Local file path, fingerprint and index state | Local device | Device/user profile | Do not sync absolute paths by default |
-| Torrent job, peer state and destination path | Local engine/WebFlix record | Device/profile | Local-only |
-| Transcript, translation, dub, summary, overview and embeddings | WebFlix derived artifact based on input | Profile/job/source | No cloud upload by default; rights/consent required |
-| Recommendation inputs and feedback | WebFlix | User/profile/source policy | Retention configurable; sync only with explicit policy |
-| Connected-provider credentials/tokens | Credential adapter/OS vault | Provider account + local OS user | Never sync plaintext or expose to renderer |
-| Ad creative discovered in public/transparency source | Source authoritative; WebFlix metadata projection | Source/ad ID and coverage | Store/cache subject to source rules and URL expiry |
-| Ad a user reports seeing | Evidence-backed AdObservation | Explicit user/device/session scope | No passive collection without explicit consent scope |
-| Ad qualification and evidence graph | WebFlix assessment over versioned evidence | Assessment/version | Retain snapshots/links only where permitted; show timestamps |
-| Third-party reviews | Original review source | Source/review ID | Prefer links and short summaries; comply with terms/retention |
-| Diagnostics and app logs | WebFlix | Local profile/device | Redact by default; configurable limited retention |
+| Data class                                                                           | Default owner                                                 | Scope                              | Sync/cloud default                                             |
+| ------------------------------------------------------------------------------------ | ------------------------------------------------------------- | ---------------------------------- | -------------------------------------------------------------- |
+| Source account likes, follows, subscriptions, comments, billing and remote playlists | External provider                                             | Linked provider account            | Never mirrored as editable truth; read/cache only as permitted |
+| WebFlix library entry, collection, note, pinned item, local playlist                 | WebFlix                                                       | WebFlix profile/device             | Local-only initially                                           |
+| Playback resume point and personal watched state                                     | WebFlix                                                       | Profile/device unless user syncs   | Local-only initially; separate from provider history           |
+| External playback progress write                                                     | External provider                                             | Explicit linked account            | Only via explicit capability and authorization                 |
+| Provider metadata and availability                                                   | Provider is source; WebFlix keeps provenance-bound projection | Source asset/region/time           | Cache according to source terms, TTL and deletion policy       |
+| Local file path, fingerprint and index state                                         | Local device                                                  | Device/user profile                | Do not sync absolute paths by default                          |
+| Torrent job, peer state and destination path                                         | Local engine/WebFlix record                                   | Device/profile                     | Local-only                                                     |
+| Transcript, translation, dub, summary, overview and embeddings                       | WebFlix derived artifact based on input                       | Profile/job/source                 | No cloud upload by default; rights/consent required            |
+| Recommendation inputs and feedback                                                   | WebFlix                                                       | User/profile/source policy         | Retention configurable; sync only with explicit policy         |
+| Connected-provider credentials/tokens                                                | Credential adapter/OS vault                                   | Provider account + local OS user   | Never sync plaintext or expose to renderer                     |
+| Ad creative discovered in public/transparency source                                 | Source authoritative; WebFlix metadata projection             | Source/ad ID and coverage          | Store/cache subject to source rules and URL expiry             |
+| Ad a user reports seeing                                                             | Evidence-backed AdObservation                                 | Explicit user/device/session scope | No passive collection without explicit consent scope           |
+| Ad qualification and evidence graph                                                  | WebFlix assessment over versioned evidence                    | Assessment/version                 | Retain snapshots/links only where permitted; show timestamps   |
+| Third-party reviews                                                                  | Original review source                                        | Source/review ID                   | Prefer links and short summaries; comply with terms/retention  |
+| Diagnostics and app logs                                                             | WebFlix                                                       | Local profile/device               | Redact by default; configurable limited retention              |
 
 ## Profiles and account separation
 

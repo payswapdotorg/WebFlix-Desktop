@@ -7,6 +7,7 @@ Audience: new technical lead TL2. This document plus the linked architecture/req
 Implement WebFlix Desktop from the ZCode fork as a desktop-first Universal Entertainment OS. The first platform goal is a useful, policy-reviewed alternative interface to YouTube using each user's own authorized YouTube account; once that integration is proven, generalize to become a primary interface for other major social platforms. Make this repository the only source of truth. Deliver a real, testable desktop product using TL2 plus three parallel workers. Do not assume this architecture is implemented merely because the docs exist.
 
 Read in order:
+
 1. ../architecture/architecture-lock.md
 2. ../architecture/upstream-baseline.md
 3. ../architecture/capability-registry.md
@@ -34,6 +35,7 @@ The inspected initial commit was 29628c9acdb81b703bbd4080c207a0e7ce5e276e, also 
 ## Execute in this order
 
 ### A. Verify repository and baseline
+
 - Confirm current origin, upstream remote, default branch, HEAD and ancestry.
 - Verify the fork includes the intended ZCode source state.
 - Read existing AGENTS.md and architecture-policy.yaml, run workspace freshness check, dependency/architecture reports, lint/typecheck and relevant baseline tests. Record exact outcomes and pre-existing failures.
@@ -42,9 +44,11 @@ The inspected initial commit was 29628c9acdb81b703bbd4080c207a0e7ce5e276e, also 
 - Do not modify provider behavior or rewrite broad upstream modules during this audit.
 
 ### B. Complete the three independent audits
+
 Assign the Phase 0 rows in work-claims.md to workers 1–3 simultaneously. They are read-only, share the same pinned base SHA and produce source-backed reports. The TL consolidates them; no waiting for chat architect.
 
 ### C. Freeze architecture and contracts
+
 - Resolve audit findings using the locked decisions and focused ADRs.
 - Lock package roots, public entrypoints, domain ownership, event/command semantics, failure vocabulary and versioning before dependent code work.
 - TL2 owns root package/workspace/config and architecture-policy changes.
@@ -53,7 +57,9 @@ Assign the Phase 0 rows in work-claims.md to workers 1–3 simultaneously. They 
 - Record a contract-freeze SHA and update Phase 1 claims.
 
 ### D. Implement Phase 1 in parallel
+
 Dispatch D1-SHELL, D2-LOCAL and D3-YOUTUBE as disjoint lanes per desktop-roadmap.md.
+
 - Worker 1: distinct WebFlix identity, secure Electron shell, navigation and YouTube-oriented product shell.
 - Worker 2: canonical product contracts/domain/application, provider account ownership/credential ports and migration-backed local library/progress.
 - Worker 3: connector/capability registry and the first real per-user YouTube authorization, browse/search/watch and supported account-operation path. Use the official API/player or another explicitly reviewed authorized path; keep unsupported operations honest.
@@ -61,11 +67,13 @@ Dispatch D1-SHELL, D2-LOCAL and D3-YOUTUBE as disjoint lanes per desktop-roadmap
 - No worker edits shared root/policy/contracts without TL2 coordination. Keep public interfaces stable after freeze.
 
 ### E. Integrate and prove the YouTube-first vertical slice
+
 The first release candidate must launch the actual packaged Electron desktop app with WebFlix identity; connect the test user's own YouTube account through a reviewed supported authorization path; browse/search real YouTube results; open and play selected content through the appropriate official playback path; exercise the first supported account operation(s); and demonstrate that all authorization and state belong to that test user. In parallel, the local-first baseline must import/open/play local media, save library/collection and progress, restart/resume, work without login/cloud and handle offline/missing/unsupported cases. Preserve required player/advertising behavior and WebFlix's independent value. If a desired operation is not supported/allowed, document the limitation instead of inventing access.
 
 Run exact lint/typecheck/format/architecture/build/test commands, relevant desktop GUI/E2E tests and target-platform packaging/smoke. Fix issues as part of the implementation wave, not after user testing is requested.
 
 ### F. Expand the product in dependency order
+
 After the YouTube-first slice is accepted: close the highest-value supported YouTube capability gaps; integrate the next social platforms using the same per-user account and connector contracts; then expand unified multi-source catalog/queues, user-authorized torrent functionality, recommendation objectives and learning/evaluation, replaceable media-intelligence jobs, Ad Center transparency search and evidence-based qualification, optional cloud sync, and future web/mobile clients.
 
 Do not block the core product on broad third-party coverage. Never claim a provider action is supported until the policy matrix, contract tests, actual source smoke and user-visible limitation are in place.
@@ -73,6 +81,7 @@ Do not block the core product on broad third-party coverage. Never claim a provi
 ## Scope and product requirements
 
 The product must preserve all of these as goals without faking present implementation:
+
 - public viewing without WebFlix login when source policy allows;
 - long/short videos, live, podcasts and creator media;
 - local-first library, playlists, progress and playback;
@@ -108,6 +117,7 @@ Use work-claims.md as a concurrency lock. One owner per path, one branch per lan
 ## Completion report
 
 When Phase 1 is accepted, commit an evidence-backed status update naming:
+
 - exact merged main SHA and upstream base;
 - files/modules and requirement IDs delivered;
 - architecture policy results;

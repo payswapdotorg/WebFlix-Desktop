@@ -12,6 +12,7 @@ These three audits start concurrently after TL2 confirms actual fork HEAD and cr
 Scope: packages/desktop; relevant app identity, packaging and UI shell files.
 
 Deliver:
+
 - Product identity inventory: app display name, bundle IDs, Windows AppUserModelId, custom protocols/file associations, app data roots, updater feed, signing config, telemetry/analytics, crash reporting, remote origins and feature flags.
 - Electron trust-boundary inventory: BrowserWindow/webContents construction, preload exposure, IPC registration/validation, remote browser/WebContents/session configuration, navigation/permissions/download paths.
 - Shell/navigation/theme/accessibility/layout inventory and current GUI/E2E capabilities.
@@ -25,6 +26,7 @@ Do not make concurrent edits during Phase 0.
 Scope: packages/shared, packages/rpc, packages/services storage/database paths and schema/migration/test infrastructure.
 
 Deliver:
+
 - Existing storage implementations and their actual use sites, transaction/migration/backup/recovery behavior, data-root selection and test isolation.
 - Current platform contract and public-entrypoint patterns.
 - Credential storage/secrets/logging and profile boundaries.
@@ -39,6 +41,7 @@ Do not modify shared contracts or schema during Phase 0.
 Scope: inherited provider/model runtime, web/server playback/browser adapters, current WebFlix 2.0 integration/reference repo and target provider/engine landscape.
 
 Deliver:
+
 - A YouTube capability-by-capability inventory: browse/search, metadata, official playback, account auth, subscriptions/history/playlists/comments/likes/creator surfaces where supported, and actions not supported by official interfaces.
 - Per-user OAuth/session/account ownership plan. Identify why the old operator-cookie/CDP broker is not reusable as a multi-user identity.
 - Current official YouTube policies/terms mapped to the desired interface, including independent value, playback/advertising behavior, API-data constraints and restricted access patterns; identify questions requiring compliance guidance.

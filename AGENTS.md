@@ -81,7 +81,6 @@
 - `warn` 用于可恢复异常；`error` 用于崩溃、握手失败、鉴权丢失等不可恢复错误。
 - 不在日志、示例或提交中写入凭据、真实用户数据和内部服务地址。
 
-
 ## WebFlix product lock (binding)
 
 The repo-local WebFlix documents linked from README.md are the sole architectural source of truth. Before implementation, read docs/plans/tl2-handoff.md, docs/architecture/architecture-lock.md, docs/plans/desktop-roadmap.md, docs/plans/worker-protocol.md, docs/plans/work-claims.md, docs/product/requirements-matrix.md and docs/testing/desktop-acceptance.md. Apply the WebFlix lock to product work while preserving inherited ZCode rules for untouched substrate code.

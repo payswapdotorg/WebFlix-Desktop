@@ -20,11 +20,12 @@ git rev-parse HEAD   # must print 7a14bc9b24a1ac6f1b30c9a55efcdfaf4b8f9286
 ```
 
 Then read these binding documents IN THE REPO before anything else (they constrain your recommendations):
+
 - AGENTS.md
 - docs/adr/architecture-lock.md
 - docs/adr/0001-webflix-product-boundaries.md
 - docs/adr/0002-provider-capabilities-and-playback.md
-- docs/adr/0003-youtube-first-per-user-identity.md  (binding: YouTube-first, per-user identity, no shared operator session)
+- docs/adr/0003-youtube-first-per-user-identity.md (binding: YouTube-first, per-user identity, no shared operator session)
 - docs/adr/capability-registry.md
 - docs/adr/data-ownership.md
 - docs/adr/provider-policy-matrix.md

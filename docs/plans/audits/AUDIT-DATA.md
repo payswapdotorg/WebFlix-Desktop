@@ -7,16 +7,15 @@ Provenance: chat session wfx-a2-data (GLM-5.3 + Full-Stack, agents tab), dispatc
 执行摘要与关键决策建议
 
 #
-	
+
 发现
-	
 建议(TL2 冻结)
 
-1	tasks-index.sqlite 的「sha256 迁移账本 + worker 线程启动 + zod 帧校验」是仓内最成熟的持久化模板	直接作为本地库(local-library)蓝本，不另起炉灶
-2	凭证加密密钥存在确定性弱回退(zcode-credential-fallback:{platform}:{homedir}:{username}),无 OS keychain/safeStorage	Phase 1 前替换为 OS vault 后端密钥
-3	数据根存在三向分歧(见 §2.4)	WebFlix 必须使用独立数据根，禁止继承 ~/.zcode
-4	无任何备份/导出/恢复机制，违反 data-ownership.md:44	「最小可行本地库」必须带 backup/export + 测试过的 restore
-5	无任何包声明 test 脚本；hermetic 测试仅能手工调用	Phase 1 前定义一等测试命令
+1 tasks-index.sqlite 的「sha256 迁移账本 + worker 线程启动 + zod 帧校验」是仓内最成熟的持久化模板 直接作为本地库(local-library)蓝本，不另起炉灶
+2 凭证加密密钥存在确定性弱回退(zcode-credential-fallback:{platform}:{homedir}:{username}),无 OS keychain/safeStorage Phase 1 前替换为 OS vault 后端密钥
+3 数据根存在三向分歧(见 §2.4) WebFlix 必须使用独立数据根，禁止继承 ~/.zcode
+4 无任何备份/导出/恢复机制，违反 data-ownership.md:44 「最小可行本地库」必须带 backup/export + 测试过的 restore
+5 无任何包声明 test 脚本；hermetic 测试仅能手工调用 Phase 1 前定义一等测试命令
 
 2. 交付物 1:存储实现与用点清单
 
@@ -91,7 +90,6 @@ torrent 任务/peer 状态/目标路径 → 本地引擎，local-only(:17)
 
 6. 交付物 5:包根/契约/依赖方向提案
 
-
 ```
 packages/webflix-contracts     # zod schema + 类型 + channels(替代 ad-hoc shared 再导出)
 packages/webflix-domain         # 库域逻辑(纯函数,零 IO)
@@ -106,19 +104,17 @@ packages/local-library          # adapters:sqlite repo、迁移账本、backup/e
 7. 交付物 6:实际跑过的 hermetic 测试与门禁(全部本回合实跑，exit code 如实)
 
 命令
-	
 结果
-	
 EXIT
 
-git rev-parse HEAD / git status --short	7a14bc9b…286 / 空(跑前跑后各验一次)	0
-node scripts/check-workspace-freshness.mjs	基线新鲜，0 阈值违规	0
-pnpm architecture:report	violations / baselineViolations / newViolations 均 []	0
-pnpm typecheck	tsc -b 全部 11 个项目无错	0
-pnpm lint	70 warnings / 0 errors,2616 files,565ms	0
-node --import tsx --test test/*.test.ts(cwd=packages/services)	10/10 pass(importedClaudeRecovery 2 + providerConfigMigration 4 + nonCliAcpRetirement 4)	0
-node --import tsx --test test/*.test.ts(cwd=packages/ui)	6/6 pass	0
-node --import tsx --test packages/ui/test/…(cwd=仓库根)	ERR_MODULE_NOT_FOUND: Cannot find package '@/lib' → 1 fail	(见注)
+git rev-parse HEAD / git status --short 7a14bc9b…286 / 空(跑前跑后各验一次) 0
+node scripts/check-workspace-freshness.mjs 基线新鲜，0 阈值违规 0
+pnpm architecture:report violations / baselineViolations / newViolations 均 [] 0
+pnpm typecheck tsc -b 全部 11 个项目无错 0
+pnpm lint 70 warnings / 0 errors,2616 files,565ms 0
+node --import tsx --test test/_.test.ts(cwd=packages/services) 10/10 pass(importedClaudeRecovery 2 + providerConfigMigration 4 + nonCliAcpRetirement 4) 0
+node --import tsx --test test/_.test.ts(cwd=packages/ui) 6/6 pass 0
+node --import tsx --test packages/ui/test/…(cwd=仓库根) ERR_MODULE_NOT_FOUND: Cannot find package '@/lib' → 1 fail (见注)
 
 合计 hermetic:16 pass / 0 fail(正确调用方式下)
 如实记录：ui 测试从仓库根调用失败(tsx 从根不解析 packages/ui tsconfig 路径别名)——调用上下文工件，非代码缺陷；从 packages/ui cwd 调用即全绿
@@ -139,6 +135,6 @@ Profile 模型：多 Profile 隔离(data-ownership.md:29-30)与现有单用户�
 
 风险分级：① 确定性凭证回退密钥(高，§4)② 无 backup/restore 违反 data-ownership.md:44(高，§5)③ 数据根三向分歧 → 跨实例误写(中)④ Electron 内 node:sqlite UNKNOWN(阻塞级，§8.3)⑤ 无 test 脚本 → 回归不可见(中)
 合规声明：本审计严格只读——未编辑任何文件、未 commit/branch/push,所有命令跑完后 git status --short 仍为空；未发现真实凭证/秘密外泄(仅引用代码常量)；测试均在 mkdtemp 隔离目录；环境失败(ui 根调用工件)已如实记录为调用上下文问题而非代码缺陷。
-信息来源(pinned tree 直读):AGENTS.md、architecture-policy.yaml(:26-33、:59-66)、docs/architecture/architecture-lock.md、docs/architecture/data-ownership.md(:9-45)、docs/plans/{worker-protocol,desktop-roadmap,tl2-handoff,work-claims}.md、docs/testing/desktop-acceptance.md、docs/operations/local-development.md、packages/services/src/{paths.ts,session/tasksDatabase/*,session/{taskIndexRepo,automationRepo,offPeakTaskRepo}.ts,storage/*,setting/*,credential/*,oauth/repo/oauthCredentialRepo.ts}、packages/shared/src/{platform,storage,database-startup,validation,zcode-protocol}.ts、packages/shared/src/node/privateFilePersistence.ts、packages/services/src/descriptors.ts、packages/rpc/src/index.ts、packages/desktop/src/{host/*,scheduler/*,main/*}、apps/zcode-cli/packages/adapters/src/storage/session-store/*。
+信息来源(pinned tree 直读):AGENTS.md、architecture-policy.yaml(:26-33、:59-66)、docs/architecture/architecture-lock.md、docs/architecture/data-ownership.md(:9-45)、docs/plans/{worker-protocol,desktop-roadmap,tl2-handoff,work-claims}.md、docs/testing/desktop-acceptance.md、docs/operations/local-development.md、packages/services/src/{paths.ts,session/tasksDatabase/_,session/{taskIndexRepo,automationRepo,offPeakTaskRepo}.ts,storage/_,setting/_,credential/_,oauth/repo/oauthCredentialRepo.ts}、packages/shared/src/{platform,storage,database-startup,validation,zcode-protocol}.ts、packages/shared/src/node/privateFilePersistence.ts、packages/services/src/descriptors.ts、packages/rpc/src/index.ts、packages/desktop/src/{host/_,scheduler/_,main/_}、apps/zcode-cli/packages/adapters/src/storage/session-store/_。
 
 收到。AUDIT-DATA 审计在本会话已完成全部取证与复核；按任务要求「最终报告须为最后一条消息并以 AUDIT-DATA COMPLETE

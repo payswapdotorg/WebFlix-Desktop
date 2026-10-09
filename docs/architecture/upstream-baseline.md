@@ -11,17 +11,17 @@
 
 ## Reusable substrate inventory
 
-| Area | Initial disposition | Required review |
-|---|---|---|
-| Electron main/preload/window lifecycle | Retain and adapt | App identity, permissions, protocol schemes, IPC trust, updater/signing settings |
-| packages/shared and packages/rpc | Reuse where appropriate | Keep messages typed/versioned; avoid leaking product concepts into public WebFlix APIs |
-| packages/ui | Reuse selectively | Product shell, visual identity, accessibility, licensing/assets |
-| packages/services | Reuse infrastructure, not as a catch-all | Owners, persistence, credentials, logs and runtime side effects |
-| Provider/model infrastructure | Adapt behind WebFlix ports | Separate inference provider from recommendation/media policy |
-| Web client/server | Optional; audit dependencies | No assumption that old Next.js WebFlix is a desktop runtime dependency |
-| apps/zcode-cli and agent runtime | Optional, reviewed reuse | Review permissions, telemetry and fit; coding-agent workflows are not default media UX |
-| Architecture checker | Retain and strengthen | Add managed product modules and changed-file checks |
-| Existing storage infrastructure | Evaluate behind a port | Verify migrations, durability, data paths, privacy and profile isolation |
+| Area                                   | Initial disposition                      | Required review                                                                        |
+| -------------------------------------- | ---------------------------------------- | -------------------------------------------------------------------------------------- |
+| Electron main/preload/window lifecycle | Retain and adapt                         | App identity, permissions, protocol schemes, IPC trust, updater/signing settings       |
+| packages/shared and packages/rpc       | Reuse where appropriate                  | Keep messages typed/versioned; avoid leaking product concepts into public WebFlix APIs |
+| packages/ui                            | Reuse selectively                        | Product shell, visual identity, accessibility, licensing/assets                        |
+| packages/services                      | Reuse infrastructure, not as a catch-all | Owners, persistence, credentials, logs and runtime side effects                        |
+| Provider/model infrastructure          | Adapt behind WebFlix ports               | Separate inference provider from recommendation/media policy                           |
+| Web client/server                      | Optional; audit dependencies             | No assumption that old Next.js WebFlix is a desktop runtime dependency                 |
+| apps/zcode-cli and agent runtime       | Optional, reviewed reuse                 | Review permissions, telemetry and fit; coding-agent workflows are not default media UX |
+| Architecture checker                   | Retain and strengthen                    | Add managed product modules and changed-file checks                                    |
+| Existing storage infrastructure        | Evaluate behind a port                   | Verify migrations, durability, data paths, privacy and profile isolation               |
 
 ## Reuse rules
 

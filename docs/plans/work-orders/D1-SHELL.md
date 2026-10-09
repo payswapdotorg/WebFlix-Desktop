@@ -18,6 +18,7 @@ git clone https://github.com/payswapdotorg/WebFlix-Desktop.git repo
 cd repo && git checkout __FREEZE_SHA__ && git checkout -b d1-shell
 git rev-parse HEAD
 ```
+
 Read first: AGENTS.md, docs/adr/architecture-lock.md, docs/adr/0003-youtube-first-per-user-identity.md, docs/plans/contract-freeze.md (§4 lane map + §6 decisions — they are BINDING for you), docs/plans/audits/AUDIT-DESKTOP.md (your own audit — its §6 retain/adapt/isolate/remove list is your backlog), docs/plans/audits/AUDIT-DATA.md (data-root and store context), docs/plans/worker-protocol.md.
 
 ## 2. Deliverables (from desktop-roadmap.md Lane D1 + contract-freeze §6)
@@ -45,6 +46,7 @@ Non-goals: any YouTube data wiring beyond contract-typed stubs (D3), any persist
 ## 6. Known limits and handoffs (what D2/D3/TL2 must know)
 ## 7. Proposed TL2-owned files (workflow patch, root config diffs)
 ```
+
 End with the exact line: `D1-SHELL COMPLETE`
 
 Narrate progress in chat as you go (TL2 monitors the live transcript). One final self-contained report message. If blocked (tools lost, contract gap), say so explicitly in chat and stop — do not improvise around the contract.
