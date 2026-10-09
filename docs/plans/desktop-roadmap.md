@@ -34,16 +34,17 @@ Deliver:
 
 Do not modify shared contracts or schema during Phase 0.
 
-### Audit C — Worker 3: providers, playback, torrents and media intelligence
+### Audit C — Worker 3: YouTube-first account interface, provider policies and media engines
 
-Scope: inherited provider/model runtime, web/server playback/browser adapters, current WebFlix 2.0 integration/reference repo and target engine landscape.
+Scope: inherited provider/model runtime, web/server playback/browser adapters, current WebFlix 2.0 integration/reference repo and target provider/engine landscape.
 
 Deliver:
-- Existing source/provider APIs, playback plan feasibility, official embed/deep-link options and source-specific limitations.
-- Torrent engine candidate/license/maintenance/security investigation; avoid selecting a permanent engine before contract/packaging review.
-- Candidate media metadata/probe/ASR/translation/TTS/overview engines with licenses and OS packaging constraints.
-- Ad-transparency source candidate capabilities and access/coverage constraints; no assumption of a global catalog.
-- Provider policy rows with official sources, open questions and required smoke tests.
+- A YouTube capability-by-capability inventory: browse/search, metadata, official playback, account auth, subscriptions/history/playlists/comments/likes/creator surfaces where supported, and actions not supported by official interfaces.
+- Per-user OAuth/session/account ownership plan. Identify why the old operator-cookie/CDP broker is not reusable as a multi-user identity.
+- Current official YouTube policies/terms mapped to the desired interface, including independent value, playback/advertising behavior, API-data constraints and restricted access patterns; identify questions requiring compliance guidance.
+- Candidate next social platforms ranked by user value, supported capabilities, auth, region, pricing/quota and policy.
+- Torrent engine candidate/license/maintenance/security investigation, plus candidate media metadata/probe/ASR/translation/TTS/overview engines and ad-transparency source access constraints.
+- Provider policy rows with official source links, open questions and required smoke tests.
 - No credentials, operator cookies, or real private media in report artifacts.
 
 Do not implement provider integration during Phase 0.
@@ -57,25 +58,25 @@ Do not implement provider integration during Phase 0.
 - Define the exact test/build commands that exist in the actual repository and add missing first-class acceptance scripts.
 - Resolve contradictory findings in ADRs. Keep unknowns explicit and continue independent work.
 
-## Phase 1 — first real desktop vertical slice (parallel after contract freeze)
+## Phase 1 — YouTube-first desktop vertical slice (parallel after contract freeze)
 
 ### Lane D1 — Worker 1: WebFlix desktop shell and product identity
 
 Owns packages/desktop plus a specifically assigned WebFlix UI shell subtree. TL2 owns shared root/config files.
 
-Deliver: separate development data root; verified WebFlix product strings and desktop identity; navigation shell; local library/watch surface frame; loading/empty/error/offline states; accessible controls; packaging identity tests; actual desktop GUI smoke.
+Deliver: separate development data root; verified WebFlix product strings and desktop identity; navigation shell; YouTube-oriented home/search/watch shell; connected-account surfaces; loading/empty/error/offline states; accessible controls; packaging identity tests; actual desktop GUI smoke. Product UI must visibly distinguish WebFlix from YouTube and leave room for the independent value required by current policy.
 
 ### Lane D2 — Worker 2: contracts/domain/local persistence
 
 Owns packages/webflix-contracts, packages/webflix-domain, packages/webflix-application and packages/local-library; any new schema files in explicitly assigned product roots. TL2 owns architecture policy/root workspace and cross-lane public contract decisions.
 
-Deliver: validated canonical catalog/local-library/playback/progress/collection contracts; migration-backed local store; path-safe file/folder indexing; local library and collection CRUD; resume/watch state; backup/restore behavior; hermetic tests.
+Deliver: validated canonical catalog/provider-account/local-library/playback/progress/collection contracts; migration-backed local store; path-safe file/folder indexing; local library and collection CRUD; user/profile-scoped provider identity/credential-port contracts; resume/watch state; backup/restore behavior; hermetic tests.
 
-### Lane D3 — Worker 3: connector registry and local playback adapter
+### Lane D3 — Worker 3: connector registry and first YouTube integration
 
-Owns packages/catalog, packages/connectors and packages/playback; the first local-media adapter may live in the specific path TL2 assigns after package mapping. TL2 owns shared public contracts and architecture policy.
+Owns packages/catalog, packages/connectors and packages/playback plus the assigned YouTube adapter path. TL2 owns shared public contracts and architecture policy.
 
-Deliver: manifest registry, per-operation capability statuses, typed playback-plan contract usage, real local file connector/player path, source/engine status and errors, contract tests plus actual local playback E2E.
+Deliver: manifest registry, per-operation capability statuses, typed playback-plan contract, per-user YouTube authorization through a reviewed supported flow, the first real YouTube browse/search/watch path using official APIs/player where required, honest auth/unsupported states, policy evidence, and contract tests plus actual YouTube desktop smoke. Worker 2's local-library vertical slice remains the local/offline baseline; D3 does not edit Worker 2's owned persistence files.
 
 ### TL2 integration and quality gate
 
@@ -86,13 +87,13 @@ Deliver: manifest registry, per-operation capability statuses, typed playback-pl
 - Run real desktop acceptance on the merged build; package a distributable and record artifact/test evidence.
 - Keep requirements matrix status honest; feature code or fixture tests alone do not imply external-source verification.
 
-## Phase 2 — first external source
+## Phase 2 — expand the YouTube interface and close the first platform gap list
 
-Add one supported external source behind the connector contract, with capability/policy review, account isolation where needed, source provenance, quota/timeout handling, source smoke test and GUI acceptance. Choose the first provider from evidence and feasibility—not from assumed universal access.
+Fill the highest-value YouTube browse/watch/account paths that are both technically available and allowed by source policy. Keep a per-operation parity matrix; inaccessible actions stay honest and may require user handoff to the official YouTube application/site. Obtain compliance review/audit when the intended API-client experience is uncertain. Do not use scraping/private endpoint/cookie-replay as an undocumented gap filler.
 
-## Phase 3 — multi-source media OS
+## Phase 3 — next social-platform interfaces
 
-Add approved social/creator sources, official streaming-service browser/deep-link surfaces, torrent metadata/download/local playback, unified playlists/queue and source coverage UX. Each provider is a separate claim and integration gate.
+Select the next platform by current supported API/embedding/browser operations, user value, authorization UX, coverage, quota/cost and restrictions. Reuse the same connector, account isolation, capability, playback and evidence contracts across Instagram, TikTok, X, Snapchat and future sources. Only then expand into wider social discovery, creator surfaces, streaming-service handoffs and legal torrent/local-media capabilities.
 
 ## Phase 4 — recommendations and media intelligence
 
@@ -108,4 +109,4 @@ Reuse contracts and application use cases after desktop boundaries are stable. D
 
 ## Critical path
 
-Actual WebFlix desktop identity → contract freeze → local persistence/catalog → real local playback → restart/resume → packaged desktop acceptance → first reviewed external connector. Everything not on this path may proceed in parallel only when ownership and dependencies are explicit.
+Actual WebFlix desktop identity → YouTube policy/capability audit → per-user account and playback contracts → local persistence + first YouTube browse/search/watch path in parallel → restart/resume and account isolation → packaged desktop acceptance → expanded YouTube capability matrix → next social-platform selection. Everything not on this path may proceed in parallel only when ownership and dependencies are explicit.
