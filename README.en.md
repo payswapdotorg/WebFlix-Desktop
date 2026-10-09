@@ -29,6 +29,8 @@ These are target capabilities, not claims that each integration already works. U
 - [Worker protocol](docs/plans/worker-protocol.md)
 - [Work claims](docs/plans/work-claims.md)
 - [Desktop acceptance](docs/testing/desktop-acceptance.md)
+- [YouTube-first per-user strategy ADR](docs/adr/0003-youtube-first-per-user-identity.md)
+- [Provider policy matrix](docs/architecture/provider-policy-matrix.md)
 
 Use the pinned toolchain from mise.toml. Useful root commands include **pnpm bootstrap**, **pnpm dev:desktop:test**, **pnpm lint**, **pnpm typecheck**, **pnpm fmt:check**, **pnpm verify:pre-push** and **pnpm architecture:report**. Read [local development](docs/operations/local-development.md) before starting production-configured processes.
 
