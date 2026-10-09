@@ -1,0 +1,62 @@
+# WebFlix requirements and implementation status matrix
+
+This matrix is the status authority. A requirement is not complete because it appears in architecture docs, an issue, a worker summary or a green unrelated check. Add evidence links, commit SHAs and the exact test commands when status advances.
+
+## Status vocabulary
+
+- **planned** — accepted scope; no implementation claim.
+- **audit-pending** — inherited behavior/source code exists, but WebFlix product identity, capability/permission, data ownership or acceptance is not verified.
+- **implemented** — production-intended code exists; tests and UX may still be incomplete.
+- **tested** — required automated tests have actually passed, with exact command/evidence recorded.
+- **source-verified** — external source behavior and access/policy path has been tested against the actual provider or authorized environment.
+- **packaged-verified** — packaged desktop artifact has passed target-platform smoke/GUI acceptance.
+- **blocked** — blocked by a named dependency/risk; keep unrelated work moving.
+
+Only the evidence in the final columns may justify advancing a status. A requirement may be tested but not source-verified or packaged-verified.
+
+## Core product requirements
+
+| ID | Capability | Required outcome | Initial status | Acceptance summary |
+|---|---|---|---|---|
+| WF-001 | Product identity | App name, bundle IDs, protocols, updater, data root and telemetry isolated from ZCode | audit-pending | Identity matrix reviewed; packaged app/data path have WebFlix identity |
+| WF-002 | Desktop shell | Native Electron app launches with WebFlix navigation, settings, loading/empty/error states | audit-pending | Actual GUI launch and nav E2E; no ZCode product shell in WebFlix default experience |
+| WF-003 | Guest viewing | Public media can be explored without WebFlix login where source permits | planned | Fresh profile, no provider account; honest auth gates by capability |
+| WF-004 | Local library | User-selected folders/files indexed; library, collections and metadata remain local by default | planned | Path safety, index/reindex, missing files, persistence/restart tests |
+| WF-005 | Playback | Actual playable content with source-specific plan and honest unavailable reasons | planned | Local file playback is first baseline; test controls and playback lifecycle |
+| WF-006 | Player controls | Pause/play, seek, volume, captions and queue where supported; mini-player/PiP only where supported | planned | Tests match actual capability and target OS; unsupported controls are not dead |
+| WF-007 | Resume and history | WebFlix resume/watched state survives restart and is distinct from provider history | planned | Persistence and user/profile isolation tests |
+| WF-008 | Unified catalog | Canonical catalog items linked to provider assets with source/provenance | planned | Duplicate/ambiguous match tests; source references preserved |
+| WF-009 | Federated search | Search eligible connected sources concurrently; show source coverage and partial failure | planned | Mixed-source paging, timeout, auth, no-results and partial-results tests |
+| WF-010 | YouTube | Source-aware discovery/playback and authorized account actions only where supported | audit-pending | Current policy review, per-user auth, actual desktop smoke and clear capability limits |
+| WF-011 | Social creator sources | Supported Instagram, TikTok, Snapchat and X flows via official API/embed/authorized surfaces | planned | Each operation reviewed and tested separately; no blanket parity claims |
+| WF-012 | Streaming services | Netflix, Prime Video and Paramount+ official website/player/deep-link paths where permitted | planned | Correct isolated/external experience; no DRM bypass/raw-stream promise |
+| WF-013 | Torrent discovery | User-provided/legal catalog/torrent/magnet discovery with provenance | planned | Engine/rights review, malformed metadata and no-auto-execution tests |
+| WF-014 | Torrent downloads | Visible/cancellable jobs, destination selection, progress, verification, pause/resume | planned | Interrupted job, quota, permission, path safety and recovery tests |
+| WF-015 | Torrent local playback | Authorized downloaded/in-progress content plays through isolated local path | planned | Authenticated loopback, host/origin and no-LAN-exposure tests |
+| WF-016 | Library and playlists | Cross-source collections/queues without falsely mutating provider playlists | planned | WebFlix-owned vs provider-owned action tests |
+| WF-017 | Recommendations | Built-in useful ranking baseline with clear explanations and feedback | planned | Deterministic baseline and offline evaluation fixtures |
+| WF-018 | Selectable models/rankers | Bring-your-own-model and swappable ranking/filter algorithms | planned | Provider-independent contract tests and capability/error states |
+| WF-019 | User objectives | Tune discovery, enjoyment, novelty, learning, friend signal, exclusions and repetition | planned | Preference persistence, reset, explanation and experiment tests |
+| WF-020 | Friend recommendations | Recommendations only from explicitly connected/authorized friend data | planned | Consent, visibility, delete/revoke and privacy isolation tests |
+| WF-021 | History/retention controls | Pause/reset/delete recommendations/history and explain local/provider boundaries | planned | Deletes only claim confirmed scope; retention behavior tested |
+| WF-022 | Media intelligence | Transcription, captions, summaries, translation, dubbing/TTS and Q&A via replaceable engines | planned | Job cancellation/retry, source rights, provenance and output labeling |
+| WF-023 | Audio/video overview | NotebookLM-like overview of permitted media/text/transcripts, using swappable models | planned | Local/user-provided input first, source lineage and derived-asset persistence |
+| WF-024 | Ad Center discovery | Search supported public ad-transparency sources with clear query coverage | planned | Partial source coverage, category/region/date filters and source link |
+| WF-025 | Advertiser identity | Normalize source identities, domains, verification and uncertainty | planned | Conflicts and unknown identity displayed, no invented certification |
+| WF-026 | Ad claim evidence | Extract claims and attach source-backed evidence/contradictions/gaps | planned | Evidence dates and sources shown; unable-to-verify distinct from false |
+| WF-027 | Offer verification | Compare price, terms, validity and advertised benefits with linked evidence | planned | Stale/partial offers labelled; no invented terms |
+| WF-028 | Reviews and qualification | Review signals, diversity/independence, claim support, recency and explainable assessment | planned | No naive average-star truth score; all dimensions and evidence visible |
+| WF-029 | Ad personal memory | Save/forget and user-reported observations with explicit opt-in scopes | planned | No ambient observation or cross-source linking without consent |
+| WF-030 | Account isolation | Provider accounts, tokens and writes are scoped to the connecting user/profile | audit-pending | Cross-profile and disconnect/revoke tests; no operator-session leakage |
+| WF-031 | Optional sync | Explicitly opted-in sync of user-owned records only, with conflict/deletion semantics | planned | Sync pause, offline conflict, tombstone and data export tests |
+| WF-032 | Future web/mobile | Reuse platform-neutral contracts and application layer | planned | Separate clients call same use cases; not a Phase 1 blocker |
+| WF-033 | Architecture enforcement | New modules managed in architecture policy; no cycles/deep imports | audit-pending | Changed-file architecture gate blocks new violations |
+| WF-034 | Release safety | Reproducible package identity, signed/verified update path and notices | audit-pending | Distribution/identity audit and target-platform smoke tests |
+
+## Current initial evidence state
+
+This setup commit series creates the architecture and execution specification only. No WebFlix product feature is advanced to implemented/tested/source-verified/packaged-verified by these docs. ZCode substrate features and WebFlix 2.0 behavior are marked audit-pending until TL2 maps actual code and test evidence to each requirement.
+
+## Evidence table
+
+TL2 maintains an evidence entry per requirement or logical batch. Required fields: requirement IDs, status before/after, commit SHA, source paths/callers, exact commands and exit status, test totals, live/source test environment and date, desktop artifact/OS, GUI/E2E result, screenshots/log references that do not expose secrets, residual limits and reviewer.
