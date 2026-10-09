@@ -48,3 +48,10 @@ Non-goals: any provider connector (D3), any UI (D1), any Electron host code, tel
 End with the exact line: `D2-LOCAL COMPLETE`
 
 Narrate progress in chat as you go (TL2 monitors the live transcript). One final self-contained report message. If a locked shape cannot be implemented as specified, STOP and report in chat — do not silently deviate.
+
+## 5. ADDENDUM (TL2, 2026-10-09 — all Phase-1 lanes)
+
+`packages/webflix-*`, `catalog`, `connectors`, `playback` and `local-library` do NOT exist at the freeze SHA 5549208 — Worker 2 creates the contract packages on branch `d2-local`. Therefore:
+
+- **D2 (Worker 2)**: you own the canonical implementation of exactly the locked §2 shapes — every other lane codes against your public entrypoints after TL2 integration.
+- **D1 / D3 (Workers 1, 3)**: implement against the LOCKED SHAPES in `docs/plans/contract-freeze.md` §2 using local type declarations in YOUR OWN owned paths only (e.g. `packages/webflix-shell/src/contract-types.ts`, `packages/connectors/src/contract-types.ts`), each file clearly marked `// swap-at-integration: re-point to packages/webflix-contracts at TL2 merge`. NEVER create, stub or edit another lane's package paths. At TL2 serial integration, imports re-point to the real packages and the local mirrors are deleted.
