@@ -12,7 +12,7 @@ TL2 must update this file before dispatching new work. The table is the authorit
 | AUDIT-SOURCES | Phase 0 | Worker 3 | TL2 records confirmed base SHA | read-only: providers, media/playback, old WebFlix reference, torrents/media engines/Ad Center candidates | TL2-BOOT-001 baseline pin | unclaimed | Link source-backed audit report and commands |
 | D1-SHELL | Phase 1 | Worker 1 | set after contract freeze | packages/desktop and assigned UI shell paths only | D1 contract freeze | blocked-on-prerequisite | Link PR/commit and GUI evidence |
 | D2-LOCAL | Phase 1 | Worker 2 | set after contract freeze | webflix contracts/domain/application/local-library paths only | D1 contract freeze | blocked-on-prerequisite | Link PR/commit and persistence evidence |
-| D3-PLAYBACK | Phase 1 | Worker 3 | set after contract freeze | catalog/connectors/playback/local file adapter paths only | D1 contract freeze | blocked-on-prerequisite | Link PR/commit and playback evidence |
+| D3-YOUTUBE | Phase 1 | Worker 3 | set after contract freeze | catalog/connectors/playback/local file adapter paths only | D1 contract freeze | blocked-on-prerequisite | Link PR/commit and playback evidence |
 
 ## Claim rules
 
