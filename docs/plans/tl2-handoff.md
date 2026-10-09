@@ -15,12 +15,13 @@ Read in order:
 6. ../architecture/provider-policy-matrix.md
 7. ../adr/0001-webflix-product-boundaries.md
 8. ../adr/0002-provider-capabilities-and-playback.md
-9. ../product/requirements-matrix.md
-10. desktop-roadmap.md
-11. worker-protocol.md
-12. work-claims.md
-13. ../testing/desktop-acceptance.md
-14. ../operations/local-development.md
+9. ../adr/0003-youtube-first-per-user-identity.md
+10. ../product/requirements-matrix.md
+11. desktop-roadmap.md
+12. worker-protocol.md
+13. work-claims.md
+14. ../testing/desktop-acceptance.md
+15. ../operations/local-development.md
 
 ## Starting baseline
 
