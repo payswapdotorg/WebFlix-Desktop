@@ -4,7 +4,7 @@ Audience: new technical lead TL2. This document plus the linked architecture/req
 
 ## Mandate
 
-Implement WebFlix Desktop from the ZCode fork as a desktop-first Universal Entertainment OS. Make this repository the only source of truth. Deliver a real, testable desktop product using TL2 plus three parallel workers. Do not assume this architecture is implemented merely because the docs exist.
+Implement WebFlix Desktop from the ZCode fork as a desktop-first Universal Entertainment OS. The first platform goal is a useful, policy-reviewed alternative interface to YouTube using each user's own authorized YouTube account; once that integration is proven, generalize to become a primary interface for other major social platforms. Make this repository the only source of truth. Deliver a real, testable desktop product using TL2 plus three parallel workers. Do not assume this architecture is implemented merely because the docs exist.
 
 Read in order:
 1. ../architecture/architecture-lock.md
@@ -58,13 +58,13 @@ Dispatch D1-SHELL, D2-LOCAL and D3-PLAYBACK as disjoint lanes per desktop-roadma
 - Worker 3: connector/capability registry and real local-file playback path.
 - No worker edits shared root/policy/contracts without TL2 coordination. Keep public interfaces stable after freeze.
 
-### E. Integrate and prove the first vertical slice
-The first release candidate must launch the actual packaged Electron desktop app with WebFlix identity; browse/import a local media file; play it with working supported controls; save library/collection and progress; restart and resume; work without login/cloud; and honestly handle offline/missing/unsupported cases. Then add one real external provider behind reviewed policy/capability contracts.
+### E. Integrate and prove the YouTube-first vertical slice
+The first release candidate must launch the actual packaged Electron desktop app with WebFlix identity; connect the test user's own YouTube account through a reviewed supported authorization path; browse/search real YouTube results; open and play selected content through the appropriate official playback path; exercise the first supported account operation(s); and demonstrate that all authorization and state belong to that test user. In parallel, the local-first baseline must import/open/play local media, save library/collection and progress, restart/resume, work without login/cloud and handle offline/missing/unsupported cases. Preserve required player/advertising behavior and WebFlix's independent value. If a desired operation is not supported/allowed, document the limitation instead of inventing access.
 
 Run exact lint/typecheck/format/architecture/build/test commands, relevant desktop GUI/E2E tests and target-platform packaging/smoke. Fix issues as part of the implementation wave, not after user testing is requested.
 
 ### F. Expand the product in dependency order
-After the local vertical slice is accepted: one externally reviewed provider; unified multi-source catalog; user-authorized torrent functionality; more source adapters and official browser surfaces; recommendation objectives and learning/evaluation; replaceable media-intelligence jobs; Ad Center transparency search and evidence-based qualification; optional cloud sync; future web/mobile clients.
+After the YouTube-first slice is accepted: close the highest-value supported YouTube capability gaps; integrate the next social platforms using the same per-user account and connector contracts; then expand unified multi-source catalog/queues, user-authorized torrent functionality, recommendation objectives and learning/evaluation, replaceable media-intelligence jobs, Ad Center transparency search and evidence-based qualification, optional cloud sync, and future web/mobile clients.
 
 Do not block the core product on broad third-party coverage. Never claim a provider action is supported until the policy matrix, contract tests, actual source smoke and user-visible limitation are in place.
 
@@ -74,6 +74,7 @@ The product must preserve all of these as goals without faking present implement
 - public viewing without WebFlix login when source policy allows;
 - long/short videos, live, podcasts and creator media;
 - local-first library, playlists, progress and playback;
+- a YouTube-first interface for each user's own authorized YouTube account, followed by primary interfaces for more major social platforms;
 - torrent-first-class discovery/download/streaming for user-authorized content;
 - cross-provider search with coverage and source-specific playback plans;
 - built-in recommendation baseline, selectable model/ranker, user objectives, friend recommendations, retention controls and explainability;
@@ -84,8 +85,10 @@ The product must preserve all of these as goals without faking present implement
 ## Critical constraints
 
 - Do not wrap the old Next.js app in Electron.
-- Do not make YouTube's DTO the universal media DTO.
-- Do not share the old operator YouTube session among users.
+- Treat YouTube as the first platform integration and use each end user's own authorization; do not share the old operator YouTube session among users.
+- Do not promise full YouTube parity until the per-operation API/player/browser capability and policy matrix supports it.
+- Current YouTube API policies require significant independent value when mimicking native YouTube UX and restrict changes/removal of required player behavior and ads. Check https://developers.google.com/youtube/terms/developer-policies-guide and https://developers.google.com/youtube/terms/api-services-terms-of-service; seek compliance guidance if needed.
+- Do not use undocumented scraping/private endpoints/cookie replay as silent fallbacks for unsupported capabilities.
 - Do not assume all streaming platforms allow in-app playback or raw streams.
 - Do not treat OpenRTB as a searchable inventory of every ad.
 - Do not claim ad qualification truth without source-backed evidence; unknown is not false.
