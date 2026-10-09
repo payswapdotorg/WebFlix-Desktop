@@ -33,6 +33,8 @@
 6. Review LICENSE, NOTICE.md and THIRD-PARTY-NOTICES.md. First-party Apache-2.0 does not replace third-party notices or grant rights to provider media/assets.
 7. Inherited behavior is not automatically WebFlix functionality. Mark it audit-pending until source, UX, identity and acceptance are verified.
 8. Upstream updates require a selected commit, diff inspection, inherited and WebFlix test run, conflict notes and an update to this file.
+9. The existing WebFlix 2.0 repository uses an operator-session/broker approach in its current single-tenant deployment. Treat it as implementation evidence only; do not port that session model into a multi-user desktop product.
+10. YouTube is the first platform target, but source integration needs an up-to-date capability/terms review. Current API policies require sufficient independent value for similar experiences and preservation of required standard playback/advertising behaviors. Where official APIs do not expose the desired operation, mark it unavailable pending a separately reviewed authorized approach instead of silently adding scraper/private-endpoint fallbacks.
 
 ## Baseline audit deliverable
 
