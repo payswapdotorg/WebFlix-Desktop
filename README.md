@@ -28,6 +28,8 @@ YouTube integration must use each user's own authorization and preserve the stan
 3. [Desktop roadmap and workstreams](docs/plans/desktop-roadmap.md)
 4. [Requirements and status matrix](docs/product/requirements-matrix.md)
 5. [Desktop acceptance criteria](docs/testing/desktop-acceptance.md)
+8. [YouTube-first per-user strategy ADR](docs/adr/0003-youtube-first-per-user-identity.md)
+9. [Provider policy matrix](docs/architecture/provider-policy-matrix.md)
 6. [Worker protocol](docs/plans/worker-protocol.md) and [claim ledger](docs/plans/work-claims.md)
 7. [Upstream baseline and reuse policy](docs/architecture/upstream-baseline.md)
 
