@@ -47,4 +47,33 @@ work-claims.md row, contract freeze 5549208 (v1.0.0).
 
 ## Execution log
 
-(filled by TL2 as lanes land)
+### 2026-10-10 — acceptance pass (TL2, DESKTOP-ACCEPTANCE-1)
+
+Executed on the phase-1 head (9a270e9) in a fresh worktree after a sandbox
+reset (replay stack rebuilt first — "always fix the replay").
+
+- Per-lane gates: ledger rows were updated by the lanes; the patch-spec
+  application revealed the D1 specs were TRUNCATED at delivery (§4-§7 missing)
+  — TL2 reconstructed the application from §1 intent + freeze §6.1 values +
+  the pure vitest-green modules (c40eff1).
+- Mirror swaps: found INCOMPLETE — playback's imports still referenced the
+  deleted mirror (its tests had also never run in the root suite: the vitest
+  include missed top-level __tests__). Playback fully reconciled to frozen
+  §2.2 (f7d324f, reference implementation for MIRROR-RECON).
+- Whole-tree gate results: see the DESKTOP-ACCEPTANCE-1 ledger row for the
+  full evidence string. Deviations recorded honestly: ui+web root tsc
+  env-limited OOM (baseline evidence stands); packaging tier-6 not runnable
+  on this box class; shell/catalog/connectors lane tsc = MIRROR-RECON.
+- Freeze defects found and fixed at integration: duplicate desktop module id
+  in architecture-policy.yaml (the freeze's arch PASS had never actually run —
+  the checker crashed on the duplicate), and the managed:true registrations
+  were incoherent with the repo's all-legacy maturity model (corrected with
+  promotion preconditions recorded).
+- GUI smoke: `pnpm test:e2e` (new; scripts/e2e/webflix-smoke.mjs) 11/11 on a
+  fresh WebFlix profile — launch, identity matrix (incl. the dev-AUMID fix),
+  updater-guard regression pin, chrome-import isolation, clean shutdown.
+- Decision: phase-1-acceptance (d557b71..a2887d7) MERGED TO MAIN (ff3052b).
+  Desktop acceptance tier-4 minimum: PASSED with recorded limitations.
+  Tier-6 packaging remains open on a CI-class box; MIRROR-RECON is the
+  Phase-2 opener.
+
