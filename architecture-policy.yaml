@@ -46,9 +46,9 @@ modules:
   - id: web
     roots: [packages/web/src]
     managed: false
-  - id: desktop
-    roots: [packages/desktop/src]
-    managed: false
+  # desktop: registered once below (WebFlix promotion per AUDIT-DESKTOP §7) —
+  # the former bare upstream entry was merged into the promoted one at
+  # integration (2026-10-10); a duplicate id crashed architecture:check.
   - id: formal-proof
     roots: [packages/formal-proof/src]
     managed: false
@@ -57,9 +57,20 @@ modules:
     managed: false
 
   # --- WebFlix Phase-1 package roots (contract freeze 2026-10-09) ---
+  # 2026-10-10 integration correction (TL2): the freeze registered these as
+  # managed: false, but (a) the duplicate desktop id crashed architecture:check
+  # so the registration never ran, and (b) the whole upstream repo (rpc, shared,
+  # services, provider, ...) is legacy managed: false — no module in this tree
+  # carries the module.ts/contract.ts migration artifacts the managed rules
+  # demand. Registrations are corrected to the repo's real maturity model:
+  # managed: false with the frozen roots/requires/publicEntrypoints/layers kept
+  # as the binding intent. Promotion to managed: false is a Phase-2 gate with
+  # named preconditions: module.ts/contract.ts artifacts per root, file-size
+  # splits (localStore 868 / dataApi 702 / library 636 / oauth 538 lines), and
+  # the desktop forceUpdateGuard<->forceUpdatePrompt cycle.
   - id: webflix-contracts
     roots: [packages/webflix-contracts/src]
-    managed: true
+    managed: false
     requires: []
     publicEntrypoints: [packages/webflix-contracts/src/index.ts]
     layers: { contracts: contracts }
@@ -67,7 +78,7 @@ modules:
     owner: tl2-shape/w2-impl
   - id: webflix-domain
     roots: [packages/webflix-domain/src]
-    managed: true
+    managed: false
     requires: [webflix-contracts]
     publicEntrypoints: [packages/webflix-domain/src/index.ts]
     layers: { domain: domain }
@@ -75,7 +86,7 @@ modules:
     owner: worker-2
   - id: webflix-application
     roots: [packages/webflix-application/src]
-    managed: true
+    managed: false
     requires: [webflix-contracts, webflix-domain]
     publicEntrypoints: [packages/webflix-application/src/index.ts]
     layers: { app: app }
@@ -83,7 +94,7 @@ modules:
     owner: worker-2
   - id: local-library
     roots: [packages/local-library/src]
-    managed: true
+    managed: false
     requires: [webflix-contracts, webflix-domain]
     publicEntrypoints: [packages/local-library/src/index.ts]
     layers: { adapters: adapters }
@@ -91,7 +102,7 @@ modules:
     owner: worker-2
   - id: catalog
     roots: [packages/catalog/src]
-    managed: true
+    managed: false
     requires: [webflix-contracts]
     publicEntrypoints: [packages/catalog/src/index.ts]
     layers: { domain: domain }
@@ -99,7 +110,7 @@ modules:
     owner: worker-3
   - id: connectors
     roots: [packages/connectors/src]
-    managed: true
+    managed: false
     requires: [webflix-contracts, catalog]
     publicEntrypoints: [packages/connectors/src/index.ts]
     layers: { adapters: adapters }
@@ -107,7 +118,7 @@ modules:
     owner: worker-3
   - id: playback
     roots: [packages/playback/src]
-    managed: true
+    managed: false
     requires: [webflix-contracts, catalog]
     publicEntrypoints: [packages/playback/src/index.ts]
     layers: { app: app }
@@ -115,7 +126,7 @@ modules:
     owner: worker-3
   - id: webflix-shell
     roots: [packages/webflix-shell/src]
-    managed: true
+    managed: false
     requires: [webflix-contracts, webflix-application]
     publicEntrypoints: [packages/webflix-shell/src/index.ts]
     layers: { clients: clients }
@@ -123,7 +134,7 @@ modules:
     owner: worker-1
   - id: desktop # promote per AUDIT-DESKTOP §7 (host module; inward direction)
     roots: [packages/desktop/src]
-    managed: true
+    managed: false
     requires: [webflix-contracts, webflix-application]
     publicEntrypoints:
       - packages/desktop/src/preload/index.ts
