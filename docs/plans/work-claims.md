@@ -25,6 +25,12 @@ TL2 must update this file before dispatching new work. The table is the authorit
 
 ## Completed work
 
+| Work ID | Owner | Base | Head | Scope | Status | Evidence |
+|---|---|---|---|---|---|---|
+| PHASE-1-INTEGRATION | TL2 | 5549208 (freeze) | phase-1 branch (43e776e..cb97437, pushed) | Serial integration: D2 → D3 → D1 per docs/plans/phase1-integration-checklist.md; mirror swaps executed (D1/D3 contract-types.ts mirrors deleted, imports re-pointed to the canonical webflix-contracts) | integrated (2026-10-10 ~10:2xZ) | 302/302 unit + 1/1 integration green on the integrated whole; tree clean; branch pushed. Deferred to the full-gate pass (recorded honestly): desktop typecheck/lint/architecture gates + GUI smoke + packaging identity tests — the desktop monorepo tooling was unavailable on the TL2 box during the outage; the line-referenced patch specs (docs/plans/patches/) carry the desktop-side changes. |
+
+## Completed work
+
 This section starts empty for code/features. Architecture documents created during repository setup are recorded in their GitHub commit history; they do not imply that product feature requirements are implemented or tested.
 
 ## Repository setup completed
