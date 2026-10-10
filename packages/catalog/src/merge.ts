@@ -15,7 +15,7 @@ import type {
   CatalogItemId,
   MatchEvidence,
   ProviderAsset,
-} from 'webflix-contracts';
+} from "webflix-contracts";
 
 /** Merge policy thresholds (MatchEvidence semantics, contract-freeze §2.2). */
 export interface MergeThresholds {
@@ -55,11 +55,11 @@ export const CONFIDENCE = {
 
 /** How an incoming asset was resolved against the catalog. */
 export type MergeOutcome =
-  | 'merged'
-  | 'deduped'
-  | 'created'
-  | 'ambiguous-separate'
-  | 'low-confidence-separate';
+  | "merged"
+  | "deduped"
+  | "created"
+  | "ambiguous-separate"
+  | "low-confidence-separate";
 
 /** Per-asset audit record. */
 export interface MergeRecord {
@@ -85,6 +85,12 @@ export interface MergeResult {
   readonly report: MergeReport;
 }
 
+/**
+ * Builder-side view of MergeReport: the published report is all-readonly
+ * (consumer contract), the merge loop needs mutable counters while building.
+ */
+type MutableMergeReport = { -readonly [K in keyof MergeReport]: MergeReport[K] };
+
 interface Candidate {
   item: CatalogItem;
   evidence: MatchEvidence;
@@ -94,19 +100,12 @@ interface Candidate {
  * Score one incoming asset against one existing catalog item.
  * Returns null when there is no plausible evidence (including kind mismatch).
  */
-export function scoreMatch(
-  asset: ProviderAsset,
-  item: CatalogItem,
-): MatchEvidence | null {
+export function scoreMatch(asset: ProviderAsset, item: CatalogItem): MatchEvidence | null {
   if (asset.kind !== item.kind) return null;
 
-  if (
-    item.assets.some(
-      (a) => a.providerId === asset.providerId && a.assetId === asset.assetId,
-    )
-  ) {
+  if (item.assets.some((a) => a.providerId === asset.providerId && a.assetId === asset.assetId)) {
     return {
-      type: 'provider-native',
+      type: "provider-native",
       confidence: CONFIDENCE.providerNative,
       source: `provider:${asset.providerId}`,
       detail: `same provider asset ${asset.providerId}/${asset.assetId}`,
@@ -117,9 +116,9 @@ export function scoreMatch(
     for (const existing of item.assets) {
       if (!existing.externalIds) continue;
       for (const [key, value] of Object.entries(asset.externalIds)) {
-        if (value !== '' && existing.externalIds[key] === value) {
+        if (value !== "" && existing.externalIds[key] === value) {
           return {
-            type: 'external-id',
+            type: "external-id",
             confidence: CONFIDENCE.externalId,
             source: `external-id:${key}`,
             detail: `${key}=${value} shared with ${existing.providerId}/${existing.assetId}`,
@@ -132,10 +131,7 @@ export function scoreMatch(
   return titleEvidence(asset, item);
 }
 
-function titleEvidence(
-  asset: ProviderAsset,
-  item: CatalogItem,
-): MatchEvidence | null {
+function titleEvidence(asset: ProviderAsset, item: CatalogItem): MatchEvidence | null {
   const a = normalizeTitle(asset.title);
   const b = normalizeTitle(item.title);
   if (a.length === 0 || b.length === 0) return null;
@@ -144,39 +140,39 @@ function titleEvidence(
   const years = compareYears(asset.year, item.year);
 
   if (sim === 1) {
-    if (years === 'conflict') {
+    if (years === "conflict") {
       return {
-        type: 'title-fuzzy',
+        type: "title-fuzzy",
         confidence: CONFIDENCE.titleExactYearConflict,
-        source: 'title:exact+year-conflict',
+        source: "title:exact+year-conflict",
         detail: `identical titles but years ${asset.year} vs ${item.year}`,
       };
     }
-    if (years === 'match') {
+    if (years === "match") {
       return {
-        type: 'title-year',
+        type: "title-year",
         confidence: CONFIDENCE.titleYear,
-        source: 'title+year',
+        source: "title+year",
         detail: `exact title, year ${asset.year}`,
       };
     }
     return {
-      type: 'title-year',
+      type: "title-year",
       confidence: CONFIDENCE.titleExactNoYear,
-      source: 'title:exact',
-      detail: 'exact title, year incomplete on at least one side',
+      source: "title:exact",
+      detail: "exact title, year incomplete on at least one side",
     };
   }
 
   if (sim < CONFIDENCE.fuzzyMinSimilarity) return null;
 
   let confidence = sim * CONFIDENCE.fuzzyFactor;
-  if (years === 'conflict') confidence *= CONFIDENCE.fuzzyYearConflictFactor;
+  if (years === "conflict") confidence *= CONFIDENCE.fuzzyYearConflictFactor;
 
   return {
-    type: 'title-fuzzy',
+    type: "title-fuzzy",
     confidence: round3(confidence),
-    source: 'title:fuzzy',
+    source: "title:fuzzy",
     detail: `similarity ${sim.toFixed(3)}`,
   };
 }
@@ -200,7 +196,7 @@ export function mergeCatalogInto(
   }));
 
   const records: MergeRecord[] = [];
-  const report: MergeReport = {
+  const report: MutableMergeReport = {
     records,
     merged: 0,
     deduped: 0,
@@ -213,8 +209,7 @@ export function mergeCatalogInto(
     const candidates = items
       .map((item) => ({ item, evidence: scoreMatch(asset, item) }))
       .filter(
-        (c): c is Candidate =>
-          c.evidence !== null && c.evidence.confidence >= thresholds.candidate,
+        (c): c is Candidate => c.evidence !== null && c.evidence.confidence >= thresholds.candidate,
       )
       .sort((x, y) => y.evidence.confidence - x.evidence.confidence);
 
@@ -222,7 +217,7 @@ export function mergeCatalogInto(
       const created = createItem(asset);
       items.push(created);
       report.created += 1;
-      records.push({ asset, outcome: 'created', targetItemId: created.id });
+      records.push({ asset, outcome: "created", targetItemId: created.id });
       continue;
     }
 
@@ -235,7 +230,7 @@ export function mergeCatalogInto(
       report.lowConfidence += 1;
       records.push({
         asset,
-        outcome: 'low-confidence-separate',
+        outcome: "low-confidence-separate",
         targetItemId: created.id,
         evidence: best.evidence,
         reason: `best candidate confidence ${pct(best.evidence.confidence)} is below autoMerge ${pct(thresholds.autoMerge)}`,
@@ -245,15 +240,14 @@ export function mergeCatalogInto(
 
     if (
       runnerUp !== undefined &&
-      best.evidence.confidence - runnerUp.evidence.confidence <
-        thresholds.ambiguityDelta
+      best.evidence.confidence - runnerUp.evidence.confidence < thresholds.ambiguityDelta
     ) {
       const created = createItem(asset);
       items.push(created);
       report.ambiguous += 1;
       records.push({
         asset,
-        outcome: 'ambiguous-separate',
+        outcome: "ambiguous-separate",
         targetItemId: created.id,
         evidence: best.evidence,
         runnerUpEvidence: runnerUp.evidence,
@@ -280,7 +274,7 @@ export function mergeCatalogInto(
       report.deduped += 1;
       records.push({
         asset,
-        outcome: 'deduped',
+        outcome: "deduped",
         targetItemId: target.id,
         evidence: best.evidence,
       });
@@ -288,7 +282,7 @@ export function mergeCatalogInto(
       report.merged += 1;
       records.push({
         asset,
-        outcome: 'merged',
+        outcome: "merged",
         targetItemId: target.id,
         evidence: best.evidence,
       });
@@ -324,18 +318,13 @@ function makeItemId(asset: ProviderAsset): CatalogItemId {
 
 function applyAvailability(item: CatalogItem, fact: AvailabilityFact): void {
   const exists = item.availability.some(
-    (f) =>
-      f.providerId === fact.providerId &&
-      (f.url ?? undefined) === (fact.url ?? undefined),
+    (f) => f.providerId === fact.providerId && (f.url ?? undefined) === (fact.url ?? undefined),
   );
   if (!exists) item.availability.push(fact);
 }
 
 function applyEvidence(item: CatalogItem, evidence: MatchEvidence): void {
-  if (
-    !item.matchEvidence ||
-    evidence.confidence > item.matchEvidence.confidence
-  ) {
+  if (!item.matchEvidence || evidence.confidence > item.matchEvidence.confidence) {
     item.matchEvidence = evidence;
   }
 }
@@ -343,19 +332,19 @@ function applyEvidence(item: CatalogItem, evidence: MatchEvidence): void {
 function compareYears(
   a: number | undefined,
   b: number | undefined,
-): 'match' | 'conflict' | 'unknown' {
-  if (a === undefined || b === undefined) return 'unknown';
+): "match" | "conflict" | "unknown" {
+  if (a === undefined || b === undefined) return "unknown";
   // ±1 tolerates release-date boundary rounding across providers.
-  if (Math.abs(a - b) <= 1) return 'match';
-  return 'conflict';
+  if (Math.abs(a - b) <= 1) return "match";
+  return "conflict";
 }
 
 function normalizeTitle(title: string): string {
   return title
-    .normalize('NFKD')
-    .replace(/[\u0300-\u036f]/g, '')
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/[^a-z0-9]+/g, " ")
     .trim();
 }
 
@@ -370,8 +359,8 @@ function levenshtein(a: string, b: string): number {
   if (a.length === 0) return b.length;
   if (b.length === 0) return a.length;
 
-  let prev = new Array<number>(b.length + 1);
-  let curr = new Array<number>(b.length + 1);
+  let prev = Array.from<number>({ length: b.length + 1 });
+  let curr = Array.from<number>({ length: b.length + 1 });
 
   for (let j = 0; j <= b.length; j += 1) prev[j] = j;
 

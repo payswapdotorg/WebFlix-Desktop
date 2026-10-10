@@ -2,14 +2,16 @@
   "name": "local-library",
   "version": "0.1.0",
   "private": true,
-  "type": "module",
   "description": "D2-LOCAL: migration-backed SQLite local library store, path-safe indexing, backup/restore and 30-day provider-metadata TTL for WebFlix-Desktop.",
+  "type": "module",
   "main": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "better-sqlite3": "^11.10.0"
+    "better-sqlite3": "^11.10.0",
+    "webflix-contracts": "workspace:*",
+    "webflix-domain": "workspace:*"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.13",

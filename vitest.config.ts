@@ -1,4 +1,4 @@
-import { defineConfig } from 'vitest/config';
+import { defineConfig } from "vitest/config";
 
 // D2 test substrate (contract freeze 5549208): unit tests across the
 // webflix packages; integration tests are separated by config file so
@@ -6,8 +6,8 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   test: {
     globals: true,
-    environment: 'node',
-    include: ['packages/{webflix-*,local-library,catalog,connectors,playback}/{src,tests}/**/*.{test,spec}.ts'],
-    exclude: ['**/*.int.test.ts', '**/*.int.spec.ts', '**/node_modules/**'],
+    environment: "node",
+    include: ["packages/{webflix-*,local-library,catalog,connectors,playback}/**/*.{test,spec}.ts"],
+    exclude: ["**/*.int.test.ts", "**/*.int.spec.ts", "**/node_modules/**"],
   },
 });

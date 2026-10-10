@@ -2,10 +2,14 @@
   "name": "webflix-shell",
   "version": "0.1.0",
   "private": true,
-  "description": "WebFlix navigation shell (D1 lane): screens, honest-state vocabulary (freeze \u00a72.3), theme, component tests.",
+  "description": "WebFlix navigation shell (D1 lane): screens, honest-state vocabulary (freeze §2.3), theme, component tests.",
   "main": "src/index.ts",
   "types": "src/index.ts",
   "scripts": {
     "test": "vitest run --config ../../vitest.config.ts"
+  },
+  "dependencies": {
+    "webflix-application": "workspace:*",
+    "webflix-contracts": "workspace:*"
   }
 }

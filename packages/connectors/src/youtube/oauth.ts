@@ -1,3 +1,7 @@
+/* eslint-disable max-lines -- oauth.ts: loopback+PKCE state machine and token lifecycle
+ delivered as one cohesive official-surface unit at freeze 5549208 (D3-YOUTUBE);
+ split deferred to the Phase-2 module split backlog (TL2 arbitration, repo
+ precedent: autoUpdater.ts). */
 /**
  * Per-user YouTube OAuth — loopback + PKCE flow DESIGN and token lifecycle.
  *
@@ -27,15 +31,15 @@
  * the token fetcher is injected, and the default fetcher fails with
  * LiveNetworkDisabledError (fixture-only; live smoke pending-operator-credential).
  */
-import { createHash, randomBytes } from 'node:crypto';
+import { createHash, randomBytes } from "node:crypto";
 
-import { LiveNetworkDisabledError } from './dataApi';
-import { YOUTUBE_OAUTH_SCOPES, YOUTUBE_PROVIDER_ID } from './manifest';
+import { LiveNetworkDisabledError } from "./dataApi";
+import { YOUTUBE_OAUTH_SCOPES, YOUTUBE_PROVIDER_ID } from "./manifest";
 import type {
   CredentialPort,
   ProviderAccountRecord,
   ProviderAccountStatus,
-} from 'webflix-contracts';
+} from "webflix-contracts";
 
 /** Alias used across the OAuth surface (same lifecycle as freeze §2.5). */
 export type OAuthAccountStatus = ProviderAccountStatus;
@@ -58,16 +62,16 @@ export interface OAuthLoopbackConfig {
 }
 
 export const YOUTUBE_OAUTH_LOOPBACK_CLIENT_ID =
-  'WEBFLIX-DESKTOP-YOUTUBE-CLIENT-ID-PENDING-OPERATOR-PROVISIONING';
+  "WEBFLIX-DESKTOP-YOUTUBE-CLIENT-ID-PENDING-OPERATOR-PROVISIONING";
 
 export const YOUTUBE_OAUTH_LOOPBACK_CONFIG: OAuthLoopbackConfig = {
   clientId: YOUTUBE_OAUTH_LOOPBACK_CLIENT_ID,
   scopes: YOUTUBE_OAUTH_SCOPES,
-  authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
-  tokenEndpoint: 'https://oauth2.googleapis.com/token',
-  revocationEndpoint: 'https://oauth2.googleapis.com/revoke',
-  loopbackHost: '127.0.0.1',
-  loopbackPath: '/oauth/callback',
+  authorizationEndpoint: "https://accounts.google.com/o/oauth2/v2/auth",
+  tokenEndpoint: "https://oauth2.googleapis.com/token",
+  revocationEndpoint: "https://oauth2.googleapis.com/revoke",
+  loopbackHost: "127.0.0.1",
+  loopbackPath: "/oauth/callback",
 };
 
 // ---------------------------------------------------------------------------
@@ -77,7 +81,7 @@ export const YOUTUBE_OAUTH_LOOPBACK_CONFIG: OAuthLoopbackConfig = {
 export class OAuthError extends Error {
   constructor(message: string) {
     super(message);
-    this.name = 'OAuthError';
+    this.name = "OAuthError";
     Object.setPrototypeOf(this, new.target.prototype);
   }
 }
@@ -85,7 +89,7 @@ export class OAuthError extends Error {
 export class RequiresAuthError extends OAuthError {
   constructor(message: string) {
     super(message);
-    this.name = 'RequiresAuthError';
+    this.name = "RequiresAuthError";
     Object.setPrototypeOf(this, new.target.prototype);
   }
 }
@@ -94,7 +98,7 @@ export class RefreshFailedError extends OAuthError {
   readonly reason: string;
   constructor(message: string, reason: string) {
     super(message);
-    this.name = 'RefreshFailedError';
+    this.name = "RefreshFailedError";
     this.reason = reason;
     Object.setPrototypeOf(this, new.target.prototype);
   }
@@ -103,7 +107,7 @@ export class RefreshFailedError extends OAuthError {
 export class StateMismatchError extends OAuthError {
   constructor(message: string) {
     super(message);
-    this.name = 'StateMismatchError';
+    this.name = "StateMismatchError";
     Object.setPrototypeOf(this, new.target.prototype);
   }
 }
@@ -111,7 +115,7 @@ export class StateMismatchError extends OAuthError {
 export class OAuthFlowError extends OAuthError {
   constructor(message: string) {
     super(message);
-    this.name = 'OAuthFlowError';
+    this.name = "OAuthFlowError";
     Object.setPrototypeOf(this, new.target.prototype);
   }
 }
@@ -119,7 +123,7 @@ export class OAuthFlowError extends OAuthError {
 export class InvalidTransitionError extends OAuthError {
   constructor(message: string) {
     super(message);
-    this.name = 'InvalidTransitionError';
+    this.name = "InvalidTransitionError";
     Object.setPrototypeOf(this, new.target.prototype);
   }
 }
@@ -131,16 +135,16 @@ export class InvalidTransitionError extends OAuthError {
 export interface PkcePair {
   codeVerifier: string;
   codeChallenge: string;
-  codeChallengeMethod: 'S256';
+  codeChallengeMethod: "S256";
 }
 
 const PKCE_VERIFIER_BYTES = 32; // base64url → 43 chars (RFC 7636 allows 43..128)
 
 export function createPkcePair(verifierBytes?: Buffer): PkcePair {
   const bytes = verifierBytes ?? randomBytes(PKCE_VERIFIER_BYTES);
-  const codeVerifier = bytes.toString('base64url');
-  const codeChallenge = createHash('sha256').update(codeVerifier, 'ascii').digest('base64url');
-  return { codeVerifier, codeChallenge, codeChallengeMethod: 'S256' };
+  const codeVerifier = bytes.toString("base64url");
+  const codeChallenge = createHash("sha256").update(codeVerifier, "ascii").digest("base64url");
+  return { codeVerifier, codeChallenge, codeChallengeMethod: "S256" };
 }
 
 // ---------------------------------------------------------------------------
@@ -160,25 +164,31 @@ export interface AuthorizationRequest extends PkcePair {
   state: string;
 }
 
-export function buildAuthorizationRequest(options: BuildAuthorizationRequestOptions): AuthorizationRequest {
+export function buildAuthorizationRequest(
+  options: BuildAuthorizationRequestOptions,
+): AuthorizationRequest {
   const config = options.config ?? YOUTUBE_OAUTH_LOOPBACK_CONFIG;
-  if (!Number.isInteger(options.redirectPort) || options.redirectPort <= 0 || options.redirectPort > 65535) {
-    throw new OAuthFlowError('redirectPort must be a real loopback listener port (1..65535)');
+  if (
+    !Number.isInteger(options.redirectPort) ||
+    options.redirectPort <= 0 ||
+    options.redirectPort > 65535
+  ) {
+    throw new OAuthFlowError("redirectPort must be a real loopback listener port (1..65535)");
   }
   const redirectUri = `http://${config.loopbackHost}:${options.redirectPort}${config.loopbackPath}`;
   const pkce = options.pkce ?? createPkcePair();
-  const state = options.state ?? randomBytes(16).toString('base64url');
+  const state = options.state ?? randomBytes(16).toString("base64url");
   const url = new URL(config.authorizationEndpoint);
-  url.searchParams.set('client_id', config.clientId);
-  url.searchParams.set('redirect_uri', redirectUri);
-  url.searchParams.set('response_type', 'code');
-  url.searchParams.set('scope', config.scopes.join(' '));
-  url.searchParams.set('access_type', 'offline');
-  url.searchParams.set('prompt', 'consent');
-  url.searchParams.set('include_granted_scopes', 'true');
-  url.searchParams.set('state', state);
-  url.searchParams.set('code_challenge', pkce.codeChallenge);
-  url.searchParams.set('code_challenge_method', pkce.codeChallengeMethod);
+  url.searchParams.set("client_id", config.clientId);
+  url.searchParams.set("redirect_uri", redirectUri);
+  url.searchParams.set("response_type", "code");
+  url.searchParams.set("scope", config.scopes.join(" "));
+  url.searchParams.set("access_type", "offline");
+  url.searchParams.set("prompt", "consent");
+  url.searchParams.set("include_granted_scopes", "true");
+  url.searchParams.set("state", state);
+  url.searchParams.set("code_challenge", pkce.codeChallenge);
+  url.searchParams.set("code_challenge_method", pkce.codeChallengeMethod);
   return {
     url: url.toString(),
     redirectUri,
@@ -189,10 +199,13 @@ export function buildAuthorizationRequest(options: BuildAuthorizationRequestOpti
   };
 }
 
-export function validateCallbackState(returnedState: string | null | undefined, expectedState: string): void {
+export function validateCallbackState(
+  returnedState: string | null | undefined,
+  expectedState: string,
+): void {
   if (!returnedState || returnedState !== expectedState) {
     throw new StateMismatchError(
-      'authorization callback state does not match the pending request (possible CSRF); aborting the flow',
+      "authorization callback state does not match the pending request (possible CSRF); aborting the flow",
     );
   }
 }
@@ -201,11 +214,13 @@ export function validateCallbackState(returnedState: string | null | undefined, 
 // Token lifecycle state machine — authorized → expired → revoked → requires-auth
 // ---------------------------------------------------------------------------
 
-export const OAUTH_TRANSITIONS: Readonly<Record<OAuthAccountStatus, readonly OAuthAccountStatus[]>> = {
-  'requires-auth': ['authorized'],
-  authorized: ['expired', 'revoked'],
-  expired: ['authorized', 'revoked'],
-  revoked: ['requires-auth'],
+export const OAUTH_TRANSITIONS: Readonly<
+  Record<OAuthAccountStatus, readonly OAuthAccountStatus[]>
+> = {
+  "requires-auth": ["authorized"],
+  authorized: ["expired", "revoked"],
+  expired: ["authorized", "revoked"],
+  revoked: ["requires-auth"],
 };
 
 export function canTransition(from: OAuthAccountStatus, to: OAuthAccountStatus): boolean {
@@ -219,15 +234,19 @@ export function assertTransition(from: OAuthAccountStatus, to: OAuthAccountStatu
 }
 
 /** Derives the honest current status from the stored record and the clock. */
-export function deriveAccountStatus(record: ProviderAccountRecord | null, now: number): OAuthAccountStatus {
-  if (!record) return 'requires-auth';
+export function deriveAccountStatus(
+  record: ProviderAccountRecord | null,
+  now: number,
+): OAuthAccountStatus {
+  if (!record) return "requires-auth";
   // account status is authoritative for terminal states (revoked clears
   // credentials — the record still reports revoked, not requires-auth)
-  if (record.status === 'revoked') return 'revoked';
-  if (record.status === 'expired') return 'expired';
-  if (!record.credentials || !record.credentials.accessToken) return 'requires-auth';
-  if (record.credentials.expiresAt !== null && record.credentials.expiresAt <= now) return 'expired';
-  return record.status === 'authorized' ? 'authorized' : 'requires-auth';
+  if (record.status === "revoked") return "revoked";
+  if (record.status === "expired") return "expired";
+  if (!record.credentials || !record.credentials.accessToken) return "requires-auth";
+  if (record.credentials.expiresAt !== null && record.credentials.expiresAt <= now)
+    return "expired";
+  return record.status === "authorized" ? "authorized" : "requires-auth";
 }
 
 /** Pure transition helper: validates, stamps updatedAt, clears credentials on revoked/requires-auth. */
@@ -241,7 +260,7 @@ export function transitionAccount(
     ...record,
     status: to,
     updatedAt: now,
-    credentials: to === 'authorized' || to === 'expired' ? record.credentials : null,
+    credentials: to === "authorized" || to === "expired" ? record.credentials : null,
   };
 }
 
@@ -258,17 +277,19 @@ export interface OAuthTokenResponse {
 }
 
 export type OAuthEndpointRequest =
-  | { kind: 'token-exchange'; code: string; codeVerifier: string; redirectUri: string }
-  | { kind: 'refresh'; refreshToken: string }
-  | { kind: 'revoke'; token: string };
+  | { kind: "token-exchange"; code: string; codeVerifier: string; redirectUri: string }
+  | { kind: "refresh"; refreshToken: string }
+  | { kind: "revoke"; token: string };
 
-export type OAuthEndpointResult = { kind: 'token'; token: OAuthTokenResponse } | { kind: 'revoked' };
+export type OAuthEndpointResult =
+  | { kind: "token"; token: OAuthTokenResponse }
+  | { kind: "revoked" };
 
 export type OAuthTokenFetcher = (request: OAuthEndpointRequest) => Promise<OAuthEndpointResult>;
 
 export const liveNetworkDeniedTokenFetcher: OAuthTokenFetcher = async () => {
   throw new LiveNetworkDisabledError(
-    'connectors/youtube oauth: live token endpoints are disabled (fixture-only; live smoke is pending-operator-credential)',
+    "connectors/youtube oauth: live token endpoints are disabled (fixture-only; live smoke is pending-operator-credential)",
   );
 };
 
@@ -322,7 +343,11 @@ export class YouTubeOAuthSession {
   }
 
   /** Step 2–3 of the flow: build the loopback+PKCE authorization URL and remember pending state. */
-  startAuthorization(options: { redirectPort: number; state?: string; pkce?: PkcePair }): AuthorizationRequest {
+  startAuthorization(options: {
+    redirectPort: number;
+    state?: string;
+    pkce?: PkcePair;
+  }): AuthorizationRequest {
     const request = buildAuthorizationRequest({
       redirectPort: options.redirectPort,
       state: options.state,
@@ -346,17 +371,17 @@ export class YouTubeOAuthSession {
   }): Promise<ProviderAccountRecord> {
     const pending = this.pending.get(callback.state);
     if (!pending) {
-      throw new StateMismatchError('no pending authorization matches the returned state parameter');
+      throw new StateMismatchError("no pending authorization matches the returned state parameter");
     }
     this.pending.delete(callback.state);
     const result = await this.tokenFetcher({
-      kind: 'token-exchange',
+      kind: "token-exchange",
       code: callback.code,
       codeVerifier: pending.codeVerifier,
       redirectUri: pending.redirectUri,
     });
-    if (result.kind !== 'token') {
-      throw new OAuthFlowError('token endpoint did not return a token for the authorization code');
+    if (result.kind !== "token") {
+      throw new OAuthFlowError("token endpoint did not return a token for the authorization code");
     }
     const now = this.now();
     const record: ProviderAccountRecord = {
@@ -364,15 +389,15 @@ export class YouTubeOAuthSession {
       userId: this.userId,
       providerAccountId: callback.providerAccountId ?? null,
       displayName: callback.displayName ?? null,
-      status: 'authorized',
+      status: "authorized",
       linkedAt: now,
       updatedAt: now,
       credentials: {
         accessToken: result.token.access_token,
         refreshToken: result.token.refresh_token ?? null,
         expiresAt: now + result.token.expires_in * 1000,
-        scope: result.token.scope ?? this.config.scopes.join(' '),
-        tokenType: result.token.token_type ?? 'Bearer',
+        scope: result.token.scope ?? this.config.scopes.join(" "),
+        tokenType: result.token.token_type ?? "Bearer",
       },
     };
     await this.credentialPort.put(record);
@@ -383,19 +408,22 @@ export class YouTubeOAuthSession {
   async getToken(): Promise<string> {
     const record = await this.loadAccount();
     const status = deriveAccountStatus(record, this.now());
-    if (!record?.credentials?.accessToken || status === 'requires-auth' || status === 'revoked') {
+    if (!record?.credentials?.accessToken || status === "requires-auth" || status === "revoked") {
       throw new RequiresAuthError(
         `youtube oauth: user "${this.userId}" is ${status}; no usable access token — run startAuthorization()/completeAuthorization() first`,
       );
     }
     const expiresAt = record.credentials.expiresAt;
     const needsRefresh =
-      status === 'expired' || (expiresAt !== null && expiresAt - this.expirySkewMs <= this.now());
+      status === "expired" || (expiresAt !== null && expiresAt - this.expirySkewMs <= this.now());
     if (needsRefresh) {
       const refreshed = await this.refresh();
       const token = refreshed.credentials?.accessToken;
       if (!token) {
-        throw new RefreshFailedError('youtube oauth: refresh completed without an access token', 'no-token');
+        throw new RefreshFailedError(
+          "youtube oauth: refresh completed without an access token",
+          "no-token",
+        );
       }
       return token;
     }
@@ -406,7 +434,9 @@ export class YouTubeOAuthSession {
   async refresh(): Promise<ProviderAccountRecord> {
     const record = await this.loadAccount();
     if (!record || !record.credentials) {
-      throw new RequiresAuthError(`youtube oauth: no stored account for user "${this.userId}" to refresh`);
+      throw new RequiresAuthError(
+        `youtube oauth: no stored account for user "${this.userId}" to refresh`,
+      );
     }
     const refreshToken = record.credentials.refreshToken;
     if (!refreshToken) {
@@ -416,16 +446,21 @@ export class YouTubeOAuthSession {
     }
     let result: OAuthEndpointResult;
     try {
-      result = await this.tokenFetcher({ kind: 'refresh', refreshToken });
+      result = await this.tokenFetcher({ kind: "refresh", refreshToken });
     } catch (err) {
-      const reason = (err as { reason?: string })?.reason ?? 'unknown';
-      if (reason === 'invalid_grant') {
+      const reason = (err as { reason?: string })?.reason ?? "unknown";
+      if (reason === "invalid_grant") {
         const now = this.now();
-        const revoked: ProviderAccountRecord = { ...record, status: 'revoked', credentials: null, updatedAt: now };
+        const revoked: ProviderAccountRecord = {
+          ...record,
+          status: "revoked",
+          credentials: null,
+          updatedAt: now,
+        };
         await this.credentialPort.put(revoked);
         throw new RefreshFailedError(
           `youtube oauth: provider rejected refresh with invalid_grant for user "${this.userId}"; account marked revoked`,
-          'invalid_grant',
+          "invalid_grant",
         );
       }
       throw new RefreshFailedError(
@@ -433,20 +468,20 @@ export class YouTubeOAuthSession {
         reason,
       );
     }
-    if (result.kind !== 'token') {
-      throw new RefreshFailedError('youtube oauth: refresh endpoint returned no token', 'no-token');
+    if (result.kind !== "token") {
+      throw new RefreshFailedError("youtube oauth: refresh endpoint returned no token", "no-token");
     }
     const now = this.now();
     const refreshed: ProviderAccountRecord = {
       ...record,
-      status: 'authorized',
+      status: "authorized",
       updatedAt: now,
       credentials: {
         accessToken: result.token.access_token,
         refreshToken: result.token.refresh_token ?? refreshToken,
         expiresAt: now + result.token.expires_in * 1000,
         scope: result.token.scope ?? record.credentials.scope,
-        tokenType: result.token.token_type ?? record.credentials.tokenType ?? 'Bearer',
+        tokenType: result.token.token_type ?? record.credentials.tokenType ?? "Bearer",
       },
     };
     await this.credentialPort.put(refreshed);
@@ -457,22 +492,29 @@ export class YouTubeOAuthSession {
   async revoke(): Promise<ProviderAccountRecord> {
     const record = await this.loadAccount();
     const status = deriveAccountStatus(record, this.now());
-    if (!record?.credentials || status === 'requires-auth') {
+    if (!record?.credentials || status === "requires-auth") {
       throw new RequiresAuthError(
         `youtube oauth: nothing to revoke for user "${this.userId}" (status ${status})`,
       );
     }
     const token = record.credentials.accessToken ?? record.credentials.refreshToken;
     if (!token) {
-      throw new RequiresAuthError(`youtube oauth: no token available to revoke for user "${this.userId}"`);
+      throw new RequiresAuthError(
+        `youtube oauth: no token available to revoke for user "${this.userId}"`,
+      );
     }
-    const result = await this.tokenFetcher({ kind: 'revoke', token });
-    if (result.kind !== 'revoked') {
-      throw new OAuthFlowError('revocation endpoint returned an unexpected response');
+    const result = await this.tokenFetcher({ kind: "revoke", token });
+    if (result.kind !== "revoked") {
+      throw new OAuthFlowError("revocation endpoint returned an unexpected response");
     }
-    assertTransition(status, 'revoked');
+    assertTransition(status, "revoked");
     const now = this.now();
-    const revoked: ProviderAccountRecord = { ...record, status: 'revoked', credentials: null, updatedAt: now };
+    const revoked: ProviderAccountRecord = {
+      ...record,
+      status: "revoked",
+      credentials: null,
+      updatedAt: now,
+    };
     await this.credentialPort.put(revoked);
     return revoked;
   }
@@ -481,11 +523,18 @@ export class YouTubeOAuthSession {
   async acknowledgeRevocation(): Promise<ProviderAccountRecord> {
     const record = await this.loadAccount();
     if (!record) {
-      throw new RequiresAuthError(`youtube oauth: no stored account to acknowledge for user "${this.userId}"`);
+      throw new RequiresAuthError(
+        `youtube oauth: no stored account to acknowledge for user "${this.userId}"`,
+      );
     }
-    assertTransition(record.status, 'requires-auth');
+    assertTransition(record.status, "requires-auth");
     const now = this.now();
-    const next: ProviderAccountRecord = { ...record, status: 'requires-auth', credentials: null, updatedAt: now };
+    const next: ProviderAccountRecord = {
+      ...record,
+      status: "requires-auth",
+      credentials: null,
+      updatedAt: now,
+    };
     await this.credentialPort.put(next);
     return next;
   }

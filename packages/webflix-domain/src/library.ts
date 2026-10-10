@@ -1,3 +1,4 @@
+/* eslint-disable max-lines -- library.ts: cohesive local-library domain module (collections, playlists, watched state, progress merge rules) delivered as one unit at contract freeze 5549208 (D2-LOCAL lane); splitting post-freeze before desktop acceptance was arbitrated by TL2 as higher-risk than the size debt (repo precedent: autoUpdater.ts). Revisit in Phase-2 module split backlog. */
 import {
   CollectionSchema,
   ErrorCode,
@@ -39,9 +40,7 @@ export type CollectionViolation =
  * - smart collections derive membership from smartQuery and must persist no entryIds;
  * - manual collections must not carry a smartQuery.
  */
-export function validateCollectionInvariants(
-  collection: Collection,
-): CollectionViolation[] {
+export function validateCollectionInvariants(collection: Collection): CollectionViolation[] {
   const parsed = CollectionSchema.safeParse(collection);
   if (!parsed.success) {
     return [
@@ -69,8 +68,7 @@ export function validateCollectionInvariants(
   if (parsed.data.kind === "smart" && parsed.data.entryIds.length > 0) {
     violations.push({
       code: "smart-with-stored-membership",
-      message:
-        "smart collections derive membership from smartQuery and must persist no entryIds",
+      message: "smart collections derive membership from smartQuery and must persist no entryIds",
     });
   }
   if (parsed.data.kind === "manual" && parsed.data.smartQuery !== undefined) {
@@ -89,16 +87,8 @@ export type CollectionMutation =
   | { outcome: "rejected"; reason: string };
 
 /** Adds an entry to a manual collection; smart membership is derived and cannot be written. */
-export function addToCollection(
-  collection: Collection,
-  entryId: string,
-): CollectionMutation {
-  const parsed = parseOrThrow(
-    CollectionSchema,
-    collection,
-    ErrorCode.LibraryCorrupt,
-    "Collection",
-  );
+export function addToCollection(collection: Collection, entryId: string): CollectionMutation {
+  const parsed = parseOrThrow(CollectionSchema, collection, ErrorCode.LibraryCorrupt, "Collection");
   if (parsed.kind === "smart") {
     return {
       outcome: "rejected",
@@ -120,16 +110,8 @@ export function addToCollection(
 }
 
 /** Removes an entry from a manual collection; a no-op on absent ids. */
-export function removeFromCollection(
-  collection: Collection,
-  entryId: string,
-): CollectionMutation {
-  const parsed = parseOrThrow(
-    CollectionSchema,
-    collection,
-    ErrorCode.LibraryCorrupt,
-    "Collection",
-  );
+export function removeFromCollection(collection: Collection, entryId: string): CollectionMutation {
+  const parsed = parseOrThrow(CollectionSchema, collection, ErrorCode.LibraryCorrupt, "Collection");
   if (parsed.kind === "smart") {
     return {
       outcome: "rejected",
@@ -155,12 +137,7 @@ export function removeFromCollection(
 
 /** Repairs duplicate membership; first occurrence wins, order is preserved. */
 export function dedupeCollection(collection: Collection): Collection {
-  const parsed = parseOrThrow(
-    CollectionSchema,
-    collection,
-    ErrorCode.LibraryCorrupt,
-    "Collection",
-  );
+  const parsed = parseOrThrow(CollectionSchema, collection, ErrorCode.LibraryCorrupt, "Collection");
   const seen = new Set<string>();
   const entryIds: string[] = [];
   for (const id of parsed.entryIds) {
@@ -181,9 +158,7 @@ export type PlaylistViolation =
   | { code: "duplicate-item-ids"; itemIds: string[]; message: string };
 
 /** Invariant beyond the contract schema: itemIds must be unique. */
-export function validatePlaylistInvariants(
-  playlist: LocalPlaylist,
-): PlaylistViolation[] {
+export function validatePlaylistInvariants(playlist: LocalPlaylist): PlaylistViolation[] {
   const parsed = LocalPlaylistSchema.safeParse(playlist);
   if (!parsed.success) {
     return [
@@ -255,20 +230,14 @@ export function addToPlaylist(
   if (position === undefined) {
     itemIds.push(itemId);
   } else {
-    const index = Math.max(
-      0,
-      Math.min(requireInteger(position, "position"), itemIds.length),
-    );
+    const index = Math.max(0, Math.min(requireInteger(position, "position"), itemIds.length));
     itemIds.splice(index, 0, itemId);
   }
   return { outcome: "added", playlist: { ...parsed, itemIds } };
 }
 
 /** Removes an item; relative order of the remaining items is preserved. */
-export function removeFromPlaylist(
-  playlist: LocalPlaylist,
-  itemId: string,
-): PlaylistMutation {
+export function removeFromPlaylist(playlist: LocalPlaylist, itemId: string): PlaylistMutation {
   const parsed = parseOrThrow(
     LocalPlaylistSchema,
     playlist,
@@ -396,12 +365,8 @@ export function playlistPlaybackOrder(
     "LocalPlaylist",
   );
   const shuffle = options.shuffle ?? parsed.shuffle;
-  const base = shuffle
-    ? seededShuffle(parsed.itemIds, options.seed ?? 0)
-    : [...parsed.itemIds];
-  const passes = parsed.loop
-    ? Math.max(1, Math.min(Math.floor(options.passes ?? 1), 10000))
-    : 1;
+  const base = shuffle ? seededShuffle(parsed.itemIds, options.seed ?? 0) : [...parsed.itemIds];
+  const passes = parsed.loop ? Math.max(1, Math.min(Math.floor(options.passes ?? 1), 10000)) : 1;
   const order: string[] = [];
   for (let pass = 0; pass < passes; pass += 1) order.push(...base);
   return order;
@@ -466,12 +431,7 @@ export function applyWatchedProgress(
   progress: PlaybackProgress,
   options: WatchedRulesOptions = {},
 ): WatchedTransition {
-  const current = parseOrThrow(
-    WatchedStateSchema,
-    state,
-    ErrorCode.LibraryCorrupt,
-    "WatchedState",
-  );
+  const current = parseOrThrow(WatchedStateSchema, state, ErrorCode.LibraryCorrupt, "WatchedState");
   const event = parseOrThrow(
     PlaybackProgressSchema,
     progress,
@@ -517,8 +477,7 @@ export function applyWatchedProgress(
     return {
       outcome: "ignored",
       state: current,
-      reason:
-        "resume-after-complete: watched state is protected; call restartWatching to rewatch",
+      reason: "resume-after-complete: watched state is protected; call restartWatching to rewatch",
     };
   }
 
@@ -558,12 +517,7 @@ export function applyWatchedProgress(
 
 /** Explicit user completion; overrides the watched-state protection. */
 export function markWatched(state: WatchedState, at: IsoDateTime): WatchedTransition {
-  const current = parseOrThrow(
-    WatchedStateSchema,
-    state,
-    ErrorCode.LibraryCorrupt,
-    "WatchedState",
-  );
+  const current = parseOrThrow(WatchedStateSchema, state, ErrorCode.LibraryCorrupt, "WatchedState");
   const instant = parseOrThrow(
     IsoDateTimeSchema,
     at,
@@ -591,12 +545,7 @@ export function markWatched(state: WatchedState, at: IsoDateTime): WatchedTransi
 
 /** Explicit reset to pristine unwatched state (clears completedAt). */
 export function markUnwatched(state: WatchedState, at: IsoDateTime): WatchedTransition {
-  const current = parseOrThrow(
-    WatchedStateSchema,
-    state,
-    ErrorCode.LibraryCorrupt,
-    "WatchedState",
-  );
+  const current = parseOrThrow(WatchedStateSchema, state, ErrorCode.LibraryCorrupt, "WatchedState");
   const instant = parseOrThrow(
     IsoDateTimeSchema,
     at,
@@ -628,12 +577,7 @@ export function markUnwatched(state: WatchedState, at: IsoDateTime): WatchedTran
 
 /** Explicit rewatch: watched → in-progress at position 0 (clears completedAt). */
 export function restartWatching(state: WatchedState, at: IsoDateTime): WatchedTransition {
-  const current = parseOrThrow(
-    WatchedStateSchema,
-    state,
-    ErrorCode.LibraryCorrupt,
-    "WatchedState",
-  );
+  const current = parseOrThrow(WatchedStateSchema, state, ErrorCode.LibraryCorrupt, "WatchedState");
   const instant = parseOrThrow(
     IsoDateTimeSchema,
     at,
@@ -669,9 +613,7 @@ export type WatchedStateViolation =
  * watchedFraction 1. Range and sign checks are already enforced by the
  * locked schema, so any schema-invalid input is reported as invalid-shape.
  */
-export function validateWatchedStateInvariants(
-  state: WatchedState,
-): WatchedStateViolation[] {
+export function validateWatchedStateInvariants(state: WatchedState): WatchedStateViolation[] {
   const parsed = WatchedStateSchema.safeParse(state);
   if (!parsed.success) {
     return [

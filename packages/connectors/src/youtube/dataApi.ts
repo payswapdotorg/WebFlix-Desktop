@@ -1,3 +1,4 @@
+/* eslint-disable max-lines -- dataApi.ts: quota-aware YouTube Data API v3 client (D3-YOUTUBE); call wrappers, retry/quota ledger and fixture-tested param builders form one cohesive official-surface unit delivered at freeze 5549208. Split deferred to the Phase-2 module split backlog (TL2 arbitration, repo precedent: autoUpdater.ts). */
 /**
  * YouTube Data API v3 client wrapper — official surface only (ADR-0003).
  *
@@ -24,13 +25,13 @@ import {
   YOUTUBE_DEFAULT_DAILY_QUOTA_UNITS,
   YOUTUBE_READ_COST,
   YOUTUBE_SEARCH_LIST_COST,
-} from './manifest';
+} from "./manifest";
 
 /** Remaining-units level under which the search budget reads 'low' (5 more searches). */
 export const YOUTUBE_SEARCH_LOW_WATERMARK_UNITS = 500;
 
 /** Explicit search-budget states surfaced to product code. */
-export type SearchBudgetState = 'ok' | 'low' | 'exhausted';
+export type SearchBudgetState = "ok" | "low" | "exhausted";
 
 export interface SearchBudgetSnapshot {
   state: SearchBudgetState;
@@ -44,10 +45,10 @@ export interface SearchBudgetSnapshot {
 }
 
 export type QuotaLedgerOutcome =
-  | 'success'
-  | 'provider-error'
-  | 'blocked-preflight'
-  | 'network-error';
+  | "success"
+  | "provider-error"
+  | "blocked-preflight"
+  | "network-error";
 
 export interface QuotaLedgerEntry {
   at: number;
@@ -103,7 +104,7 @@ export class YouTubeApiError extends Error {
 
   constructor(init: YouTubeApiErrorInit) {
     super(init.message);
-    this.name = 'YouTubeApiError';
+    this.name = "YouTubeApiError";
     this.operationId = init.operationId;
     this.status = init.status ?? null;
     this.reason = init.reason ?? null;
@@ -115,7 +116,7 @@ export class YouTubeApiError extends Error {
 export class QuotaExceededError extends YouTubeApiError {
   constructor(init: YouTubeApiErrorInit) {
     super(init);
-    this.name = 'QuotaExceededError';
+    this.name = "QuotaExceededError";
     Object.setPrototypeOf(this, new.target.prototype);
   }
 }
@@ -125,7 +126,7 @@ export class RateLimitedError extends YouTubeApiError {
 
   constructor(init: YouTubeApiErrorInit & { retryAfterSeconds?: number | null }) {
     super(init);
-    this.name = 'RateLimitedError';
+    this.name = "RateLimitedError";
     this.retryAfterSeconds = init.retryAfterSeconds ?? null;
     Object.setPrototypeOf(this, new.target.prototype);
   }
@@ -134,7 +135,7 @@ export class RateLimitedError extends YouTubeApiError {
 export class MissingCredentialError extends YouTubeApiError {
   constructor(init: YouTubeApiErrorInit) {
     super(init);
-    this.name = 'MissingCredentialError';
+    this.name = "MissingCredentialError";
     Object.setPrototypeOf(this, new.target.prototype);
   }
 }
@@ -142,17 +143,17 @@ export class MissingCredentialError extends YouTubeApiError {
 export class NotFoundError extends YouTubeApiError {
   constructor(init: YouTubeApiErrorInit) {
     super(init);
-    this.name = 'NotFoundError';
+    this.name = "NotFoundError";
     Object.setPrototypeOf(this, new.target.prototype);
   }
 }
 
 export class LiveNetworkDisabledError extends Error {
   constructor(
-    message = 'connectors/youtube: live network calls are disabled (fixture-only build; live smoke is pending-operator-credential)',
+    message = "connectors/youtube: live network calls are disabled (fixture-only build; live smoke is pending-operator-credential)",
   ) {
     super(message);
-    this.name = 'LiveNetworkDisabledError';
+    this.name = "LiveNetworkDisabledError";
     Object.setPrototypeOf(this, new.target.prototype);
   }
 }
@@ -258,11 +259,11 @@ export interface YouTubeListResponse<TItem> {
 
 export interface SearchListParams {
   q: string;
-  type?: 'video' | 'channel' | 'playlist';
+  type?: "video" | "channel" | "playlist";
   maxResults?: number;
   pageToken?: string;
-  order?: 'relevance' | 'date' | 'rating' | 'title' | 'viewCount' | 'videoCount';
-  safeSearch?: 'moderate' | 'none' | 'strict';
+  order?: "relevance" | "date" | "rating" | "title" | "viewCount" | "videoCount";
+  safeSearch?: "moderate" | "none" | "strict";
   regionCode?: string;
   relevanceLanguage?: string;
 }
@@ -272,11 +273,11 @@ export interface SearchListParams {
 // ---------------------------------------------------------------------------
 
 type OperationId =
-  | 'search.list'
-  | 'videos.list'
-  | 'channels.list'
-  | 'playlists.list'
-  | 'playlistItems.list';
+  | "search.list"
+  | "videos.list"
+  | "channels.list"
+  | "playlists.list"
+  | "playlistItems.list";
 
 interface OperationSpec {
   endpoint: string;
@@ -284,15 +285,15 @@ interface OperationSpec {
 }
 
 const OPERATION_SPECS: Record<OperationId, OperationSpec> = {
-  'search.list': { endpoint: 'search', cost: YOUTUBE_SEARCH_LIST_COST },
-  'videos.list': { endpoint: 'videos', cost: YOUTUBE_READ_COST },
-  'channels.list': { endpoint: 'channels', cost: YOUTUBE_READ_COST },
-  'playlists.list': { endpoint: 'playlists', cost: YOUTUBE_READ_COST },
-  'playlistItems.list': { endpoint: 'playlistItems', cost: YOUTUBE_READ_COST },
+  "search.list": { endpoint: "search", cost: YOUTUBE_SEARCH_LIST_COST },
+  "videos.list": { endpoint: "videos", cost: YOUTUBE_READ_COST },
+  "channels.list": { endpoint: "channels", cost: YOUTUBE_READ_COST },
+  "playlists.list": { endpoint: "playlists", cost: YOUTUBE_READ_COST },
+  "playlistItems.list": { endpoint: "playlistItems", cost: YOUTUBE_READ_COST },
 };
 
-const RATE_LIMIT_REASONS = new Set(['rateLimitExceeded', 'userRateLimitExceeded']);
-const QUOTA_REASONS = new Set(['quotaExceeded', 'dailyLimitExceeded']);
+const RATE_LIMIT_REASONS = new Set(["rateLimitExceeded", "userRateLimitExceeded"]);
+const QUOTA_REASONS = new Set(["quotaExceeded", "dailyLimitExceeded"]);
 
 interface GoogleErrorEnvelope {
   error?: {
@@ -315,26 +316,30 @@ function clampInt(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, n));
 }
 
-function buildUrl(endpoint: string, params: Record<string, QueryParam>, apiKey: string | null): string {
+function buildUrl(
+  endpoint: string,
+  params: Record<string, QueryParam>,
+  apiKey: string | null,
+): string {
   const qs = new URLSearchParams();
   for (const [key, value] of Object.entries(params)) {
-    if (value === undefined || value === null || value === '') continue;
+    if (value === undefined || value === null || value === "") continue;
     qs.set(key, String(value));
   }
-  if (apiKey) qs.set('key', apiKey);
+  if (apiKey) qs.set("key", apiKey);
   return `${YOUTUBE_API_BASE}/${endpoint}?${qs.toString()}`;
 }
 
 function extractReason(body: unknown): string | null {
-  if (!body || typeof body !== 'object') return null;
+  if (!body || typeof body !== "object") return null;
   const envelope = body as GoogleErrorEnvelope;
   const first = envelope.error?.errors?.[0];
   return first?.reason ?? null;
 }
 
-function parseRetryAfter(headers: FetchResponseLike['headers']): number | null {
-  const raw = headers.get('retry-after');
-  if (raw === null || raw === '') return null;
+function parseRetryAfter(headers: FetchResponseLike["headers"]): number | null {
+  const raw = headers.get("retry-after");
+  if (raw === null || raw === "") return null;
   const seconds = Number(raw);
   return Number.isFinite(seconds) ? seconds : null;
 }
@@ -374,7 +379,7 @@ export class YouTubeDataApiClient {
     this.apiKey = options.apiKey ?? null;
     this.limitToday = options.quotaLimitToday ?? YOUTUBE_DEFAULT_DAILY_QUOTA_UNITS;
     if (!Number.isInteger(this.limitToday) || this.limitToday <= 0) {
-      throw new Error('quotaLimitToday must be a positive integer');
+      throw new Error("quotaLimitToday must be a positive integer");
     }
     this.nowFn = options.clock ?? Date.now;
     this.dayKey = utcDateKey(this.nowFn());
@@ -383,13 +388,16 @@ export class YouTubeDataApiClient {
   // ---- public query API --------------------------------------------------
 
   async searchVideos(params: SearchListParams): Promise<YouTubeListResponse<YouTubeSearchItem>> {
-    if (typeof params?.q !== 'string' || params.q.trim() === '') {
-      throw new YouTubeApiError({ operationId: 'search.list', message: 'searchVideos requires a non-empty q' });
+    if (typeof params?.q !== "string" || params.q.trim() === "") {
+      throw new YouTubeApiError({
+        operationId: "search.list",
+        message: "searchVideos requires a non-empty q",
+      });
     }
-    return this.call('search.list', {
-      part: 'snippet',
+    return this.call("search.list", {
+      part: "snippet",
       q: params.q,
-      type: params.type ?? 'video',
+      type: params.type ?? "video",
       maxResults: clampInt(params.maxResults ?? 25, 1, 50),
       pageToken: params.pageToken,
       order: params.order,
@@ -404,11 +412,14 @@ export class YouTubeDataApiClient {
     parts?: readonly string[];
   }): Promise<YouTubeListResponse<YouTubeVideoItem>> {
     if (!params?.ids?.length) {
-      throw new YouTubeApiError({ operationId: 'videos.list', message: 'getVideos requires at least one video id' });
+      throw new YouTubeApiError({
+        operationId: "videos.list",
+        message: "getVideos requires at least one video id",
+      });
     }
-    return this.call('videos.list', {
-      part: (params.parts ?? ['snippet', 'contentDetails', 'statistics']).join(','),
-      id: params.ids.join(','),
+    return this.call("videos.list", {
+      part: (params.parts ?? ["snippet", "contentDetails", "statistics"]).join(","),
+      id: params.ids.join(","),
       maxResults: params.ids.length,
     });
   }
@@ -418,7 +429,7 @@ export class YouTubeDataApiClient {
     const item = page.items[0];
     if (!item) {
       throw new NotFoundError({
-        operationId: 'videos.list',
+        operationId: "videos.list",
         message: `videos.list returned no video for id "${videoId}"`,
       });
     }
@@ -431,14 +442,17 @@ export class YouTubeDataApiClient {
     parts?: readonly string[];
   }): Promise<YouTubeChannelItem> {
     if (!params.id && !params.mine) {
-      throw new YouTubeApiError({ operationId: 'channels.list', message: 'getChannel requires id or mine:true' });
+      throw new YouTubeApiError({
+        operationId: "channels.list",
+        message: "getChannel requires id or mine:true",
+      });
     }
     const page = await this.call(
-      'channels.list',
+      "channels.list",
       {
-        part: (params.parts ?? ['snippet', 'statistics']).join(','),
+        part: (params.parts ?? ["snippet", "statistics"]).join(","),
         id: params.id,
-        mine: params.mine ? 'true' : undefined,
+        mine: params.mine ? "true" : undefined,
         maxResults: params.id ? 1 : undefined,
       },
       { requiresAuth: Boolean(params.mine) },
@@ -446,8 +460,8 @@ export class YouTubeDataApiClient {
     const item = page.items[0];
     if (!item) {
       throw new NotFoundError({
-        operationId: 'channels.list',
-        message: `channels.list returned no channel${params.id ? ` for id "${params.id}"` : ' for the authorized account'}`,
+        operationId: "channels.list",
+        message: `channels.list returned no channel${params.id ? ` for id "${params.id}"` : " for the authorized account"}`,
       });
     }
     return item;
@@ -459,10 +473,13 @@ export class YouTubeDataApiClient {
     maxResults?: number;
   }): Promise<YouTubeListResponse<YouTubePlaylistItem>> {
     if (!params?.channelId) {
-      throw new YouTubeApiError({ operationId: 'playlists.list', message: 'getPlaylists requires channelId' });
+      throw new YouTubeApiError({
+        operationId: "playlists.list",
+        message: "getPlaylists requires channelId",
+      });
     }
-    return this.call('playlists.list', {
-      part: 'snippet',
+    return this.call("playlists.list", {
+      part: "snippet",
       channelId: params.channelId,
       maxResults: clampInt(params.maxResults ?? 25, 1, 50),
       pageToken: params.pageToken,
@@ -475,10 +492,13 @@ export class YouTubeDataApiClient {
     maxResults?: number;
   }): Promise<YouTubeListResponse<YouTubePlaylistItemsItem>> {
     if (!params?.playlistId) {
-      throw new YouTubeApiError({ operationId: 'playlistItems.list', message: 'getPlaylistItems requires playlistId' });
+      throw new YouTubeApiError({
+        operationId: "playlistItems.list",
+        message: "getPlaylistItems requires playlistId",
+      });
     }
-    return this.call('playlistItems.list', {
-      part: 'snippet',
+    return this.call("playlistItems.list", {
+      part: "snippet",
       playlistId: params.playlistId,
       maxResults: clampInt(params.maxResults ?? 25, 1, 50),
       pageToken: params.pageToken,
@@ -507,10 +527,10 @@ export class YouTubeDataApiClient {
     const remaining = Math.max(0, this.limitToday - this.usedToday);
     const exhausted = this.providerReportedExhaustion || remaining < YOUTUBE_SEARCH_LIST_COST;
     const state: SearchBudgetState = exhausted
-      ? 'exhausted'
+      ? "exhausted"
       : remaining < YOUTUBE_SEARCH_LOW_WATERMARK_UNITS
-        ? 'low'
-        : 'ok';
+        ? "low"
+        : "ok";
     return {
       state,
       unitsLimitToday: this.limitToday,
@@ -571,15 +591,15 @@ export class YouTubeDataApiClient {
         operationId,
         cost: 0,
         ok: false,
-        outcome: 'blocked-preflight',
+        outcome: "blocked-preflight",
         httpStatus: null,
-        reason: 'local-budget-exhausted',
+        reason: "local-budget-exhausted",
         url,
       });
       throw new QuotaExceededError({
         operationId,
         status: null,
-        reason: 'local-budget-exhausted',
+        reason: "local-budget-exhausted",
         quotaCost: spec.cost,
         message: `${operationId} blocked locally: it costs ${spec.cost} units but only ${Math.max(0, remaining)} of ${this.limitToday} remain today; no network call was made and no units were charged`,
       });
@@ -588,7 +608,7 @@ export class YouTubeDataApiClient {
     let response: FetchResponseLike;
     try {
       response = await this.fetchImpl(url, {
-        method: 'GET',
+        method: "GET",
         headers: authorization ? { Authorization: authorization } : {},
       });
     } catch (err) {
@@ -599,15 +619,15 @@ export class YouTubeDataApiClient {
         operationId,
         cost: 0,
         ok: false,
-        outcome: 'network-error',
+        outcome: "network-error",
         httpStatus: null,
-        reason: 'network-error',
+        reason: "network-error",
         url,
       });
       throw new YouTubeApiError({
         operationId,
         status: null,
-        reason: 'network-error',
+        reason: "network-error",
         message: `network failure while calling ${operationId}: ${(err as Error | undefined)?.message ?? String(err)}`,
       });
     }
@@ -624,21 +644,22 @@ export class YouTubeDataApiClient {
         operationId,
         cost: spec.cost,
         ok: false,
-        outcome: 'provider-error',
+        outcome: "provider-error",
         httpStatus: response.status,
         reason,
         url,
       });
       if (response.status === 429 || (reason !== null && RATE_LIMIT_REASONS.has(reason))) {
         const retryAfterSeconds = parseRetryAfter(response.headers);
-        const retrySuffix = retryAfterSeconds !== null ? `; Retry-After: ${retryAfterSeconds}s` : '';
+        const retrySuffix =
+          retryAfterSeconds !== null ? `; Retry-After: ${retryAfterSeconds}s` : "";
         throw new RateLimitedError({
           operationId,
           status: response.status,
           reason,
           quotaCost: spec.cost,
           retryAfterSeconds,
-          message: `YouTube rate-limited ${operationId} (HTTP ${response.status}${reason ? `, reason=${reason}` : ''})${retrySuffix}. No automatic retry is performed.`,
+          message: `YouTube rate-limited ${operationId} (HTTP ${response.status}${reason ? `, reason=${reason}` : ""})${retrySuffix}. No automatic retry is performed.`,
         });
       }
       if (reason !== null && QUOTA_REASONS.has(reason)) {
@@ -670,7 +691,7 @@ export class YouTubeDataApiClient {
       operationId,
       cost: spec.cost,
       ok: true,
-      outcome: 'success',
+      outcome: "success",
       httpStatus: response.status,
       reason: null,
       url,

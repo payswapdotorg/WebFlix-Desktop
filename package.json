@@ -46,7 +46,8 @@
     "architecture:baseline:update": "node scripts/architecture/architecture-check.mjs baseline:update",
     "architecture:context": "node scripts/architecture/architecture-check.mjs context",
     "test:unit": "vitest run",
-    "test:integration": "vitest run --config vitest.integration.config.ts"
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "test:e2e": "pnpm --dir packages/desktop run test:e2e"
   },
   "dependencies": {
     "border-beam": "^1.0.1",
