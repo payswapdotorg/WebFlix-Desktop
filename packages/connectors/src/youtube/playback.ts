@@ -7,7 +7,7 @@
  * player_parameters) are emitted, and enablejsapi is only enabled when a pinned
  * origin is supplied (the official recommendation for the JS API).
  */
-import type { PlaybackPlan, ProvenanceCitation } from '../contract-types';
+import type { PlaybackPlan, ProvenanceCitation } from 'webflix-contracts';
 import { YOUTUBE_PROVIDER_ID } from './manifest';
 
 const OFFICIAL_IFRAME_API_REFERENCE: ProvenanceCitation = {

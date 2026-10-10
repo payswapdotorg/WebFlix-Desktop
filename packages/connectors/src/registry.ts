@@ -8,7 +8,7 @@ import type {
   CapabilityStatus,
   ConnectorManifest,
   OperationCapability,
-} from './contract-types';
+} from 'webflix-contracts';
 import { youtubeManifest } from './youtube/manifest';
 
 export class RegistryError extends Error {

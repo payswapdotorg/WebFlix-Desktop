@@ -15,7 +15,7 @@ import type {
   CatalogItemId,
   MatchEvidence,
   ProviderAsset,
-} from './contract-types';
+} from 'webflix-contracts';
 
 /** Merge policy thresholds (MatchEvidence semantics, contract-freeze §2.2). */
 export interface MergeThresholds {

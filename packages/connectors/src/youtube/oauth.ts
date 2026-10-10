@@ -35,7 +35,7 @@ import type {
   CredentialPort,
   ProviderAccountRecord,
   ProviderAccountStatus,
-} from '../contract-types';
+} from 'webflix-contracts';
 
 /** Alias used across the OAuth surface (same lifecycle as freeze §2.5). */
 export type OAuthAccountStatus = ProviderAccountStatus;

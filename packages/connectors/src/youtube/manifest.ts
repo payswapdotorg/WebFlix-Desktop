@@ -17,7 +17,7 @@ import type {
   ConnectorManifest,
   OperationCapability,
   ProvenanceCitation,
-} from '../contract-types';
+} from 'webflix-contracts';
 
 export const YOUTUBE_PROVIDER_ID = 'youtube';
 export const YOUTUBE_DISPLAY_NAME = 'YouTube';
