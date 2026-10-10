@@ -1,5 +1,5 @@
 {
-  "name": "@webflix/application",
+  "name": "webflix-application",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -11,6 +11,6 @@
     "test:unit": "../../node_modules/.bin/vitest run --config ../../vitest.config.ts"
   },
   "dependencies": {
-    "@webflix/contracts": "workspace:*"
+    "contracts": "workspace:*"
   }
 }

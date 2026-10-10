@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "sideEffects": false,
-  "description": "Pure domain rules for WebFlix-Desktop: catalog merge, library invariants, watched-state transitions, job semantics. Depends on webflix-contracts only — no I/O, no Electron, no DB.",
+  "description": "Pure domain rules for WebFlix-Desktop: catalog merge, library invariants, watched-state transitions, job semantics. Depends on webflix-contracts only \u2014 no I/O, no Electron, no DB.",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "exports": {

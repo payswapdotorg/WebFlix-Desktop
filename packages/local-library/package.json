@@ -1,5 +1,5 @@
 {
-  "name": "@webflix/local-library",
+  "name": "local-library",
   "version": "0.1.0",
   "private": true,
   "type": "module",
