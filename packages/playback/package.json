@@ -1,0 +1,21 @@
+{
+  "name": "@webflix/playback",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Typed PlaybackPlan resolution (official-embed | local-file | unavailable) and WebFlix-owned playback progress for WebFlix-Desktop (D2-LOCAL).",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "sideEffects": false,
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.4",
+    "vitest": "^2.1.1"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

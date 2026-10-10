@@ -1,0 +1,38 @@
+{
+  "_fixture": "FIXTURE-ONLY: abridged YouTube Data API v3 search.list response envelope; synthetic values, never a live capture; no credentials",
+  "kind": "youtube#searchListResponse",
+  "etag": "fixture-etag-search-cats-1",
+  "nextPageToken": "FIXTURE-NEXT-PAGE-1",
+  "regionCode": "US",
+  "pageInfo": { "totalResults": 118, "resultsPerPage": 2 },
+  "items": [
+    {
+      "kind": "youtube#searchResult",
+      "etag": "fixture-etag-search-item-1",
+      "id": { "kind": "youtube#video", "videoId": "FIXVID00001" },
+      "snippet": {
+        "publishedAt": "2024-11-02T10:00:00Z",
+        "channelId": "UCFIXCH0000000000000001",
+        "title": "Fixture: container gardening basics",
+        "description": "Fixture-only abridged description.",
+        "channelTitle": "Fixture Channel",
+        "thumbnails": { "default": { "url": "https://i.ytimg.com/vi/FIXVID00001/default.jpg", "width": 120, "height": 90 } },
+        "liveBroadcastContent": "none"
+      }
+    },
+    {
+      "kind": "youtube#searchResult",
+      "etag": "fixture-etag-search-item-2",
+      "id": { "kind": "youtube#video", "videoId": "FIXVID00002" },
+      "snippet": {
+        "publishedAt": "2024-12-18T08:30:00Z",
+        "channelId": "UCFIXCH0000000000000001",
+        "title": "Fixture: winter soil prep",
+        "description": "Fixture-only abridged description.",
+        "channelTitle": "Fixture Channel",
+        "thumbnails": { "default": { "url": "https://i.ytimg.com/vi/FIXVID00002/default.jpg", "width": 120, "height": 90 } },
+        "liveBroadcastContent": "none"
+      }
+    }
+  ]
+}
