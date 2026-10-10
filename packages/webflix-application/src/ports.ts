@@ -23,13 +23,13 @@ import type {
   ProviderId,
   TrackId,
   TrackProbe,
-} from './types';
+} from "./types";
 
 /**
  * The credential contract is frozen in `@webflix/contracts`; re-exported here
  * so use-cases, adapters and tests share a single definition.
  */
-export type { CredentialPort } from '@webflix/contracts';
+export type { CredentialPort } from "webflix-contracts";
 
 /** Injectable time — use-cases never read the wall clock directly. */
 export interface ClockPort {
@@ -69,7 +69,10 @@ export interface LocalStore {
   clearPlaybackProgress(trackId: TrackId): Promise<void>;
 
   // --- provider-sourced field sets ---
-  getProviderFieldSet(trackId: TrackId, provider: ProviderId): Promise<ProviderFieldSetRecord | null>;
+  getProviderFieldSet(
+    trackId: TrackId,
+    provider: ProviderId,
+  ): Promise<ProviderFieldSetRecord | null>;
   listProviderFieldSets(provider?: ProviderId): Promise<readonly ProviderFieldSetRecord[]>;
   putProviderFieldSet(record: ProviderFieldSetRecord): Promise<void>;
   deleteProviderFieldSet(trackId: TrackId, provider: ProviderId): Promise<void>;
@@ -79,7 +82,7 @@ export interface LocalStore {
 // IndexingPort — path-safe local indexing
 // ---------------------------------------------------------------------------
 
-export type IndexingStatus = 'running' | 'completed' | 'cancelled' | 'failed';
+export type IndexingStatus = "running" | "completed" | "cancelled" | "failed";
 
 export interface IndexingJobHandle {
   readonly jobId: string;
@@ -143,9 +146,9 @@ export interface IndexingPort {
 
 /** Outcome of a single track's provider lookup (contract-freeze §7.8). */
 export type ProviderMetadataOutcome =
-  | { readonly kind: 'fetched'; readonly trackId: TrackId; readonly fields: ProviderFields }
-  | { readonly kind: 'not-found'; readonly trackId: TrackId }
-  | { readonly kind: 'error'; readonly trackId: TrackId; readonly reason: string };
+  | { readonly kind: "fetched"; readonly trackId: TrackId; readonly fields: ProviderFields }
+  | { readonly kind: "not-found"; readonly trackId: TrackId }
+  | { readonly kind: "error"; readonly trackId: TrackId; readonly reason: string };
 
 /**
  * Online provider seam used by `RefreshProviderMetadata`. The adapter performs

@@ -13,9 +13,9 @@
  *   - An aborted signal cancels the underlying job; files already probed are
  *     still ingested, the rest is reported as rejected.
  */
-import type { ClockPort, IdGenerator, IndexingPort, IndexingProgress, LocalStore } from './ports';
-import { cancelOnAbort, waitForIndexingResult } from './indexing-session';
-import { sanitizePaths, type RejectedPath } from './path-safety';
+import type { ClockPort, IdGenerator, IndexingPort, IndexingProgress, LocalStore } from "./ports";
+import { cancelOnAbort, waitForIndexingResult } from "./indexing-session";
+import { sanitizePaths, type RejectedPath } from "./path-safety";
 import {
   asFingerprint,
   asTrackId,
@@ -23,11 +23,11 @@ import {
   type LibraryTrack,
   type TrackId,
   type TrackProbe,
-} from './types';
+} from "./types";
 
 /** Collapse case and whitespace so cosmetic tag edits do not fork identity. */
 function normalizeTagPart(value: string | null): string {
-  return value === null ? '' : value.trim().replace(/\s+/g, ' ').toLowerCase();
+  return value === null ? "" : value.trim().replace(/\s+/g, " ").toLowerCase();
 }
 
 /**
@@ -37,18 +37,20 @@ function normalizeTagPart(value: string | null): string {
  */
 export async function fingerprintTrack(probe: TrackProbe): Promise<Fingerprint> {
   const canonical = [
-    'webflix-track-v1',
+    "webflix-track-v1",
     probe.container.trim().toLowerCase(),
     String(probe.sizeBytes),
-    probe.durationMs === null ? '' : String(probe.durationMs),
+    probe.durationMs === null ? "" : String(probe.durationMs),
     normalizeTagPart(probe.title),
     normalizeTagPart(probe.artist),
     normalizeTagPart(probe.album),
-    probe.trackNo === null ? '' : String(probe.trackNo),
-  ].join('\u001f');
+    probe.trackNo === null ? "" : String(probe.trackNo),
+  ].join("\u001f");
 
-  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(canonical));
-  const hex = Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(canonical));
+  const hex = Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join(
+    "",
+  );
   return asFingerprint(hex);
 }
 
@@ -84,7 +86,9 @@ export class AddLocalFilesToLibrary {
   constructor(private readonly deps: AddLocalFilesToLibraryDeps) {}
 
   async execute(input: AddLocalFilesInput): Promise<AddLocalFilesOutput> {
-    const { valid, rejected } = sanitizePaths(input.paths);
+    const { valid, rejected: rejectedInput } = sanitizePaths(input.paths);
+    // Builder-side mutable copy: the published output shape stays readonly.
+    const rejected: RejectedPath[] = [...rejectedInput];
     const added: LibraryTrack[] = [];
     const duplicates: DuplicateHit[] = [];
 
@@ -92,7 +96,10 @@ export class AddLocalFilesToLibrary {
       return { added, duplicates, rejected };
     }
     if (input.signal?.aborted) {
-      const cancelled: RejectedPath[] = valid.map((path) => ({ path, reason: 'cancelled before start' }));
+      const cancelled: RejectedPath[] = valid.map((path) => ({
+        path,
+        reason: "cancelled before start",
+      }));
       return { added, duplicates, rejected: [...rejected, ...cancelled] };
     }
 
@@ -109,12 +116,13 @@ export class AddLocalFilesToLibrary {
       handled.add(failure.path);
       rejected.push({ path: failure.path, reason: failure.reason });
     }
-    if (result.status === 'cancelled' || result.status === 'failed') {
+    if (result.status === "cancelled" || result.status === "failed") {
       for (const path of valid) {
         if (!handled.has(path)) {
           rejected.push({
             path,
-            reason: result.status === 'cancelled' ? 'cancelled' : (result.error ?? 'indexer failed'),
+            reason:
+              result.status === "cancelled" ? "cancelled" : (result.error ?? "indexer failed"),
           });
         }
       }

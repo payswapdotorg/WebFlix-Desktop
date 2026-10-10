@@ -15,8 +15,9 @@
  * sets, which keeps §7.8's invariant ("fetchedAt on provider-sourced field
  * sets") true by construction.
  */
-import type { ClockPort, CredentialPort, LocalStore, ProviderMetadataPort } from './ports';
-import type { ProviderFieldSetRecord, ProviderId, TrackId } from './types';
+import type { CredentialRef } from "webflix-contracts";
+import type { ClockPort, CredentialPort, LocalStore, ProviderMetadataPort } from "./ports";
+import type { ProviderFieldSetRecord, ProviderId, TrackId } from "./types";
 
 /** Frozen TTL from contract-freeze §7.8. */
 export const PROVIDER_METADATA_TTL_DAYS = 30;
@@ -33,11 +34,11 @@ export function isProviderFieldSetStale(record: ProviderFieldSetRecord, now: Dat
 }
 
 export type RefreshAction =
-  | 'refreshed'
-  | 'deleted'
-  | 'kept-fresh'
-  | 'kept-transient-error'
-  | 'skipped-unauthenticated';
+  | "refreshed"
+  | "deleted"
+  | "kept-fresh"
+  | "kept-transient-error"
+  | "skipped-unauthenticated";
 
 export interface RefreshOutcome {
   readonly trackId: TrackId;
@@ -47,6 +48,13 @@ export interface RefreshOutcome {
 
 export interface RefreshProviderMetadataInput {
   readonly provider: ProviderId;
+  /**
+   * The connected account whose credentials authorize this refresh
+   * (§2.6: credentials are per-account — providerId + internalAccountId
+   * identify the keychain entry). The caller enumerates connected accounts
+   * from the account store.
+   */
+  readonly internalAccountId: string;
   /**
    * Tracks to refresh. Defaults to every track that already holds a stored
    * field set for the provider; explicitly listed tracks without a stored
@@ -74,15 +82,27 @@ export class RefreshProviderMetadata {
 
   async execute(input: RefreshProviderMetadataInput): Promise<RefreshProviderMetadataOutput> {
     const candidates = await this.resolveCandidates(input.trackIds, input.provider);
-    const token = await this.deps.credentials.get(input.provider);
+    /*
+     * §2.6 seam (canonical CredentialPort): the port resolves a CredentialRef
+     * HANDLE for (providerId, internalAccountId) — handles are opaque keychain
+     * lookup keys, never tokens, and a missing/unusable credential surfaces as
+     * a rejection. The refresh path only needs "usable credential or not";
+     * the host opens the handle when it talks to the provider.
+     */
+    let credential: CredentialRef | undefined;
+    try {
+      credential = await this.deps.credentials.getToken(input.provider, input.internalAccountId);
+    } catch {
+      credential = undefined; // no usable credential for this account → honest skip
+    }
 
-    if (!token) {
+    if (!credential) {
       return {
         provider: input.provider,
         checked: candidates.length,
         outcomes: candidates.map((trackId) => ({
           trackId,
-          action: 'skipped-unauthenticated' as const,
+          action: "skipped-unauthenticated" as const,
         })),
       };
     }
@@ -93,12 +113,12 @@ export class RefreshProviderMetadata {
     for (const trackId of candidates) {
       const existing = await this.deps.store.getProviderFieldSet(trackId, input.provider);
       if (existing && !isProviderFieldSetStale(existing, now)) {
-        outcomes.push({ trackId, action: 'kept-fresh' });
+        outcomes.push({ trackId, action: "kept-fresh" });
         continue;
       }
 
       const outcome = await this.deps.providers.fetch(trackId, input.provider);
-      if (outcome.kind === 'fetched') {
+      if (outcome.kind === "fetched") {
         const record: ProviderFieldSetRecord = {
           trackId,
           provider: input.provider,
@@ -106,12 +126,12 @@ export class RefreshProviderMetadata {
           fetchedAt: now.toISOString(),
         };
         await this.deps.store.putProviderFieldSet(record);
-        outcomes.push({ trackId, action: 'refreshed' });
-      } else if (outcome.kind === 'not-found') {
+        outcomes.push({ trackId, action: "refreshed" });
+      } else if (outcome.kind === "not-found") {
         await this.deps.store.deleteProviderFieldSet(trackId, input.provider);
-        outcomes.push({ trackId, action: 'deleted' });
+        outcomes.push({ trackId, action: "deleted" });
       } else {
-        outcomes.push({ trackId, action: 'kept-transient-error', detail: outcome.reason });
+        outcomes.push({ trackId, action: "kept-transient-error", detail: outcome.reason });
       }
     }
 

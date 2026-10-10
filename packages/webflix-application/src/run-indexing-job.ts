@@ -15,15 +15,16 @@
  *     paths successfully probed before cancellation are kept.
  *   - Every attempt's progress events are forwarded to `onProgress` verbatim.
  */
-import type { IndexingPort, IndexingProgress, IndexingStatus, TrackProbe } from './ports';
+import type { IndexingPort, IndexingProgress, IndexingStatus } from "./ports";
+import type { TrackProbe } from "./types";
 import {
   cancelOnAbort,
   fixedBackoff,
   sleep,
   waitForIndexingResult,
   type BackoffDelay,
-} from './indexing-session';
-import { sanitizePaths } from './path-safety';
+} from "./indexing-session";
+import { sanitizePaths } from "./path-safety";
 
 export const DEFAULT_MAX_ATTEMPTS = 3;
 
@@ -88,14 +89,19 @@ export class RunIndexingJob {
     let pending = [...valid];
     let attemptsRun = 0;
     let cancelled = false;
-    let lastStatus: IndexingStatus = 'completed';
+    let lastStatus: IndexingStatus = "completed";
 
-    while (pending.length > 0 && attemptsRun < maxAttempts && !cancelled && !input.signal?.aborted) {
+    while (
+      pending.length > 0 &&
+      attemptsRun < maxAttempts &&
+      !cancelled &&
+      !input.signal?.aborted
+    ) {
       if (attemptsRun > 0) {
         // The inter-retry wait lives entirely behind the injected strategy —
         // never a hardcoded timer on this path.
         const wait = backoff(attemptsRun);
-        if (typeof wait === 'number') {
+        if (typeof wait === "number") {
           if (wait > 0) await sleep(wait);
         } else {
           await wait;
@@ -104,7 +110,11 @@ export class RunIndexingJob {
       attemptsRun += 1;
       const handle = await this.deps.indexing.start(pending);
       cancelOnAbort(this.deps.indexing, handle.jobId, input.signal);
-      const result = await waitForIndexingResult(this.deps.indexing, handle.jobId, input.onProgress);
+      const result = await waitForIndexingResult(
+        this.deps.indexing,
+        handle.jobId,
+        input.onProgress,
+      );
       lastStatus = result.status;
 
       const probedPaths = new Set<string>();
@@ -120,13 +130,15 @@ export class RunIndexingJob {
         const perPath = result.failures.find((failure) => failure.path === path);
         const reason =
           perPath?.reason ??
-          (result.status === 'cancelled' ? 'cancelled' : (result.error ?? `indexing ${result.status}`));
+          (result.status === "cancelled"
+            ? "cancelled"
+            : (result.error ?? `indexing ${result.status}`));
         failures.set(path, { path, probe: null, attempts: attemptsRun, reason });
         nextPending.push(path);
       }
       pending = nextPending;
 
-      if (result.status === 'cancelled') {
+      if (result.status === "cancelled") {
         cancelled = true;
       }
     }
@@ -142,13 +154,13 @@ export class RunIndexingJob {
           path,
           probe: null,
           attempts: attemptsRun,
-          reason: cancelled ? 'cancelled' : 'indexer did not report this path',
+          reason: cancelled ? "cancelled" : "indexer did not report this path",
         });
       }
     }
 
     return {
-      status: cancelled ? 'cancelled' : lastStatus,
+      status: cancelled ? "cancelled" : lastStatus,
       succeeded,
       failed: [...failures.values()],
       cancelled,

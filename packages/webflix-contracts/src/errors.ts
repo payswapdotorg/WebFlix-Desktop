@@ -36,9 +36,7 @@ export enum ErrorCode {
  * Zod schema for {@link ErrorCode} values. Built via `Object.values` (not
  * `z.nativeEnum`) so the schema behaves identically on zod 3 and zod 4.
  */
-export const ErrorCodeSchema = z.enum(
-  Object.values(ErrorCode) as [ErrorCode, ...ErrorCode[]],
-);
+export const ErrorCodeSchema = z.enum(Object.values(ErrorCode) as [ErrorCode, ...ErrorCode[]]);
 
 /** Serializable, persistable shape of a {@link WebFlixError}. */
 export const WebFlixErrorShapeSchema = z.object({
@@ -86,9 +84,8 @@ export class WebFlixError extends Error {
     return value instanceof WebFlixError;
   }
 
-  /** IPC-safe, secret-free serialization of the error. */
+  /** IPC-safe, secret-free serialization of the error (frozen WebFlixErrorShape). */
   toJSON(): {
-    name: string;
     code: ErrorCode;
     reason: string;
     retryable: boolean;

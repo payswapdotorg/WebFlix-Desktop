@@ -17,7 +17,7 @@ const WINDOWS_DRIVE = /^[A-Za-z]:[\\/]/;
 const UNC_PATH = /^\\\\[^\s]/;
 
 export function isAbsolutePath(path: string): boolean {
-  return path.startsWith('/') || WINDOWS_DRIVE.test(path) || UNC_PATH.test(path);
+  return path.startsWith("/") || WINDOWS_DRIVE.test(path) || UNC_PATH.test(path);
 }
 
 export interface SanitizedPaths {
@@ -39,15 +39,15 @@ export function sanitizePaths(paths: readonly string[]): SanitizedPaths {
   for (const raw of paths) {
     const path = raw.trim();
     if (path.length === 0) {
-      rejected.push({ path: raw, reason: 'empty path' });
+      rejected.push({ path: raw, reason: "empty path" });
       continue;
     }
-    if (path.includes('\0')) {
-      rejected.push({ path, reason: 'path contains a NUL byte' });
+    if (path.includes("\0")) {
+      rejected.push({ path, reason: "path contains a NUL byte" });
       continue;
     }
     if (!isAbsolutePath(path)) {
-      rejected.push({ path, reason: 'only absolute paths are accepted' });
+      rejected.push({ path, reason: "only absolute paths are accepted" });
       continue;
     }
     if (seen.has(path)) continue;

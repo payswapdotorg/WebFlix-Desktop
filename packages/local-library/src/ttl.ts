@@ -1,5 +1,6 @@
-import { PROVIDER_METADATA_TTL_MS } from './constants';
-import type { LocalStorePort, ProviderMetadataRecord } from './ports';
+import { PROVIDER_METADATA_TTL_MS } from "./constants";
+import type { LocalStorePort } from "./ports";
+import type { ProviderMetadataRecord } from "./types";
 
 export type MetadataRefreshResult = { payload: unknown } | null;
 
@@ -46,7 +47,7 @@ export async function sweepProviderMetadata(
     } catch {
       replacement = null; // refresh failure ⇒ delete
     }
-    if (replacement && typeof replacement === 'object' && 'payload' in replacement) {
+    if (replacement && typeof replacement === "object" && "payload" in replacement) {
       store.refreshProviderMetadata(record.id, replacement.payload, now);
       refreshed += 1;
     } else {

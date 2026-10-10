@@ -18,14 +18,41 @@
  * via toProviderHistoryWrite() by the app layer.
  */
 
-import { PROGRESS_OWNER } from './contract-types.js';
 import type {
   PlaybackPlan,
   PlaybackProgress,
-  ProviderHistoryWriteOp,
   RecoveryHint,
   UnavailableReason,
-} from './contract-types.js';
+} from "webflix-contracts";
+
+/*
+ * §2.2 reconciliation (integration 2026-10-10): this module originally spoke
+ * the lane-local contract mirror, which had drifted from the FROZEN §2.2
+ * shapes (a fabricated progress record with contentId/planKind/owner, and a
+ * private unavailable-reason vocabulary). The mirror was removed; this
+ * module now speaks the canonical webflix-contracts types directly.
+ * ProviderHistoryWriteOp stays a playback-local type (the explicit provider
+ * push op is a playback-layer construct, not a §2.2 shape).
+ *
+ * Reason vocabulary map (mirror → frozen §2.2):
+ *   connector-missing      → unsupported       (recovery: open-system-settings —
+ *                                               the connector manager lives in settings)
+ *   offline                → offline           (recovery: check-connection)
+ *   connector-unauthorized → requires-auth     (recovery: sign-in)
+ *   region-unavailable     → region            (recovery: change-region)
+ *   drm-unsupported        → policy-restricted (recovery: open-provider-app)
+ *   embed-unsupported      → unsupported       (recovery: open-provider-app)
+ *   no-official-provider   → unsupported       (recovery: open-system-settings —
+ *                                               add the file to the local library)
+ */
+
+/** The explicit op for pushing WebFlix-owned progress into a provider's history. */
+export interface ProviderHistoryWriteOp {
+  op: "provider-history-write";
+  providerId: string;
+  externalId: string;
+  progress: PlaybackProgress;
+}
 
 // ---------------------------------------------------------------------------
 // Resolution inputs
@@ -100,12 +127,12 @@ interface EmbedFailure {
 
 /** Substitutes the provider's external id into an embed spec's URL template. */
 export function resolveEmbedUrl(spec: EmbedSpec, externalId: string): string {
-  return spec.urlTemplate.replace('{mediaId}', encodeURIComponent(externalId));
+  return spec.urlTemplate.replace("{mediaId}", encodeURIComponent(externalId));
 }
 
 function regionAllowed(regions: string[] | undefined, region: string | undefined): boolean {
   if (!regions || regions.length === 0) return true;
-  if (region === undefined || region === '') return false;
+  if (region === undefined || region === "") return false;
   const wanted = region.toUpperCase();
   return regions.some((r) => r.toUpperCase() === wanted);
 }
@@ -132,11 +159,10 @@ export function resolvePlaybackPlan(request: ResolveRequest): PlaybackPlan {
 
     if (!connector) {
       firstFailure ??= {
-        reason: 'connector-missing',
+        reason: "unsupported",
         recovery: {
-          action: 'install-connector',
-          message: `No connector is installed for "${listing.providerId}". Install it to stream this title.`,
-          providerId: listing.providerId,
+          action: "open-system-settings",
+          message: `No connector is installed for "${listing.providerId}". Open settings to install it.`,
         },
       };
       continue;
@@ -144,13 +170,11 @@ export function resolvePlaybackPlan(request: ResolveRequest): PlaybackPlan {
 
     if (!online) {
       firstFailure ??= {
-        reason: 'offline',
+        reason: "offline",
         recovery: {
-          action: 'check-connection',
+          action: "check-connection",
           message:
-            'Streaming requires a network connection. Local files remain playable while offline.',
-          providerId: listing.providerId,
-          connectorId: connector.id,
+            "Streaming requires a network connection. Local files remain playable while offline.",
         },
       };
       continue;
@@ -158,12 +182,10 @@ export function resolvePlaybackPlan(request: ResolveRequest): PlaybackPlan {
 
     if (connector.requiresSignIn === true) {
       firstFailure ??= {
-        reason: 'connector-unauthorized',
+        reason: "requires-auth",
         recovery: {
-          action: 'sign-in',
+          action: "sign-in",
           message: `Sign in to "${listing.providerId}" through its connector to stream this title.`,
-          providerId: listing.providerId,
-          connectorId: connector.id,
         },
       };
       continue;
@@ -174,11 +196,10 @@ export function resolvePlaybackPlan(request: ResolveRequest): PlaybackPlan {
       !regionAllowed(connector.regions, request.region)
     ) {
       firstFailure ??= {
-        reason: 'region-unavailable',
+        reason: "region",
         recovery: {
-          action: 'open-in-provider',
+          action: "change-region",
           message: `"${request.title}" is not available in your region on "${listing.providerId}".`,
-          providerId: listing.providerId,
         },
       };
       continue;
@@ -186,11 +207,10 @@ export function resolvePlaybackPlan(request: ResolveRequest): PlaybackPlan {
 
     if (listing.drmProtected === true) {
       firstFailure ??= {
-        reason: 'drm-unsupported',
+        reason: "policy-restricted",
         recovery: {
-          action: 'open-in-provider',
+          action: "open-provider-app",
           message: `"${request.title}" is DRM-protected and cannot be embedded. Watch it on "${listing.providerId}".`,
-          providerId: listing.providerId,
         },
       };
       continue;
@@ -199,60 +219,51 @@ export function resolvePlaybackPlan(request: ResolveRequest): PlaybackPlan {
     const spec = connector.embed;
     if (!spec || !spec.allowsEmbedding || spec.providerId !== listing.providerId) {
       firstFailure ??= {
-        reason: 'embed-unsupported',
+        reason: "unsupported",
         recovery: {
-          action: 'open-in-provider',
+          action: "open-provider-app",
           message: `"${listing.providerId}" does not allow official embedding for this title. Watch it on the provider.`,
-          providerId: listing.providerId,
-          connectorId: connector.id,
         },
       };
       continue;
     }
 
     return {
-      kind: 'official-embed',
-      contentId: request.contentId,
-      title: request.title,
+      kind: "official-embed",
       providerId: listing.providerId,
-      connectorId: connector.id,
-      externalId: listing.externalId,
-      embedUrl: resolveEmbedUrl(spec, listing.externalId),
+      embedSpec: {
+        urlTemplate: spec.urlTemplate,
+        externalId: listing.externalId,
+        embedUrl: resolveEmbedUrl(spec, listing.externalId),
+      },
     };
   }
 
   // Lane 2: local file — delegated path, playable even while offline.
   const local = matchLocalFile(request);
-  if (local) {
+  if (local && local.mimeType) {
     return {
-      kind: 'local-file',
-      contentId: request.contentId,
-      title: request.title,
-      filePath: local.path,
+      kind: "local-file",
+      path: local.path,
       mimeType: local.mimeType,
-      sizeBytes: local.sizeBytes,
     };
   }
 
   // Lane 3: unavailable — remembered failure, or no official support at all.
   if (firstFailure) {
     return {
-      kind: 'unavailable',
-      contentId: request.contentId,
-      title: request.title,
+      kind: "unavailable",
       reason: firstFailure.reason,
       recovery: firstFailure.recovery,
     };
   }
 
   return {
-    kind: 'unavailable',
-    contentId: request.contentId,
-    title: request.title,
-    reason: 'no-official-provider',
+    kind: "unavailable",
+    reason: "unsupported",
     recovery: {
-      action: 'search-local-library',
-      message: `"${request.title}" is not carried by any officially supported provider. Search your local library or add the file manually.`,
+      action: "open-system-settings",
+      message: `"${request.title}" is not carried by any officially supported provider. Add the file to your local library to play it.`,
     },
   };
 }
@@ -266,13 +277,13 @@ export function resolvePlaybackPlan(request: ResolveRequest): PlaybackPlan {
  * non-alphanumeric characters collapsed away.
  */
 export function normalizeTitle(title: string): string {
-  return title.toLowerCase().replace(/[^a-z0-9]+/g, '');
+  return title.toLowerCase().replace(/[^a-z0-9]+/g, "");
 }
 
 function baseName(filePath: string): string {
-  const sep = Math.max(filePath.lastIndexOf('/'), filePath.lastIndexOf('\\'));
+  const sep = Math.max(filePath.lastIndexOf("/"), filePath.lastIndexOf("\\"));
   const name = sep >= 0 ? filePath.slice(sep + 1) : filePath;
-  const dot = name.lastIndexOf('.');
+  const dot = name.lastIndexOf(".");
   return dot > 0 ? name.slice(0, dot) : name;
 }
 
@@ -298,7 +309,7 @@ export function matchLocalFile(request: ResolveRequest): LocalLibraryFile | unde
 
 /** True when a plan can actually start playback (embed or local file). */
 export function isPlayablePlan(plan: PlaybackPlan): boolean {
-  return plan.kind === 'official-embed' || plan.kind === 'local-file';
+  return plan.kind === "official-embed" || plan.kind === "local-file";
 }
 
 // ---------------------------------------------------------------------------
@@ -309,9 +320,9 @@ export function isPlayablePlan(plan: PlaybackPlan): boolean {
 export const COMPLETION_THRESHOLD = 0.95;
 
 export interface CreateProgressInput {
-  contentId: string;
-  planKind: PlaybackPlan['kind'];
+  itemId: string;
   positionMs?: number;
+  /** 0 (or omitted) = duration not yet known. */
   durationMs?: number | null;
 }
 
@@ -325,6 +336,28 @@ export interface ProgressUpdate {
   at?: string;
 }
 
+function isoNow(): string {
+  return new Date().toISOString();
+}
+
+/**
+ * Creates a WebFlix-owned progress record (§2.2 shape: WebFlix's own store,
+ * never a provider history entry — provider pushes happen ONLY via the
+ * explicit toProviderHistoryWrite op). `durationMs: 0` is the honest
+ * "duration not yet known" value of the canonical int-typed field.
+ */
+export function createProgress(
+  input: CreateProgressInput,
+  at: string = isoNow(),
+): PlaybackProgress {
+  return {
+    itemId: input.itemId,
+    positionMs: clampMs(input.positionMs ?? 0),
+    durationMs: clampMs(input.durationMs ?? 0),
+    updatedAt: at,
+  };
+}
+
 function clampMs(ms: number, maxMs?: number): number {
   const value = Number.isFinite(ms) ? ms : 0;
   const floored = Math.max(0, value);
@@ -332,29 +365,6 @@ function clampMs(ms: number, maxMs?: number): number {
     return Math.min(floored, maxMs);
   }
   return floored;
-}
-
-function isoNow(): string {
-  return new Date().toISOString();
-}
-
-/**
- * Creates a WebFlix-owned progress record. The constant `owner: 'webflix-local'`
- * marker distinguishes it from any provider history entry at the type and
- * value level.
- */
-export function createProgress(
-  input: CreateProgressInput,
-  at: string = isoNow(),
-): PlaybackProgress {
-  return {
-    owner: PROGRESS_OWNER,
-    contentId: input.contentId,
-    planKind: input.planKind,
-    positionMs: clampMs(input.positionMs ?? 0),
-    durationMs: input.durationMs ?? null,
-    updatedAt: at,
-  };
 }
 
 /**
@@ -366,25 +376,27 @@ export function updateProgress(
   update: ProgressUpdate,
 ): PlaybackProgress {
   const next = update.positionMs ?? progress.positionMs + (update.deltaMs ?? 0);
-  const durationMs = update.durationMs !== undefined ? update.durationMs : progress.durationMs;
+  // null is an explicit "duration unknown" update (canonical 0); undefined keeps the previous value.
+  const durationMs =
+    update.durationMs !== undefined ? (update.durationMs ?? 0) : progress.durationMs;
   return {
     ...progress,
-    positionMs: clampMs(next, durationMs ?? undefined),
+    positionMs: clampMs(next, durationMs > 0 ? durationMs : undefined),
     durationMs,
     updatedAt: update.at ?? isoNow(),
   };
 }
 
-/** 0–100 with one decimal, or null when the duration is unknown. */
+/** 0–100 with one decimal, or null when the duration is unknown (0). */
 export function progressPercent(progress: PlaybackProgress): number | null {
-  if (progress.durationMs === null || progress.durationMs <= 0) return null;
+  if (progress.durationMs <= 0) return null;
   const pct = (progress.positionMs / progress.durationMs) * 100;
   return Math.round(Math.min(100, Math.max(0, pct)) * 10) / 10;
 }
 
 /** True once the position reaches COMPLETION_THRESHOLD of a known duration. */
 export function isCompleted(progress: PlaybackProgress): boolean {
-  if (progress.durationMs === null || progress.durationMs <= 0) return false;
+  if (progress.durationMs <= 0) return false;
   return progress.positionMs / progress.durationMs >= COMPLETION_THRESHOLD;
 }
 
@@ -398,7 +410,7 @@ export function toProviderHistoryWrite(
   provider: { providerId: string; externalId: string },
 ): ProviderHistoryWriteOp {
   return {
-    op: 'provider-history-write',
+    op: "provider-history-write",
     providerId: provider.providerId,
     externalId: provider.externalId,
     progress,

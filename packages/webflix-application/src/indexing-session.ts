@@ -2,7 +2,7 @@
  * Shared plumbing for use-cases that drive an `IndexingPort` job to its
  * terminal event. Pure session mechanics — no business rules.
  */
-import type { IndexingPort, IndexingProgress, IndexingResult } from './ports';
+import type { IndexingPort, IndexingProgress, IndexingResult } from "./ports";
 
 /**
  * Subscribe to `jobId` and resolve with the job's terminal `IndexingResult`.
@@ -44,7 +44,7 @@ export function cancelOnAbort(indexing: IndexingPort, jobId: string, signal?: Ab
     cancel();
     return;
   }
-  signal.addEventListener('abort', cancel, { once: true });
+  signal.addEventListener("abort", cancel, { once: true });
 }
 
 /**

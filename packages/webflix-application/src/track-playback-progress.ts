@@ -8,13 +8,13 @@
  *     the effective duration;
  *   - durations must be finite and positive to count.
  */
-import type { ClockPort, LocalStore } from './ports';
-import type { PlaybackProgressRecord, TrackId } from './types';
+import type { ClockPort, LocalStore } from "./ports";
+import type { PlaybackProgressRecord, TrackId } from "./types";
 
 /** Fraction of the duration from which a track counts as finished. */
 export const COMPLETION_THRESHOLD = 0.95;
 
-export type PlaybackRuleCode = 'track-not-in-library' | 'invalid-position';
+export type PlaybackRuleCode = "track-not-in-library" | "invalid-position";
 
 /** Raised when a progress operation would violate a domain rule. */
 export class PlaybackRuleError extends Error {
@@ -22,7 +22,7 @@ export class PlaybackRuleError extends Error {
 
   constructor(code: PlaybackRuleCode, message: string) {
     super(message);
-    this.name = 'PlaybackRuleError';
+    this.name = "PlaybackRuleError";
     this.code = code;
   }
 }
@@ -50,17 +50,24 @@ export class TrackPlaybackProgress {
   async save(input: SavePlaybackProgressInput): Promise<PlaybackProgressRecord> {
     const track = await this.deps.store.getTrack(input.trackId);
     if (!track) {
-      throw new PlaybackRuleError('track-not-in-library', `Track ${input.trackId} is not in the library.`);
+      throw new PlaybackRuleError(
+        "track-not-in-library",
+        `Track ${input.trackId} is not in the library.`,
+      );
     }
     if (!Number.isFinite(input.positionMs)) {
       throw new PlaybackRuleError(
-        'invalid-position',
+        "invalid-position",
         `Position must be a finite number (got ${String(input.positionMs)}).`,
       );
     }
-    if (input.durationMs !== undefined && input.durationMs !== null && !Number.isFinite(input.durationMs)) {
+    if (
+      input.durationMs !== undefined &&
+      input.durationMs !== null &&
+      !Number.isFinite(input.durationMs)
+    ) {
       throw new PlaybackRuleError(
-        'invalid-position',
+        "invalid-position",
         `Duration must be a finite number (got ${String(input.durationMs)}).`,
       );
     }
