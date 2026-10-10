@@ -45,8 +45,8 @@
     "architecture:report": "node scripts/architecture/architecture-check.mjs report",
     "architecture:baseline:update": "node scripts/architecture/architecture-check.mjs baseline:update",
     "architecture:context": "node scripts/architecture/architecture-check.mjs context",
-    "test:unit": "vitest run --config vitest.workspace.ts",
-    "test:integration": "vitest run --config vitest.workspace.ts"
+    "test:unit": "vitest run",
+    "test:integration": "vitest run --config vitest.integration.config.ts"
   },
   "dependencies": {
     "border-beam": "^1.0.1",
