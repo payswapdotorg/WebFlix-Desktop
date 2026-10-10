@@ -28,6 +28,53 @@ import type { LinuxChromePasswordStore } from "./chromeInstallationCandidates.js
 import type { WindowsChromeAppBoundKeyReader } from "./windowsChromeAppBoundKey.js";
 
 export const EMBEDDED_BROWSER_PARTITION = "persist:zcode-embedded-browser";
+
+/*
+ * AUDIT-DESKTOP finding (d) fix (desktop-fixes.patch.md §1.d, integration-time
+ * application 2026-10-10): every provider webview used to share the ONE
+ * `persist:zcode-embedded-browser` partition — cross-provider session leakage.
+ * Per-provider-profile partitions are derived purely from the provider id +
+ * account key (no free-form strings enter the partition name): ids are
+ * lowercased and restricted to [a-z0-9-]; the account key is hashed (FNV-1a,
+ * stable across processes/versions) so account identities never appear in
+ * partition names on disk. Callers without provider context (the bootstrap
+ * protocol install in index.ts, the network policy) keep the legacy constant
+ * — back-compat until the provider webview work (Phase 2) threads provider
+ * identity through every attach site.
+ */
+const PROVIDER_PARTITION_PREFIX = "persist:webflix-embedded";
+
+function sanitizePartitionSegment(value: string): string {
+  const sanitized = value
+    .toLowerCase()
+    .replace(/[^a-z0-9-]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return sanitized.slice(0, 48) || "x";
+}
+
+function fnv1aHex(value: string): string {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < value.length; i += 1) {
+    hash ^= value.charCodeAt(i);
+    // 32-bit FNV-1a with deliberate uint32 wraparound.
+    hash = Math.imul(hash, 0x01000193) >>> 0;
+  }
+  return hash.toString(16).padStart(8, "0");
+}
+
+/**
+ * Resolves the embedded-browser partition for a provider session. With both
+ * providerId and accountKey present the per-provider-profile partition
+ * `persist:webflix-embedded-<provider>-<accounthash>` is used (session data of
+ * different providers/accounts can never mix); with either missing the legacy
+ * shared partition is returned so existing attach sites keep working.
+ */
+export function resolveEmbeddedBrowserPartition(providerId?: string, accountKey?: string): string {
+  if (!providerId || !accountKey) {
+    return EMBEDDED_BROWSER_PARTITION;
+  }
+  return `${PROVIDER_PARTITION_PREFIX}-${sanitizePartitionSegment(providerId)}-${fnv1aHex(accountKey)}`;
+}
 const CACHE_STORAGE_TYPES: Electron.ClearStorageDataOptions["storages"] = [
   "shadercache",
   "serviceworkers",
@@ -83,6 +130,9 @@ export async function importChromeBrowserData(options: {
   profilePath?: string;
   platform?: NodeJS.Platform;
   targetSession?: BrowserSessionLike;
+  /** Optional provider scope (finding d): import into that provider's partition. */
+  providerId?: string;
+  accountKey?: string;
   windowsChromeAppBoundKeyReader?: WindowsChromeAppBoundKeyReader;
   localStorageImporter?: (options: {
     profilePath: string;
@@ -120,7 +170,10 @@ export async function importChromeBrowserData(options: {
     detectedChromeExecutablePath;
   const chromePasswordStore = options.chromePasswordStore ?? discovered?.source.passwordStore;
   const targetSession =
-    options.targetSession ?? electronSession.fromPartition(EMBEDDED_BROWSER_PARTITION);
+    options.targetSession ??
+    electronSession.fromPartition(
+      resolveEmbeddedBrowserPartition(options.providerId, options.accountKey),
+    );
   const result: ChromeBrowserDataImportResult = {
     success: false,
     cookies: { imported: 0, skipped: 0, failed: 0 },
@@ -211,9 +264,15 @@ export async function clearEmbeddedBrowserData(options: {
   logger: BrowserDataLogger;
   mode: "cache" | "all";
   targetSession?: BrowserSessionLike;
+  /** Optional provider scope (finding d): clear only that provider's partition. */
+  providerId?: string;
+  accountKey?: string;
 }): Promise<EmbeddedBrowserDataClearResult> {
   const targetSession =
-    options.targetSession ?? electronSession.fromPartition(EMBEDDED_BROWSER_PARTITION);
+    options.targetSession ??
+    electronSession.fromPartition(
+      resolveEmbeddedBrowserPartition(options.providerId, options.accountKey),
+    );
   try {
     await targetSession.clearCache();
     if (options.mode === "all") {

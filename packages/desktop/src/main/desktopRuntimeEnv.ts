@@ -37,11 +37,27 @@ import {
   type ResolveRemoteCdnOptions,
 } from "./remoteCdn.js";
 import { getElectronAppPath, isElectronAppPackaged } from "./desktopElectronApp.js";
+import { resolveWebFlixDataRootName } from "../../scripts/desktop-product-identity.mjs";
+import { applyWebFlixDataRootEnv } from "./webflix/identity-env.js";
 
 const isLocalDevelopmentRuntime = !isElectronAppPackaged();
 export const desktopRuntimeEnv: ZCodeRuntimeEnv = isLocalDevelopmentRuntime
   ? "development"
   : "production";
+/*
+ * WebFlix 身份数据根（freeze §6.1/§6.8；desktop-fixes.patch.md §1.e 集成期应用
+ * 2026-10-10）：`WEBFLIX_IDENTITY=1` 时数据根解析为 `~/.webflix`（打包）/
+ * `~/.webflix-dev`（开发），绝不是 ZCode 根。根名在这里解析一次并回写
+ * `WEBFLIX_DATA_ROOT`（services 层的数据根段读取该变量，fail-closed），
+ * fork 出的 host/scheduler 进程通过环境继承拿到同一个根。非 WebFlix 身份
+ * 返回 undefined，所有路径保持原 ZCode 行为不变（迁移期 ZCODE_* 别名继续生效）。
+ */
+export const webFlixDataRootName = resolveWebFlixDataRootName(process.env, {
+  isPackaged: isElectronAppPackaged(),
+});
+// Idempotent with the earliest-import side effect in webflix/identity-env.ts
+// (logger.ts evaluates it before this module); an explicit env value always wins.
+applyWebFlixDataRootEnv();
 // 身份看编译期 flavor 而不是 ZCODE_ENV：ZCODE_PREVIEW_IDENTITY=1 的生产后端构建同样是 Preview，
 // 需要独立的应用名、Electron 数据目录和 Helper 安装子目录才能与正式版并排运行。
 const isPreviewPackagedRuntime = !isLocalDevelopmentRuntime && ZCODE_PRODUCT_FLAVOR === "preview";
@@ -60,7 +76,15 @@ function isTruthyRuntimeEnvOverride(name: string): boolean {
 // 这里允许测试显式隔离运行时身份，正常桌面/远控路径保持原来的默认值。
 export const runtimeApplicationName =
   readRuntimeEnvOverride("ZCODE_DESKTOP_APPLICATION_NAME") ??
-  (isLocalDevelopmentRuntime ? "ZCode Dev" : isPreviewPackagedRuntime ? "ZCode Preview" : "ZCode");
+  (webFlixDataRootName
+    ? isLocalDevelopmentRuntime
+      ? "WebFlix Dev"
+      : "WebFlix"
+    : isLocalDevelopmentRuntime
+      ? "ZCode Dev"
+      : isPreviewPackagedRuntime
+        ? "ZCode Preview"
+        : "ZCode");
 // Electron 的 app.getPath("home") 不一定跟随测试进程里的 HOME 覆盖。
 // e2e 默认工作区依赖 home 路径，因此提供显式覆盖，避免测试写到开发者真实 ~/ZCodeProject。
 export const runtimeHomePath = readRuntimeEnvOverride("ZCODE_DESKTOP_HOME_DIR");
@@ -70,9 +94,13 @@ export const shouldUseElectronDefaultUserDataPath = isTruthyRuntimeEnvOverride(
 );
 export const runtimeUserDataPath =
   readRuntimeEnvOverride("ZCODE_DESKTOP_USER_DATA_DIR") ??
-  (shouldUseElectronDefaultUserDataPath
-    ? undefined
-    : join(getElectronAppPath("appData"), runtimeApplicationName));
+  (webFlixDataRootName
+    ? // WebFlix：userData 直接落在冻结数据根（~/.webflix 或 ~/.webflix-dev），
+      // 不进入 appData/<Application Name> 的 ZCode 布局。
+      join(homedir(), webFlixDataRootName)
+    : shouldUseElectronDefaultUserDataPath
+      ? undefined
+      : join(getElectronAppPath("appData"), runtimeApplicationName));
 export const runtimeSessionDataPath =
   readRuntimeEnvOverride("ZCODE_DESKTOP_SESSION_DATA_DIR") ??
   (runtimeUserDataPath ? join(runtimeUserDataPath, "session") : undefined);

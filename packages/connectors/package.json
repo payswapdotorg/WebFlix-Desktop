@@ -1,0 +1,22 @@
+{
+  "name": "connectors",
+  "version": "0.1.0",
+  "private": true,
+  "description": "WebFlix-Desktop connector manifests + YouTube official-surface connector (ADR-0003: official surfaces only; fixture-tested, live smoke pending-operator-credential).",
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "catalog": "workspace:*",
+    "webflix-contracts": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.4.0",
+    "vitest": "^1.6.0"
+  }
+}

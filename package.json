@@ -44,7 +44,10 @@
     "architecture:check": "node scripts/architecture/architecture-check.mjs check",
     "architecture:report": "node scripts/architecture/architecture-check.mjs report",
     "architecture:baseline:update": "node scripts/architecture/architecture-check.mjs baseline:update",
-    "architecture:context": "node scripts/architecture/architecture-check.mjs context"
+    "architecture:context": "node scripts/architecture/architecture-check.mjs context",
+    "test:unit": "vitest run",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "test:e2e": "pnpm --dir packages/desktop run test:e2e"
   },
   "dependencies": {
     "border-beam": "^1.0.1",
@@ -70,7 +73,8 @@
     "ts-morph": "^28.0.0",
     "tsx": "^4.19.4",
     "turbo": "^2.4.0",
-    "typescript": "^6.0.2"
+    "typescript": "^6.0.2",
+    "vitest": "^3.0.0"
   },
   "peerDependencies": {
     "@tanstack/react-virtual": "^3.13.23"

@@ -1,0 +1,21 @@
+{
+  "_fixture": "FIXTURE-ONLY: abridged YouTube Data API v3 playlists.list response envelope; synthetic values, never a live capture; no credentials",
+  "kind": "youtube#playlistListResponse",
+  "etag": "fixture-etag-playlists-1",
+  "pageInfo": { "totalResults": 1, "resultsPerPage": 1 },
+  "items": [
+    {
+      "kind": "youtube#playlist",
+      "etag": "fixture-etag-playlist-1",
+      "id": "PLFIX0000000000000001",
+      "snippet": {
+        "publishedAt": "2024-10-01T09:00:00Z",
+        "channelId": "UCFIXCH0000000000000001",
+        "title": "Fixture playlist: gardening fundamentals",
+        "description": "Fixture-only abridged description.",
+        "channelTitle": "Fixture Channel"
+      },
+      "contentDetails": { "itemCount": 2 }
+    }
+  ]
+}

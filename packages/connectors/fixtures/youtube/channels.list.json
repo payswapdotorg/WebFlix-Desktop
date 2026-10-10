@@ -1,0 +1,19 @@
+{
+  "_fixture": "FIXTURE-ONLY: abridged YouTube Data API v3 channels.list response envelope; synthetic values, never a live capture; no credentials",
+  "kind": "youtube#channelListResponse",
+  "etag": "fixture-etag-channels-1",
+  "pageInfo": { "totalResults": 1, "resultsPerPage": 1 },
+  "items": [
+    {
+      "kind": "youtube#channel",
+      "etag": "fixture-etag-channel-1",
+      "id": "UCFIXCH0000000000000001",
+      "snippet": {
+        "title": "Fixture Channel",
+        "description": "Fixture-only abridged description.",
+        "customUrl": "@fixturechannel"
+      },
+      "statistics": { "viewCount": "900000", "subscriberCount": "4200", "videoCount": "87" }
+    }
+  ]
+}

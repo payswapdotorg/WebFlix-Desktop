@@ -1,0 +1,15 @@
+{
+  "_fixture": "FIXTURE-ONLY: Google API error envelope, HTTP 429; synthetic values, never a live capture",
+  "error": {
+    "code": 429,
+    "message": "Too many requests have been sent in a given time span.",
+    "errors": [
+      {
+        "message": "Too many requests have been sent in a given time span.",
+        "domain": "usageLimits",
+        "reason": "rateLimitExceeded"
+      }
+    ],
+    "status": "RESOURCE_EXHAUSTED"
+  }
+}

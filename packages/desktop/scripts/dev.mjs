@@ -119,9 +119,13 @@ if (process.platform === "darwin" && existsSync(electronBinary)) {
   const electronPackageJsonPath = require.resolve("electron/package.json");
   const electronPackage = JSON.parse(await readFile(electronPackageJsonPath, "utf8"));
   const electronAppPath = resolve(electronBinary, "../../..");
+  // WebFlix 身份（freeze §6.8；desktop-fixes.patch.md §1.e）：dev runtime 根隔离为
+  // `.webflix-runtime/desktop-dev`，不落在 `.zcode-runtime` 下。
+  const devRuntimeRootName =
+    (process.env.WEBFLIX_IDENTITY?.trim() ?? "") === "1" ? ".webflix-runtime" : ".zcode-runtime";
   const devBundle = await prepareDevElectronAppBundle({
     electronAppPath,
-    runtimeRoot: resolve(root, "../../.zcode-runtime/desktop-dev"),
+    runtimeRoot: resolve(root, `../../${devRuntimeRootName}/desktop-dev`),
     electronVersion: electronPackage.version,
     arch: process.arch,
   });

@@ -1,0 +1,16 @@
+{
+  "name": "webflix-application",
+  "version": "0.1.0",
+  "private": true,
+  "description": "WebFlix-Desktop application layer (D2-LOCAL): use-cases orchestrating the domain over LocalStore/CredentialPort/Indexing/Clock ports.",
+  "type": "module",
+  "main": "src/index.ts",
+  "module": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "test:unit": "../../node_modules/.bin/vitest run --config ../../vitest.config.ts"
+  },
+  "dependencies": {
+    "webflix-contracts": "workspace:*"
+  }
+}

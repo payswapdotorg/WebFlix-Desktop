@@ -1,3 +1,9 @@
+// Must run before the first services path resolution below (LOG_DIR):
+// under WEBFLIX_IDENTITY=1 the services data-root segment is fail-closed and
+// needs WEBFLIX_DATA_ROOT set. An explicit call (not a bare side-effect
+// import) so code-splitting can never drop it.
+import { applyWebFlixDataRootEnv } from "./webflix/identity-env.js";
+applyWebFlixDataRootEnv();
 import { mkdirSync, appendFileSync } from "node:fs";
 import { join } from "node:path";
 import { formatTimestamp } from "@zcode/shared";
