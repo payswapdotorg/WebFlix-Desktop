@@ -7,7 +7,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    include: ['packages/webflix-*/src/**/*.{test,spec}.ts'],
+    include: ['packages/{webflix-*,local-library}/src/**/*.{test,spec}.ts'],
     exclude: ['**/*.int.test.ts', '**/*.int.spec.ts', '**/node_modules/**'],
   },
 });
