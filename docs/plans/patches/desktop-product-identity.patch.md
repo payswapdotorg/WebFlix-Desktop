@@ -14,16 +14,16 @@ This patch also fixes the dev-AUMID defect flagged by AUDIT-DESKTOP: the ZCode f
 
 ## 2. Frozen values (freeze §6.1 — BINDING)
 
-| Field | Frozen value | Source |
-| --- | --- | --- |
-| appId / production AUMID | `org.webflix.desktop` | freeze §6.1 |
-| productName | `WebFlix` | freeze §6.1 |
-| scheme | `webflix://` | freeze §6.1 |
-| data root (production) | `~/.webflix` | freeze §6.1 |
-| data root (development) | `~/.webflix-dev` | freeze §6.1 |
-| dev AUMID | `org.webflix.desktop.dev` | freeze §6.1 |
-| Linux package names | `webflix-desktop*` → `webflix-desktop`, `webflix-desktop-dev` | freeze §6.1 |
-| env aliases | `ZCODE_*` kept during migration | freeze §6.1 |
+| Field                            | Frozen value                                                                                      | Source                                  |
+| -------------------------------- | ------------------------------------------------------------------------------------------------- | --------------------------------------- |
+| appId / production AUMID         | `org.webflix.desktop`                                                                             | freeze §6.1                             |
+| productName                      | `WebFlix`                                                                                         | freeze §6.1                             |
+| scheme                           | `webflix://`                                                                                      | freeze §6.1                             |
+| data root (production)           | `~/.webflix`                                                                                      | freeze §6.1                             |
+| data root (development)          | `~/.webflix-dev`                                                                                  | freeze §6.1                             |
+| dev AUMID                        | `org.webflix.desktop.dev`                                                                         | freeze §6.1                             |
+| Linux package names              | `webflix-desktop*` → `webflix-desktop`, `webflix-desktop-dev`                                     | freeze §6.1                             |
+| env aliases                      | `ZCODE_*` kept during migration                                                                   | freeze §6.1                             |
 | Forbidden on any WebFlix surface | appId/AUMID `cn.aminer.zcode`, scheme `zcode://`, data root `~/.zcode`, packages `zcode-desktop*` | freeze §6.1 coexistence + AUDIT-DESKTOP |
 
 ## 3. Base snapshot (as read at the d1-shell branch base)

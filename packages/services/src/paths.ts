@@ -39,9 +39,39 @@ export function getDataBaseDir(): string {
   return defaultDataBaseDir;
 }
 
-/** {dataBaseDir}/.zcode */
+/** {dataBaseDir}/.zcode — 或 WebFlix 身份时的冻结数据根段。 */
+function resolveDataRootSegment(): string {
+  /*
+   * WebFlix 身份感知段（freeze §6.1；desktop-fixes.patch.md §1.e 集成期应用
+   * 2026-10-10，TL2 仲裁的跨包触点，镜像 swap 同类）：默认 `.zcode` 行为
+   * 逐字节不变。`WEBFLIX_IDENTITY=1` 时段名收口为 `WEBFLIX_DATA_ROOT`（由
+   * desktop main 在任何路径解析前设置；fork 出的进程经环境继承拿到同值）。
+   * fail-closed：身份拼写非法、或 WebFlix 身份但没有数据根 → 直接抛错，
+   * 绝不静默回落到 ZCode 根（WebFlix 进程永不读写 ~/.zcode）。
+   */
+  const raw = process.env.WEBFLIX_IDENTITY?.trim() ?? "";
+  if (raw === "" || raw === "0") {
+    return ".zcode";
+  }
+  if (raw !== "1") {
+    throw new Error(`invalid WEBFLIX_IDENTITY=${raw}; expected 1 or 0 (fail-closed)`);
+  }
+  const webflixRoot = process.env.WEBFLIX_DATA_ROOT?.trim();
+  if (!webflixRoot) {
+    throw new Error(
+      "WEBFLIX_IDENTITY=1 requires WEBFLIX_DATA_ROOT (set by the desktop main at startup; fail-closed)",
+    );
+  }
+  return webflixRoot;
+}
+
 export function getZCodeDataRootDir(): string {
-  return join(getDataBaseDir(), ".zcode");
+  const segment = resolveDataRootSegment();
+  if (segment.startsWith("/") || win32.isAbsolute(segment)) {
+    // 测试隔离用绝对路径覆盖：直接作为根使用。
+    return segment;
+  }
+  return join(getDataBaseDir(), segment);
 }
 
 /** 非项目对话共享的真实工作目录；默认 ~/.zcode/workspace/default。 */

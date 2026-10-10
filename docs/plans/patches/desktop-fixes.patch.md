@@ -8,13 +8,13 @@
 
 ## 1. Scope — what this spec fixes (AUDIT-DESKTOP)
 
-| Ref | Defect | Fix | Specified in |
-| --- | --- | --- | --- |
-| (a) | Finding 7: `autoUpdater.ts:23` constructs the platform updater eagerly at import time; dev boots report version `0.0` (invalid semver) and crash in construction | Lazy + guarded init: skip construction on missing/invalid version, construct at most once | §6.A, logic in `packages/webflix-shell/src/updater-guard.ts` |
-| (b) | Chrome cookie/localStorage/credential import IPC is registered unconditionally — reachable from any renderer | `chromeImportEnabled` (default OFF): NO handler registered while OFF → surface unreachable, not hidden | §6.B, logic in `packages/webflix-shell/src/isolation-flags.ts` |
-| (c) | Product surfaces (Coding Plan/PayPal, CUA, Lark, SSH/Docker/WSL remotes, force-update) registered unconditionally | `webflixProductSurface` (default OFF): gated registrations skipped entirely while OFF | §6.C (follow-ups §7) |
-| (d) | Every provider webview shares ONE `persist:zcode-embedded-browser` partition (`browserDataManager.ts:30`) — cross-provider session leakage | Per-provider-profile partitions derived purely from provider id + account key | §6.D |
-| (e) | Dev scripts default the data root to the legacy `~/.zcode` | Dev data root resolves through identity: `~/.webflix-dev`, and never a ZCode root | §6.E (follow-ups §7) |
+| Ref | Defect                                                                                                                                                           | Fix                                                                                                    | Specified in                                                   |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------- |
+| (a) | Finding 7: `autoUpdater.ts:23` constructs the platform updater eagerly at import time; dev boots report version `0.0` (invalid semver) and crash in construction | Lazy + guarded init: skip construction on missing/invalid version, construct at most once              | §6.A, logic in `packages/webflix-shell/src/updater-guard.ts`   |
+| (b) | Chrome cookie/localStorage/credential import IPC is registered unconditionally — reachable from any renderer                                                     | `chromeImportEnabled` (default OFF): NO handler registered while OFF → surface unreachable, not hidden | §6.B, logic in `packages/webflix-shell/src/isolation-flags.ts` |
+| (c) | Product surfaces (Coding Plan/PayPal, CUA, Lark, SSH/Docker/WSL remotes, force-update) registered unconditionally                                                | `webflixProductSurface` (default OFF): gated registrations skipped entirely while OFF                  | §6.C (follow-ups §7)                                           |
+| (d) | Every provider webview shares ONE `persist:zcode-embedded-browser` partition (`browserDataManager.ts:30`) — cross-provider session leakage                       | Per-provider-profile partitions derived purely from provider id + account key                          | §6.D                                                           |
+| (e) | Dev scripts default the data root to the legacy `~/.zcode`                                                                                                       | Dev data root resolves through identity: `~/.webflix-dev`, and never a ZCode root                      | §6.E (follow-ups §7)                                           |
 
 ## 2. Normative references
 

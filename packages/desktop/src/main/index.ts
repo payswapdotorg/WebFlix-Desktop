@@ -160,6 +160,7 @@ import {
   runtimeSessionDataPath,
   runtimeUserDataPath,
   shouldUseElectronDefaultUserDataPath,
+  webFlixDataRootName,
 } from "./desktopRuntimeEnv.js";
 import {
   disposeHostProcess,
@@ -199,11 +200,7 @@ import {
 } from "./resourceManagerWindow.js";
 import { createDesktopHelpConfigReader } from "./desktopHelpConfig.js";
 import { registerPlatformIpcHandlers } from "./desktopMainIpcPlatform.js";
-import {
-  loadCliMcpFromUserDirectory,
-  migrateLegacyCommonMcp,
-  saveCliMcpToUserDirectory,
-} from "./mcpUserDirectory/index.js";
+import { loadCliMcpFromUserDirectory, migrateLegacyCommonMcp } from "./mcpUserDirectory/index.js";
 import { registerRemoteIpcHandlers } from "./desktopMainIpcRemote.js";
 import {
   configureDesktopStabilityTelemetry,
@@ -529,7 +526,12 @@ async function runBrowserCommandOnView(params: {
 let currentDesktopZoomLevel = 0;
 let currentDesktopWindowSize: DesktopWindowSize | undefined;
 const preloadPath = join(import.meta.dirname, "../preload/index.cjs");
-const settingsFile = join(homedir(), ".zcode", "v2", "setting.json");
+/*
+ * WebFlix 身份（freeze §6.1；desktop-fixes.patch.md §1.e）：设置文件跟随冻结
+ * 数据根（dev `~/.webflix-dev/v2/setting.json`），绝不读写 `~/.zcode`。
+ * 非 WebFlix 身份保持原路径不变。
+ */
+const settingsFile = join(homedir(), webFlixDataRootName ?? ".zcode", "v2", "setting.json");
 let activeAppShutdownPolicy = resolveAppShutdownPolicy("normal", process.platform);
 let activeAppShutdownKind: AppShutdownKind | null = null;
 const WINDOWS_AGENT_FORCE_KILL_TIMEOUT_MS = 2_000;
