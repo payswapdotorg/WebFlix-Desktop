@@ -1,0 +1,8 @@
+{
+  "_fixture": "FIXTURE-ONLY: OAuth2 token endpoint response envelope; all token strings are synthetic fixture labels, never real credentials",
+  "access_token": "FIXTURE-ACCESS-TOKEN-1",
+  "expires_in": 3600,
+  "refresh_token": "FIXTURE-REFRESH-TOKEN-1",
+  "scope": "https://www.googleapis.com/auth/youtube.readonly",
+  "token_type": "Bearer"
+}

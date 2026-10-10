@@ -1,0 +1,15 @@
+{
+  "_fixture": "FIXTURE-ONLY: Google API error envelope, HTTP 403 rateLimitExceeded; synthetic values, never a live capture",
+  "error": {
+    "code": 403,
+    "message": "The request was rate-limited; back off and retry later.",
+    "errors": [
+      {
+        "message": "The request was rate-limited; back off and retry later.",
+        "domain": "usageLimits",
+        "reason": "rateLimitExceeded"
+      }
+    ],
+    "status": "PERMISSION_DENIED"
+  }
+}
