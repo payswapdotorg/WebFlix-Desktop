@@ -1,6 +1,6 @@
 import React from 'react';
 import { theme } from '../theme';
-import type { CatalogItem, ProviderAccountRecord } from '../contract-types';
+import type { CatalogItem, ProviderAccountRecord } from 'webflix-contracts';
 
 export interface HomeScreenProps {
   readonly accounts?: readonly ProviderAccountRecord[];

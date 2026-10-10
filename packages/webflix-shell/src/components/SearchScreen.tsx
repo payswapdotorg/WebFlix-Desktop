@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { theme } from '../theme';
-import type { CatalogItem } from '../contract-types';
+import type { CatalogItem } from 'webflix-contracts';
 import { HONEST_COPY } from '../states';
 import type { SearchState } from '../states';
 

@@ -10,7 +10,7 @@
 //      where nothing can be done, the state says so instead of showing a dead
 //      button.
 
-import type { CapabilityStatus, CatalogItem } from './contract-types';
+import type { CapabilityStatus, CatalogItem } from 'webflix-contracts';
 
 /** The exhaustive honest-state vocabulary (freeze §2.3). */
 export const HONEST_STATES = [

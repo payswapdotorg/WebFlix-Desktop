@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { theme } from '../theme';
-import type { CatalogItem, LibraryCollection, ProviderAccountRecord } from '../contract-types';
+import type { CatalogItem, LibraryCollection, ProviderAccountRecord } from 'webflix-contracts';
 import type { SearchState } from '../states';
 import { HomeScreen } from './HomeScreen';
 import { SearchScreen } from './SearchScreen';

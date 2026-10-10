@@ -1,6 +1,6 @@
 import React from 'react';
 import { theme } from '../theme';
-import type { CatalogItem, LibraryCollection } from '../contract-types';
+import type { CatalogItem, LibraryCollection } from 'webflix-contracts';
 
 export interface LibraryScreenProps {
   readonly collections?: readonly LibraryCollection[];

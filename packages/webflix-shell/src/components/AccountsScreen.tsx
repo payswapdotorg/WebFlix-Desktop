@@ -1,6 +1,6 @@
 import React from 'react';
 import { theme } from '../theme';
-import type { AccountState, ProviderAccountRecord, ProviderId } from '../contract-types';
+import type { AccountState, ProviderAccountRecord, ProviderId } from 'webflix-contracts';
 
 interface ProviderDescriptor {
   readonly id: ProviderId;

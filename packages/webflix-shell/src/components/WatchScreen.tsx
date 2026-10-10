@@ -1,6 +1,6 @@
 import React from 'react';
 import { theme } from '../theme';
-import type { PlaybackPlan } from '../contract-types';
+import type { PlaybackPlan } from 'webflix-contracts';
 
 export interface WatchScreenProps {
   readonly plan: PlaybackPlan;

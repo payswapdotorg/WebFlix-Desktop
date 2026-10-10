@@ -4,7 +4,7 @@
 // WebFlix theme, and the contract-type mirror (swap-at-integration: re-point
 // these to packages/webflix-contracts when it lands).
 
-export * from './contract-types';
+export * from 'webflix-contracts';
 export * from './states';
 export * from './theme';
 
