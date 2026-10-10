@@ -1,6 +1,6 @@
-import React from 'react';
-import { theme } from '../theme';
-import type { AccountState, ProviderAccountRecord, ProviderId } from 'webflix-contracts';
+import React from "react";
+import { theme } from "../theme";
+import type { AccountState, ProviderAccountRecord, ProviderId } from "webflix-contracts";
 
 interface ProviderDescriptor {
   readonly id: ProviderId;
@@ -11,33 +11,33 @@ interface ProviderDescriptor {
 /** Providers the shell knows about in M1. D3 adds 'youtube'; D2 owns 'local'. */
 const KNOWN_PROVIDERS: readonly ProviderDescriptor[] = [
   {
-    id: 'youtube',
-    name: 'YouTube',
-    blurb: 'Connect to search YouTube and watch via the official embed.',
+    id: "youtube",
+    name: "YouTube",
+    blurb: "Connect to search YouTube and watch via the official embed.",
   },
 ];
 
 const ACCOUNT_STATE_COPY: Record<
   AccountState,
-  { badge: string; note: string; action: 'disconnect' | 'connect'; actionLabel: string }
+  { badge: string; note: string; action: "disconnect" | "connect"; actionLabel: string }
 > = {
   connected: {
-    badge: 'Connected',
-    note: 'Signed in and ready.',
-    action: 'disconnect',
-    actionLabel: 'Disconnect',
+    badge: "Connected",
+    note: "Signed in and ready.",
+    action: "disconnect",
+    actionLabel: "Disconnect",
   },
   expired: {
-    badge: 'Expired',
-    note: 'The access token expired — sign in again to refresh it.',
-    action: 'connect',
-    actionLabel: 'Reconnect',
+    badge: "Expired",
+    note: "The access token expired — sign in again to refresh it.",
+    action: "connect",
+    actionLabel: "Reconnect",
   },
   revoked: {
-    badge: 'Revoked',
-    note: 'Access was revoked. Reconnect to restore it.',
-    action: 'connect',
-    actionLabel: 'Connect',
+    badge: "Revoked",
+    note: "Access was revoked. Reconnect to restore it.",
+    action: "connect",
+    actionLabel: "Connect",
   },
 };
 
@@ -48,7 +48,12 @@ export interface AccountsScreenProps {
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  root: { display: 'flex', flexDirection: 'column', gap: theme.spacing.md, color: theme.colors.text },
+  root: {
+    display: "flex",
+    flexDirection: "column",
+    gap: theme.spacing.md,
+    color: theme.colors.text,
+  },
   heading: { margin: 0, fontSize: theme.typography.sizes.xl },
   muted: { margin: 0, color: theme.colors.textMuted, lineHeight: 1.5 },
   card: {
@@ -56,8 +61,8 @@ const styles: Record<string, React.CSSProperties> = {
     border: `1px solid ${theme.colors.border}`,
     borderRadius: theme.radii.lg,
     padding: theme.spacing.md,
-    display: 'flex',
-    flexDirection: 'column',
+    display: "flex",
+    flexDirection: "column",
     gap: theme.spacing.sm,
   },
   cardTitle: { margin: 0, fontSize: theme.typography.sizes.lg },
@@ -66,52 +71,52 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: theme.radii.md,
     padding: theme.spacing.md,
     color: theme.colors.textMuted,
-    display: 'flex',
-    flexDirection: 'column',
+    display: "flex",
+    flexDirection: "column",
     gap: theme.spacing.sm,
-    alignItems: 'flex-start',
+    alignItems: "flex-start",
   },
   accountCard: {
     border: `1px solid ${theme.colors.border}`,
     borderRadius: theme.radii.md,
     padding: theme.spacing.sm,
-    display: 'flex',
-    flexDirection: 'column',
+    display: "flex",
+    flexDirection: "column",
     gap: 6,
   },
   row: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
     gap: theme.spacing.sm,
   },
   badge: {
     borderRadius: 999,
-    padding: '2px 10px',
+    padding: "2px 10px",
     fontSize: theme.typography.sizes.sm,
     fontWeight: 600,
   },
-  badgeOk: { background: 'rgba(63, 200, 120, 0.18)', color: theme.colors.ok },
-  badgeWarn: { background: 'rgba(217, 161, 59, 0.18)', color: theme.colors.warning },
-  badgeDanger: { background: 'rgba(224, 95, 116, 0.18)', color: theme.colors.danger },
+  badgeOk: { background: "rgba(63, 200, 120, 0.18)", color: theme.colors.ok },
+  badgeWarn: { background: "rgba(217, 161, 59, 0.18)", color: theme.colors.warning },
+  badgeDanger: { background: "rgba(224, 95, 116, 0.18)", color: theme.colors.danger },
   button: {
-    alignSelf: 'flex-start',
+    alignSelf: "flex-start",
     background: theme.colors.accent,
-    color: '#08211b',
-    border: 'none',
+    color: "#08211b",
+    border: "none",
     borderRadius: theme.radii.sm,
-    padding: '8px 14px',
+    padding: "8px 14px",
     fontWeight: 600,
-    cursor: 'pointer',
+    cursor: "pointer",
   },
   ghostButton: {
-    alignSelf: 'flex-start',
-    background: 'transparent',
+    alignSelf: "flex-start",
+    background: "transparent",
     color: theme.colors.accent,
     border: `1px solid ${theme.colors.accent}`,
     borderRadius: theme.radii.sm,
-    padding: '8px 14px',
-    cursor: 'pointer',
+    padding: "8px 14px",
+    cursor: "pointer",
   },
 };
 
@@ -128,7 +133,7 @@ export function AccountsScreen(props: AccountsScreenProps) {
   const knownIds = new Set(KNOWN_PROVIDERS.map((provider) => provider.id));
   const extraProviders: ProviderDescriptor[] = [...byProvider.keys()]
     .filter((id) => !knownIds.has(id))
-    .map((id) => ({ id, name: id, blurb: 'Provider registered by another lane.' }));
+    .map((id) => ({ id, name: id, blurb: "Provider registered by another lane." }));
   const providers: readonly ProviderDescriptor[] = [...KNOWN_PROVIDERS, ...extraProviders];
 
   return (
@@ -147,10 +152,7 @@ export function AccountsScreen(props: AccountsScreenProps) {
             <p style={styles.muted}>{provider.blurb}</p>
 
             {providerAccounts.length === 0 && (
-              <div
-                data-testid={`account-card-not-connected-${provider.id}`}
-                style={styles.empty}
-              >
+              <div data-testid={`account-card-not-connected-${provider.id}`} style={styles.empty}>
                 <p style={styles.muted}>Not connected. Nothing has been authorized yet.</p>
                 <button
                   type="button"
@@ -176,9 +178,9 @@ export function AccountsScreen(props: AccountsScreenProps) {
                     <span
                       style={{
                         ...styles.badge,
-                        ...(account.state === 'connected'
+                        ...(account.state === "connected"
                           ? styles.badgeOk
-                          : account.state === 'expired'
+                          : account.state === "expired"
                             ? styles.badgeWarn
                             : styles.badgeDanger),
                       }}
@@ -191,13 +193,13 @@ export function AccountsScreen(props: AccountsScreenProps) {
                     <p style={styles.muted}>Token expires: {account.tokenExpiresAt}</p>
                   )}
                   {account.scopes && account.scopes.length > 0 && (
-                    <p style={styles.muted}>Scopes: {account.scopes.join(', ')}</p>
+                    <p style={styles.muted}>Scopes: {account.scopes.join(", ")}</p>
                   )}
                   <button
                     type="button"
-                    style={copy.action === 'disconnect' ? styles.ghostButton : styles.button}
+                    style={copy.action === "disconnect" ? styles.ghostButton : styles.button}
                     onClick={() =>
-                      copy.action === 'disconnect'
+                      copy.action === "disconnect"
                         ? onDisconnect?.(account.accountId)
                         : onConnect?.(provider.id)
                     }

@@ -1,19 +1,19 @@
-import React, { useState } from 'react';
-import { theme } from '../theme';
-import type { CatalogItem, LibraryCollection, ProviderAccountRecord } from 'webflix-contracts';
-import type { SearchState } from '../states';
-import { HomeScreen } from './HomeScreen';
-import { SearchScreen } from './SearchScreen';
-import { LibraryScreen } from './LibraryScreen';
-import { AccountsScreen } from './AccountsScreen';
+import React, { useState } from "react";
+import { theme } from "../theme";
+import type { CatalogItem, LibraryCollection, ProviderAccountRecord } from "webflix-contracts";
+import type { SearchState } from "../states";
+import { HomeScreen } from "./HomeScreen";
+import { SearchScreen } from "./SearchScreen";
+import { LibraryScreen } from "./LibraryScreen";
+import { AccountsScreen } from "./AccountsScreen";
 
-export type ScreenId = 'home' | 'search' | 'library' | 'accounts';
+export type ScreenId = "home" | "search" | "library" | "accounts";
 
 export const NAV_ITEMS: readonly { id: ScreenId; label: string }[] = [
-  { id: 'home', label: 'Home' },
-  { id: 'search', label: 'Search' },
-  { id: 'library', label: 'Library' },
-  { id: 'accounts', label: 'Accounts' },
+  { id: "home", label: "Home" },
+  { id: "search", label: "Search" },
+  { id: "library", label: "Library" },
+  { id: "accounts", label: "Accounts" },
 ];
 
 export interface AppShellProps {
@@ -33,41 +33,41 @@ export interface AppShellProps {
 
 const styles: Record<string, React.CSSProperties> = {
   root: {
-    minHeight: '100vh',
-    boxSizing: 'border-box',
-    display: 'grid',
-    gridTemplateRows: 'auto auto 1fr auto',
+    minHeight: "100vh",
+    boxSizing: "border-box",
+    display: "grid",
+    gridTemplateRows: "auto auto 1fr auto",
     gap: theme.spacing.md,
     padding: theme.spacing.md,
     fontFamily: theme.typography.fontFamily,
     background: theme.colors.background,
     color: theme.colors.text,
   },
-  header: { display: 'flex', alignItems: 'baseline', gap: theme.spacing.sm },
+  header: { display: "flex", alignItems: "baseline", gap: theme.spacing.sm },
   brand: {
     fontSize: theme.typography.sizes.display,
     fontWeight: 700,
-    letterSpacing: '0.5px',
+    letterSpacing: "0.5px",
     color: theme.colors.accent,
   },
   tagline: { color: theme.colors.textMuted },
-  nav: { display: 'flex', gap: theme.spacing.sm },
+  nav: { display: "flex", gap: theme.spacing.sm },
   navButton: {
-    background: 'transparent',
+    background: "transparent",
     color: theme.colors.textMuted,
     border: `1px solid ${theme.colors.border}`,
     borderRadius: theme.radii.sm,
-    padding: '8px 14px',
-    cursor: 'pointer',
+    padding: "8px 14px",
+    cursor: "pointer",
     fontSize: theme.typography.sizes.md,
   },
   navButtonActive: {
     background: theme.colors.accent,
     borderColor: theme.colors.accent,
-    color: '#08211b',
+    color: "#08211b",
     fontWeight: 600,
   },
-  main: { display: 'block' },
+  main: { display: "block" },
   footer: {
     borderTop: `1px solid ${theme.colors.border}`,
     paddingTop: theme.spacing.sm,
@@ -78,12 +78,12 @@ const styles: Record<string, React.CSSProperties> = {
 
 export function AppShell(props: AppShellProps) {
   const {
-    initialScreen = 'home',
+    initialScreen = "home",
     accounts = [],
     recentItems = [],
     collections = [],
     localEntries = [],
-    searchState = { phase: 'idle' },
+    searchState = { phase: "idle" },
     onPlay,
     onConnect,
     onDisconnect,
@@ -107,7 +107,7 @@ export function AppShell(props: AppShellProps) {
             key={navItem.id}
             type="button"
             data-testid={`nav-${navItem.id}`}
-            aria-current={screen === navItem.id ? 'page' : undefined}
+            aria-current={screen === navItem.id ? "page" : undefined}
             style={
               screen === navItem.id
                 ? { ...styles.navButton, ...styles.navButtonActive }
@@ -121,7 +121,7 @@ export function AppShell(props: AppShellProps) {
       </nav>
 
       <main style={styles.main}>
-        {screen === 'home' && (
+        {screen === "home" && (
           <HomeScreen
             accounts={accounts}
             recentItems={recentItems}
@@ -129,7 +129,7 @@ export function AppShell(props: AppShellProps) {
             onPlay={onPlay}
           />
         )}
-        {screen === 'search' && (
+        {screen === "search" && (
           <SearchScreen
             state={searchState}
             onQueryChange={onSearchQuery}
@@ -139,10 +139,10 @@ export function AppShell(props: AppShellProps) {
             onSelectItem={onPlay}
           />
         )}
-        {screen === 'library' && (
+        {screen === "library" && (
           <LibraryScreen collections={collections} localEntries={localEntries} onPlay={onPlay} />
         )}
-        {screen === 'accounts' && (
+        {screen === "accounts" && (
           <AccountsScreen accounts={accounts} onConnect={onConnect} onDisconnect={onDisconnect} />
         )}
       </main>

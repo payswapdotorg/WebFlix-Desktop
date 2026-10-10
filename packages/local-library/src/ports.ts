@@ -13,7 +13,7 @@ import type {
   ProviderMetadataInput,
   ProviderMetadataRecord,
   WatchedState,
-} from './types';
+} from "./types";
 
 /**
  * The application-facing LocalStore port implemented by this lane.

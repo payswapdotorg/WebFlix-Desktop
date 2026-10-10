@@ -27,17 +27,17 @@
  * the defense-in-depth guard used inside IPC handler bodies.
  */
 
-import { readEnv } from './identity';
+import { readEnv } from "./identity";
 
-export type IsolationFlagName = 'chromeImportEnabled' | 'webflixProductSurface';
+export type IsolationFlagName = "chromeImportEnabled" | "webflixProductSurface";
 
 export interface IsolationFlags {
   readonly chromeImportEnabled: boolean;
   readonly webflixProductSurface: boolean;
 }
 
-export const CHROME_IMPORT_ENV = 'WEBFLIX_ENABLE_CHROME_IMPORT';
-export const PRODUCT_SURFACE_ENV = 'WEBFLIX_ENABLE_PRODUCT_SURFACE';
+export const CHROME_IMPORT_ENV = "WEBFLIX_ENABLE_CHROME_IMPORT";
+export const PRODUCT_SURFACE_ENV = "WEBFLIX_ENABLE_PRODUCT_SURFACE";
 
 /** Both flags default OFF — fail-closed (AUDIT-DESKTOP). */
 export const DEFAULT_ISOLATION_FLAGS: Readonly<IsolationFlags> = Object.freeze({
@@ -45,7 +45,7 @@ export const DEFAULT_ISOLATION_FLAGS: Readonly<IsolationFlags> = Object.freeze({
   webflixProductSurface: false,
 });
 
-const TRUTHY = new Set(['1', 'true', 'yes', 'on']);
+const TRUTHY = new Set(["1", "true", "yes", "on"]);
 
 /** Fail-closed: only explicit opt-in values are true; everything else is false. */
 export function parseIsolationFlagValue(raw: string | undefined): boolean {
@@ -63,8 +63,8 @@ export function resolveIsolationFlags(
   env: Record<string, string | undefined>,
 ): Readonly<IsolationFlags> {
   return Object.freeze({
-    chromeImportEnabled: parseIsolationFlagValue(readEnv(env, 'ENABLE_CHROME_IMPORT')),
-    webflixProductSurface: parseIsolationFlagValue(readEnv(env, 'ENABLE_PRODUCT_SURFACE')),
+    chromeImportEnabled: parseIsolationFlagValue(readEnv(env, "ENABLE_CHROME_IMPORT")),
+    webflixProductSurface: parseIsolationFlagValue(readEnv(env, "ENABLE_PRODUCT_SURFACE")),
   });
 }
 
@@ -82,43 +82,43 @@ export interface IsolationFlagPolicy {
 
 export const ISOLATION_FLAG_POLICY: readonly IsolationFlagPolicy[] = Object.freeze([
   Object.freeze({
-    name: 'chromeImportEnabled',
+    name: "chromeImportEnabled",
     env: CHROME_IMPORT_ENV,
     default: false,
     gates: Object.freeze([
-      'chrome cookie import',
-      'chrome localStorage import',
-      'chrome credential (password) import',
+      "chrome cookie import",
+      "chrome localStorage import",
+      "chrome credential (password) import",
     ]),
     offGuarantee:
-      'While chromeImportEnabled is OFF, the Chrome import IPC surface is UNREACHABLE: no ipcMain ' +
-      'handler is registered for the chrome-import:* channels, so every renderer invoke fails ' +
-      "with Electron's \"No handler registered\" error before any import code runs. Reachability " +
-      'is enforced in the main process, never by hiding renderer UI.',
-    enforcedIn: Object.freeze(['packages/desktop/src/main/chrome-import.ts']),
+      "While chromeImportEnabled is OFF, the Chrome import IPC surface is UNREACHABLE: no ipcMain " +
+      "handler is registered for the chrome-import:* channels, so every renderer invoke fails " +
+      'with Electron\'s "No handler registered" error before any import code runs. Reachability ' +
+      "is enforced in the main process, never by hiding renderer UI.",
+    enforcedIn: Object.freeze(["packages/desktop/src/main/chrome-import.ts"]),
   }),
   Object.freeze({
-    name: 'webflixProductSurface',
+    name: "webflixProductSurface",
     env: PRODUCT_SURFACE_ENV,
     default: false,
     gates: Object.freeze([
-      'Coding Plan / PayPal surface',
-      'CUA (computer-use agent) surface',
-      'Lark surface',
-      'SSH remote surface',
-      'Docker remote surface',
-      'WSL remote surface',
-      'force-update flow',
+      "Coding Plan / PayPal surface",
+      "CUA (computer-use agent) surface",
+      "Lark surface",
+      "SSH remote surface",
+      "Docker remote surface",
+      "WSL remote surface",
+      "force-update flow",
     ]),
     offGuarantee:
-      'While webflixProductSurface is OFF, the product surface is UNREACHABLE: none of the gated ' +
-      'IPC channels, menu entries, deep links, or renderer routes are registered, and any message ' +
-      'arriving on a gated channel is rejected in the main process before a gated handler body ' +
-      'can execute.',
+      "While webflixProductSurface is OFF, the product surface is UNREACHABLE: none of the gated " +
+      "IPC channels, menu entries, deep links, or renderer routes are registered, and any message " +
+      "arriving on a gated channel is rejected in the main process before a gated handler body " +
+      "can execute.",
     enforcedIn: Object.freeze([
-      'packages/desktop/src/main/ipc-router.ts',
-      'packages/desktop/src/main/app-menu.ts',
-      'packages/desktop/src/main/deep-links.ts',
+      "packages/desktop/src/main/ipc-router.ts",
+      "packages/desktop/src/main/app-menu.ts",
+      "packages/desktop/src/main/deep-links.ts",
     ]),
   }),
 ]);
@@ -138,7 +138,7 @@ export class FlagDisabledError extends Error {
         `unreachable from the renderer (see ISOLATION_FLAG_POLICY). Set ${FLAG_ENV[flag]} ` +
         `explicitly to enable.`,
     );
-    this.name = 'FlagDisabledError';
+    this.name = "FlagDisabledError";
     this.flag = flag;
   }
 }

@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { theme } from '../theme';
-import type { CatalogItem } from 'webflix-contracts';
-import { HONEST_COPY } from '../states';
-import type { SearchState } from '../states';
+import React, { useState } from "react";
+import { theme } from "../theme";
+import type { CatalogItem } from "webflix-contracts";
+import { HONEST_COPY } from "../states";
+import type { SearchState } from "../states";
 
 export interface SearchScreenProps {
   readonly state: SearchState;
@@ -14,62 +14,67 @@ export interface SearchScreenProps {
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  root: { display: 'flex', flexDirection: 'column', gap: theme.spacing.md, color: theme.colors.text },
+  root: {
+    display: "flex",
+    flexDirection: "column",
+    gap: theme.spacing.md,
+    color: theme.colors.text,
+  },
   heading: { margin: 0, fontSize: theme.typography.sizes.xl },
-  form: { display: 'flex', gap: theme.spacing.sm },
+  form: { display: "flex", gap: theme.spacing.sm },
   input: {
     flex: 1,
     background: theme.colors.surface,
     color: theme.colors.text,
     border: `1px solid ${theme.colors.border}`,
     borderRadius: theme.radii.md,
-    padding: '10px 12px',
+    padding: "10px 12px",
     fontSize: theme.typography.sizes.md,
   },
   button: {
     background: theme.colors.accent,
-    color: '#08211b',
-    border: 'none',
+    color: "#08211b",
+    border: "none",
     borderRadius: theme.radii.sm,
-    padding: '10px 16px',
+    padding: "10px 16px",
     fontWeight: 600,
-    cursor: 'pointer',
+    cursor: "pointer",
   },
   ghostButton: {
-    background: 'transparent',
+    background: "transparent",
     color: theme.colors.accent,
     border: `1px solid ${theme.colors.accent}`,
     borderRadius: theme.radii.sm,
-    padding: '8px 14px',
-    cursor: 'pointer',
+    padding: "8px 14px",
+    cursor: "pointer",
   },
   panel: {
     background: theme.colors.surface,
     border: `1px solid ${theme.colors.border}`,
     borderRadius: theme.radii.lg,
     padding: theme.spacing.md,
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'flex-start',
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "flex-start",
     gap: theme.spacing.sm,
   },
   panelTitle: { margin: 0, fontSize: theme.typography.sizes.lg },
   muted: { margin: 0, color: theme.colors.textMuted, lineHeight: 1.5 },
   row: {
-    width: '100%',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    width: "100%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
     gap: theme.spacing.sm,
     padding: `${theme.spacing.xs}px 0`,
     borderBottom: `1px solid ${theme.colors.border}`,
   },
-  list: { listStyle: 'none', margin: 0, padding: 0, width: '100%' },
+  list: { listStyle: "none", margin: 0, padding: 0, width: "100%" },
 };
 
 export function SearchScreen(props: SearchScreenProps) {
   const { state, onQueryChange, onSubmit, onRetry, onConnect, onSelectItem } = props;
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState("");
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
@@ -99,7 +104,12 @@ export function SearchScreen(props: SearchScreenProps) {
           Search
         </button>
       </form>
-      <ResultsArea state={state} onRetry={onRetry} onConnect={onConnect} onSelectItem={onSelectItem} />
+      <ResultsArea
+        state={state}
+        onRetry={onRetry}
+        onConnect={onConnect}
+        onSelectItem={onSelectItem}
+      />
     </section>
   );
 }
@@ -113,7 +123,7 @@ function ResultsArea(props: {
   const { state, onRetry, onConnect, onSelectItem } = props;
 
   switch (state.phase) {
-    case 'idle':
+    case "idle":
       return (
         <div data-testid="search-idle" role="status" style={styles.panel}>
           <p style={styles.muted}>
@@ -123,7 +133,7 @@ function ResultsArea(props: {
         </div>
       );
 
-    case 'loading':
+    case "loading":
       return (
         <div data-testid="search-loading" role="status" style={styles.panel}>
           <p style={styles.panelTitle}>{HONEST_COPY.loading.title}</p>
@@ -131,11 +141,11 @@ function ResultsArea(props: {
         </div>
       );
 
-    case 'results':
+    case "results":
       return (
         <div data-testid="search-results" style={styles.panel}>
           <p style={styles.panelTitle}>
-            {state.items.length} result{state.items.length === 1 ? '' : 's'} for “{state.query}”
+            {state.items.length} result{state.items.length === 1 ? "" : "s"} for “{state.query}”
           </p>
           <ul style={styles.list}>
             {state.items.map((item) => (
@@ -143,7 +153,7 @@ function ResultsArea(props: {
                 <span>
                   {item.title}
                   <span style={styles.muted}>
-                    {' '}
+                    {" "}
                     · {item.providerId} · {item.kind}
                   </span>
                 </span>
@@ -161,7 +171,7 @@ function ResultsArea(props: {
         </div>
       );
 
-    case 'empty':
+    case "empty":
       return (
         <div data-testid="search-empty" role="status" style={styles.panel}>
           <p style={styles.panelTitle}>{HONEST_COPY.empty.title}</p>
@@ -169,22 +179,22 @@ function ResultsArea(props: {
         </div>
       );
 
-    case 'requires-auth':
+    case "requires-auth":
       return (
         <div data-testid="search-requires-auth" role="status" style={styles.panel}>
-          <p style={styles.panelTitle}>{HONEST_COPY['requires-auth'].title}</p>
-          <p style={styles.muted}>{HONEST_COPY['requires-auth'].message}</p>
+          <p style={styles.panelTitle}>{HONEST_COPY["requires-auth"].title}</p>
+          <p style={styles.muted}>{HONEST_COPY["requires-auth"].message}</p>
           <button type="button" style={styles.button} onClick={() => onConnect?.(state.providerId)}>
-            {HONEST_COPY['requires-auth'].actionLabel}
+            {HONEST_COPY["requires-auth"].actionLabel}
           </button>
         </div>
       );
 
-    case 'rate-limited':
+    case "rate-limited":
       return (
         <div data-testid="search-rate-limited" role="status" style={styles.panel}>
-          <p style={styles.panelTitle}>{HONEST_COPY['rate-limited'].title}</p>
-          <p style={styles.muted}>{HONEST_COPY['rate-limited'].message}</p>
+          <p style={styles.panelTitle}>{HONEST_COPY["rate-limited"].title}</p>
+          <p style={styles.muted}>{HONEST_COPY["rate-limited"].message}</p>
           {state.retryAfterSeconds !== undefined && (
             <p style={styles.muted}>Quota should reset in about {state.retryAfterSeconds}s.</p>
           )}
@@ -196,7 +206,7 @@ function ResultsArea(props: {
         </div>
       );
 
-    case 'unsupported':
+    case "unsupported":
       return (
         <div data-testid="search-unsupported" role="status" style={styles.panel}>
           <p style={styles.panelTitle}>{HONEST_COPY.unsupported.title}</p>
@@ -207,7 +217,7 @@ function ResultsArea(props: {
         </div>
       );
 
-    case 'unavailable':
+    case "unavailable":
       return (
         <div data-testid="search-unavailable" role="status" style={styles.panel}>
           <p style={styles.panelTitle}>{HONEST_COPY.unavailable.title}</p>
@@ -221,15 +231,15 @@ function ResultsArea(props: {
         </div>
       );
 
-    case 'status-unknown':
+    case "status-unknown":
       return (
         <div data-testid="search-status-unknown" role="status" style={styles.panel}>
-          <p style={styles.panelTitle}>{HONEST_COPY['status-unknown'].title}</p>
-          <p style={styles.muted}>{HONEST_COPY['status-unknown'].message}</p>
+          <p style={styles.panelTitle}>{HONEST_COPY["status-unknown"].title}</p>
+          <p style={styles.muted}>{HONEST_COPY["status-unknown"].message}</p>
           {state.detail && <p style={styles.muted}>{state.detail}</p>}
           {onRetry && (
             <button type="button" style={styles.ghostButton} onClick={onRetry}>
-              {HONEST_COPY['status-unknown'].actionLabel}
+              {HONEST_COPY["status-unknown"].actionLabel}
             </button>
           )}
         </div>

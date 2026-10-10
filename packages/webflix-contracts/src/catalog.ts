@@ -1,19 +1,8 @@
 import { z } from "zod";
-import {
-  IsoDateTimeSchema,
-  RegionCodeSchema,
-  SecretFreeStringSchema,
-} from "./internal/primitives";
+import { IsoDateTimeSchema, RegionCodeSchema, SecretFreeStringSchema } from "./internal/primitives";
 
 /** The kind of media a catalog item represents. */
-export const MediaKindSchema = z.enum([
-  "video",
-  "short",
-  "live",
-  "podcast",
-  "audio",
-  "local-file",
-]);
+export const MediaKindSchema = z.enum(["video", "short", "live", "podcast", "audio", "local-file"]);
 export type MediaKind = z.infer<typeof MediaKindSchema>;
 
 /** Kinds of provider-side assets a catalog item can reference. */

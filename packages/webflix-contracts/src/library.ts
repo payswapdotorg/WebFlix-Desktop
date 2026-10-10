@@ -53,11 +53,9 @@ export const CollectionSchema = z
     createdAt: IsoDateTimeSchema,
     updatedAt: IsoDateTimeSchema,
   })
-  .refine(
-    (collection) =>
-      collection.kind !== "smart" || collection.smartQuery !== undefined,
-    { message: "smart collections must define smartQuery" },
-  );
+  .refine((collection) => collection.kind !== "smart" || collection.smartQuery !== undefined, {
+    message: "smart collections must define smartQuery",
+  });
 export type Collection = z.infer<typeof CollectionSchema>;
 
 /** Ordered playback list of item ids. */

@@ -2,11 +2,7 @@ import { z } from "zod";
 import { IsoDateTimeSchema } from "./internal/primitives";
 
 /** Lifecycle of a linked provider account, as observed by the renderer. */
-export const ProviderAccountStatusSchema = z.enum([
-  "connected",
-  "expired",
-  "revoked",
-]);
+export const ProviderAccountStatusSchema = z.enum(["connected", "expired", "revoked"]);
 export type ProviderAccountStatus = z.infer<typeof ProviderAccountStatusSchema>;
 
 /**
@@ -46,8 +42,5 @@ export interface CredentialRef {
  * zod-wrap credential material inside this package.
  */
 export interface CredentialPort {
-  getToken(
-    providerId: string,
-    internalAccountId: string,
-  ): Promise<CredentialRef>;
+  getToken(providerId: string, internalAccountId: string): Promise<CredentialRef>;
 }

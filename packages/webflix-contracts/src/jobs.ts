@@ -1,8 +1,5 @@
 import { z } from "zod";
-import {
-  IsoDateTimeSchema,
-  SecretFreeRecordSchema,
-} from "./internal/primitives";
+import { IsoDateTimeSchema, SecretFreeRecordSchema } from "./internal/primitives";
 import { FailureModeSchema, ProvenanceSchema } from "./capability";
 
 /** Lifecycle states of a background job. */

@@ -1,6 +1,6 @@
-import React from 'react';
-import { theme } from '../theme';
-import type { CatalogItem, LibraryCollection } from 'webflix-contracts';
+import React from "react";
+import { theme } from "../theme";
+import type { CatalogItem, LibraryCollection } from "webflix-contracts";
 
 export interface LibraryScreenProps {
   readonly collections?: readonly LibraryCollection[];
@@ -9,15 +9,20 @@ export interface LibraryScreenProps {
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  root: { display: 'flex', flexDirection: 'column', gap: theme.spacing.md, color: theme.colors.text },
+  root: {
+    display: "flex",
+    flexDirection: "column",
+    gap: theme.spacing.md,
+    color: theme.colors.text,
+  },
   heading: { margin: 0, fontSize: theme.typography.sizes.xl },
   card: {
     background: theme.colors.surface,
     border: `1px solid ${theme.colors.border}`,
     borderRadius: theme.radii.lg,
     padding: theme.spacing.md,
-    display: 'flex',
-    flexDirection: 'column',
+    display: "flex",
+    flexDirection: "column",
     gap: theme.spacing.sm,
   },
   cardTitle: { margin: 0, fontSize: theme.typography.sizes.lg },
@@ -29,23 +34,23 @@ const styles: Record<string, React.CSSProperties> = {
     color: theme.colors.textMuted,
   },
   row: {
-    width: '100%',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    width: "100%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
     gap: theme.spacing.sm,
     padding: `${theme.spacing.xs}px 0`,
     borderBottom: `1px solid ${theme.colors.border}`,
   },
-  list: { listStyle: 'none', margin: 0, padding: 0, width: '100%' },
+  list: { listStyle: "none", margin: 0, padding: 0, width: "100%" },
   collectionName: { margin: 0, fontWeight: 600 },
   ghostButton: {
-    background: 'transparent',
+    background: "transparent",
     color: theme.colors.accent,
     border: `1px solid ${theme.colors.accent}`,
     borderRadius: theme.radii.sm,
-    padding: '6px 12px',
-    cursor: 'pointer',
+    padding: "6px 12px",
+    cursor: "pointer",
   },
 };
 
@@ -74,7 +79,7 @@ export function LibraryScreen(props: LibraryScreenProps) {
                   {collection.description && <p style={styles.muted}>{collection.description}</p>}
                 </div>
                 <span style={styles.muted}>
-                  {collection.itemIds.length} item{collection.itemIds.length === 1 ? '' : 's'}
+                  {collection.itemIds.length} item{collection.itemIds.length === 1 ? "" : "s"}
                 </span>
               </li>
             ))}

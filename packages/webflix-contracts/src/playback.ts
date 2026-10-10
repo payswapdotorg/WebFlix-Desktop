@@ -63,9 +63,7 @@ export const LocalFilePlanSchema = z.object({
   kind: z.literal("local-file"),
   /** Absolute filesystem path of the local file. */
   path: z.string().min(1),
-  mimeType: z
-    .string()
-    .regex(/^[\w.+-]+\/[\w.+-]+$/, "must be a MIME type such as video/mp4"),
+  mimeType: z.string().regex(/^[\w.+-]+\/[\w.+-]+$/, "must be a MIME type such as video/mp4"),
 });
 export type LocalFilePlan = z.infer<typeof LocalFilePlanSchema>;
 

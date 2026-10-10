@@ -1,9 +1,4 @@
-import {
-  ErrorCode,
-  IsoDateTimeSchema,
-  JobDescriptorSchema,
-  WebFlixError,
-} from "webflix-contracts";
+import { ErrorCode, IsoDateTimeSchema, JobDescriptorSchema, WebFlixError } from "webflix-contracts";
 import type {
   FailureMode,
   IsoDateTime,
@@ -39,9 +34,7 @@ export const INHERENTLY_RETRYABLE_FAILURE_MODES: readonly FailureMode[] = [
 ];
 
 export function isRetryableFailureMode(mode: FailureMode): boolean {
-  return (INHERENTLY_RETRYABLE_FAILURE_MODES as readonly string[]).includes(
-    mode,
-  );
+  return (INHERENTLY_RETRYABLE_FAILURE_MODES as readonly string[]).includes(mode);
 }
 
 export const DEFAULT_MAX_BACKOFF_MS = 5 * 60 * 1000;
@@ -70,14 +63,10 @@ export function computeBackoffMs(
       context: { maxBackoffMs: options.maxBackoffMs },
     });
   }
-  const base =
-    Number.isFinite(retry.backoffMs) && retry.backoffMs > 0 ? retry.backoffMs : 0;
+  const base = Number.isFinite(retry.backoffMs) && retry.backoffMs > 0 ? retry.backoffMs : 0;
   const multiplier =
-    Number.isFinite(retry.multiplier) && retry.multiplier >= 1
-      ? retry.multiplier
-      : 1;
-  const attempts =
-    Number.isInteger(failedAttempts) && failedAttempts > 0 ? failedAttempts : 0;
+    Number.isFinite(retry.multiplier) && retry.multiplier >= 1 ? retry.multiplier : 1;
+  const attempts = Number.isInteger(failedAttempts) && failedAttempts > 0 ? failedAttempts : 0;
   const raw = base * Math.pow(multiplier, attempts);
   return Math.min(Math.max(raw, 0), cap);
 }
@@ -115,12 +104,7 @@ export function decideRetry(
   failure: JobFailure,
   options: BackoffOptions = {},
 ): JobRetryDecision {
-  const parsed = parseOrThrow(
-    JobDescriptorSchema,
-    job,
-    ErrorCode.Unknown,
-    "JobDescriptor",
-  );
+  const parsed = parseOrThrow(JobDescriptorSchema, job, ErrorCode.Unknown, "JobDescriptor");
   if (parsed.state === "cancelled") {
     return {
       outcome: "no-retry",
@@ -186,18 +170,8 @@ export function applyRetryDecision(
   failure: JobFailure,
   at: IsoDateTime,
 ): JobDescriptor {
-  const parsed = parseOrThrow(
-    JobDescriptorSchema,
-    job,
-    ErrorCode.Unknown,
-    "JobDescriptor",
-  );
-  const instant = parseOrThrow(
-    IsoDateTimeSchema,
-    at,
-    ErrorCode.Unknown,
-    "job timestamp",
-  );
+  const parsed = parseOrThrow(JobDescriptorSchema, job, ErrorCode.Unknown, "JobDescriptor");
+  const instant = parseOrThrow(IsoDateTimeSchema, at, ErrorCode.Unknown, "job timestamp");
   const lastError = lastErrorOf(failure);
   if (decision.outcome === "retry") {
     return {
@@ -215,11 +189,7 @@ export function applyRetryDecision(
 /* Cancellation                                                         */
 /* ------------------------------------------------------------------ */
 
-export const TERMINAL_JOB_STATES: readonly JobState[] = [
-  "succeeded",
-  "failed",
-  "cancelled",
-];
+export const TERMINAL_JOB_STATES: readonly JobState[] = ["succeeded", "failed", "cancelled"];
 
 export function isTerminalJobState(state: JobState): boolean {
   return (TERMINAL_JOB_STATES as readonly string[]).includes(state);
@@ -235,22 +205,9 @@ export type JobCancellation =
  * live job. Idempotent; terminal jobs are unchanged. The job must stop at
  * its next checkpoint.
  */
-export function requestCancellation(
-  job: JobDescriptor,
-  at: IsoDateTime,
-): JobCancellation {
-  const parsed = parseOrThrow(
-    JobDescriptorSchema,
-    job,
-    ErrorCode.Unknown,
-    "JobDescriptor",
-  );
-  const instant = parseOrThrow(
-    IsoDateTimeSchema,
-    at,
-    ErrorCode.Unknown,
-    "job timestamp",
-  );
+export function requestCancellation(job: JobDescriptor, at: IsoDateTime): JobCancellation {
+  const parsed = parseOrThrow(JobDescriptorSchema, job, ErrorCode.Unknown, "JobDescriptor");
+  const instant = parseOrThrow(IsoDateTimeSchema, at, ErrorCode.Unknown, "job timestamp");
   if (isTerminalJobState(parsed.state)) {
     return {
       outcome: "unchanged",
@@ -277,22 +234,9 @@ export function requestCancellation(
  * request only when they advertise `cancellable`. Rejected when no
  * cancellation was requested; unchanged when already terminal.
  */
-export function acknowledgeCancellation(
-  job: JobDescriptor,
-  at: IsoDateTime,
-): JobCancellation {
-  const parsed = parseOrThrow(
-    JobDescriptorSchema,
-    job,
-    ErrorCode.Unknown,
-    "JobDescriptor",
-  );
-  const instant = parseOrThrow(
-    IsoDateTimeSchema,
-    at,
-    ErrorCode.Unknown,
-    "job timestamp",
-  );
+export function acknowledgeCancellation(job: JobDescriptor, at: IsoDateTime): JobCancellation {
+  const parsed = parseOrThrow(JobDescriptorSchema, job, ErrorCode.Unknown, "JobDescriptor");
+  const instant = parseOrThrow(IsoDateTimeSchema, at, ErrorCode.Unknown, "job timestamp");
   if (!parsed.cancelRequested) {
     return {
       outcome: "rejected",
@@ -340,23 +284,9 @@ export type JobTransition =
  * and finishedAt on any terminal state. Requeues after failure go through
  * applyRetryDecision, not through this table. Provenance is preserved.
  */
-export function transitionJob(
-  job: JobDescriptor,
-  next: JobState,
-  at: IsoDateTime,
-): JobTransition {
-  const parsed = parseOrThrow(
-    JobDescriptorSchema,
-    job,
-    ErrorCode.Unknown,
-    "JobDescriptor",
-  );
-  const instant = parseOrThrow(
-    IsoDateTimeSchema,
-    at,
-    ErrorCode.Unknown,
-    "job timestamp",
-  );
+export function transitionJob(job: JobDescriptor, next: JobState, at: IsoDateTime): JobTransition {
+  const parsed = parseOrThrow(JobDescriptorSchema, job, ErrorCode.Unknown, "JobDescriptor");
+  const instant = parseOrThrow(IsoDateTimeSchema, at, ErrorCode.Unknown, "job timestamp");
   if (!JOB_TRANSITIONS[parsed.state].includes(next)) {
     return {
       outcome: "rejected",
@@ -381,12 +311,7 @@ export function transitionJob(
  * The provenance every artifact produced by this job must carry, verbatim.
  */
 export function jobArtifactProvenance(job: JobDescriptor): Provenance {
-  const parsed = parseOrThrow(
-    JobDescriptorSchema,
-    job,
-    ErrorCode.Unknown,
-    "JobDescriptor",
-  );
+  const parsed = parseOrThrow(JobDescriptorSchema, job, ErrorCode.Unknown, "JobDescriptor");
   return { ...parsed.provenance };
 }
 
@@ -404,12 +329,7 @@ export function deriveArtifactProvenance(
   job: JobDescriptor,
   overrides: ProvenanceOverrides = {},
 ): Provenance {
-  const parsed = parseOrThrow(
-    JobDescriptorSchema,
-    job,
-    ErrorCode.Unknown,
-    "JobDescriptor",
-  );
+  const parsed = parseOrThrow(JobDescriptorSchema, job, ErrorCode.Unknown, "JobDescriptor");
   const derived: Provenance = { ...parsed.provenance };
   if (overrides.buildId !== undefined) derived.buildId = overrides.buildId;
   if (overrides.inputsHash !== undefined) {
@@ -419,9 +339,6 @@ export function deriveArtifactProvenance(
 }
 
 /** True when derived provenance is byte-for-byte the original (deep equality). */
-export function isProvenancePreserved(
-  original: Provenance,
-  derived: Provenance,
-): boolean {
+export function isProvenancePreserved(original: Provenance, derived: Provenance): boolean {
   return deepEqual(original, derived);
 }

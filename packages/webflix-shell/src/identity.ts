@@ -15,11 +15,11 @@
  */
 
 /** The one and only WebFlix flavor. */
-export const FLAVOR = 'webflix' as const;
+export const FLAVOR = "webflix" as const;
 export type Flavor = typeof FLAVOR;
 
 /** Selects between the frozen production and development identity values. */
-export type DataRootMode = 'prod' | 'dev';
+export type DataRootMode = "prod" | "dev";
 
 export interface WebFlixIdentity {
   readonly appId: string;
@@ -40,24 +40,24 @@ export interface WebFlixIdentity {
  */
 export const WEBFLIX_IDENTITY: Readonly<WebFlixIdentity> = Object.freeze({
   /** freeze §6.1 — production Windows AUMID and Electron appId. */
-  appId: 'org.webflix.desktop',
+  appId: "org.webflix.desktop",
   /** freeze §6.1 — user-facing product name (installers, menus, userData label). */
-  productName: 'WebFlix',
+  productName: "WebFlix",
   /** freeze §6.1 — deep-link scheme, registered and matched as `webflix://`. */
-  scheme: 'webflix://',
+  scheme: "webflix://",
   /** freeze §6.1 — production data root (Electron userData base). */
-  dataRoot: '~/.webflix',
+  dataRoot: "~/.webflix",
   /** freeze §6.1 — development data root; keeps dev state out of production. */
-  devDataRoot: '~/.webflix-dev',
+  devDataRoot: "~/.webflix-dev",
   /** freeze §6.1 — development Windows AUMID. Never the legacy ZCode AUMID
    *  `cn.aminer.zcode` and never the production appId (AUDIT-DESKTOP). */
-  devAumid: 'org.webflix.desktop.dev',
+  devAumid: "org.webflix.desktop.dev",
   /** freeze §6.1 — Linux package names, glob form as frozen. */
-  linuxPackageGlob: 'webflix-desktop*',
+  linuxPackageGlob: "webflix-desktop*",
   /** freeze §6.1 — concrete Linux package names covered by the glob. */
-  linuxPackageNames: ['webflix-desktop', 'webflix-desktop-dev'] as const,
+  linuxPackageNames: ["webflix-desktop", "webflix-desktop-dev"] as const,
   /** freeze §6.1 — legacy `ZCODE_*` env aliases remain honored during migration. */
-  legacyEnvPrefix: 'ZCODE_',
+  legacyEnvPrefix: "ZCODE_",
 });
 
 export interface LegacyZCodeIdentity {
@@ -75,11 +75,11 @@ export interface LegacyZCodeIdentity {
  * rejects them; `identity.test.ts` pins the rejections).
  */
 export const LEGACY_ZCODE_IDENTITY: Readonly<LegacyZCodeIdentity> = Object.freeze({
-  appId: 'cn.aminer.zcode',
-  scheme: 'zcode://',
-  dataRoot: '~/.zcode',
-  envPrefix: 'ZCODE_',
-  buggyDevAumid: 'cn.aminer.zcode',
+  appId: "cn.aminer.zcode",
+  scheme: "zcode://",
+  dataRoot: "~/.zcode",
+  envPrefix: "ZCODE_",
+  buggyDevAumid: "cn.aminer.zcode",
 });
 
 /**
@@ -87,22 +87,22 @@ export const LEGACY_ZCODE_IDENTITY: Readonly<LegacyZCodeIdentity> = Object.freez
  * only mandates that the legacy `ZCODE_*` aliases stay honored during
  * migration — see `readEnv`.
  */
-export const CANONICAL_ENV_PREFIX = 'WEBFLIX_';
+export const CANONICAL_ENV_PREFIX = "WEBFLIX_";
 
 /** Production uses the frozen appId as its Windows AUMID; dev uses `.dev`. */
 export function aumidFor(mode: DataRootMode): string {
-  return mode === 'dev' ? WEBFLIX_IDENTITY.devAumid : WEBFLIX_IDENTITY.appId;
+  return mode === "dev" ? WEBFLIX_IDENTITY.devAumid : WEBFLIX_IDENTITY.appId;
 }
 
 /** Frozen data root for the requested mode (freeze §6.1). */
 export function dataRootFor(mode: DataRootMode): string {
-  return mode === 'dev' ? WEBFLIX_IDENTITY.devDataRoot : WEBFLIX_IDENTITY.dataRoot;
+  return mode === "dev" ? WEBFLIX_IDENTITY.devDataRoot : WEBFLIX_IDENTITY.dataRoot;
 }
 
 /** Expand a leading `~/` data root against a home directory. */
 export function resolveDataRoot(root: string, home: string): string {
-  if (root === '~') return home;
-  if (root.startsWith('~/')) return `${home}${root.slice(1)}`;
+  if (root === "~") return home;
+  if (root.startsWith("~/")) return `${home}${root.slice(1)}`;
   return root;
 }
 
@@ -115,7 +115,7 @@ export function isWebflixSchemeUrl(url: string): boolean {
 export class LegacyIdentityCollisionError extends Error {
   constructor(message: string) {
     super(message);
-    this.name = 'LegacyIdentityCollisionError';
+    this.name = "LegacyIdentityCollisionError";
   }
 }
 
@@ -150,17 +150,20 @@ export function assertWebFlixIdentity(surface: IdentitySurface): void {
     const allowedAumids: readonly string[] = [WEBFLIX_IDENTITY.appId, WEBFLIX_IDENTITY.devAumid];
     if (!allowedAumids.includes(surface.aumid)) {
       throw new LegacyIdentityCollisionError(
-        `AUMID "${surface.aumid}" is not a WebFlix AUMID (allowed: ${allowedAumids.join(', ')}); ` +
+        `AUMID "${surface.aumid}" is not a WebFlix AUMID (allowed: ${allowedAumids.join(", ")}); ` +
           `the legacy ZCode AUMID "${legacy.appId}" is forbidden on WebFlix surfaces (AUDIT-DESKTOP)`,
       );
     }
   }
 
   if (surface.dataRoot !== undefined) {
-    const allowedRoots: readonly string[] = [WEBFLIX_IDENTITY.dataRoot, WEBFLIX_IDENTITY.devDataRoot];
+    const allowedRoots: readonly string[] = [
+      WEBFLIX_IDENTITY.dataRoot,
+      WEBFLIX_IDENTITY.devDataRoot,
+    ];
     if (!allowedRoots.includes(surface.dataRoot)) {
       throw new LegacyIdentityCollisionError(
-        `data root "${surface.dataRoot}" is not a WebFlix data root (allowed: ${allowedRoots.join(', ')}); ` +
+        `data root "${surface.dataRoot}" is not a WebFlix data root (allowed: ${allowedRoots.join(", ")}); ` +
           `the legacy ZCode root "${legacy.dataRoot}" is forbidden on WebFlix surfaces (freeze §6.1)`,
       );
     }
@@ -181,8 +184,8 @@ export function assertWebFlixIdentity(surface: IdentitySurface): void {
  */
 export function readEnv(env: Record<string, string | undefined>, name: string): string | undefined {
   const canonical = env[`${CANONICAL_ENV_PREFIX}${name}`];
-  if (canonical !== undefined && canonical !== '') return canonical;
+  if (canonical !== undefined && canonical !== "") return canonical;
   const legacy = env[`${WEBFLIX_IDENTITY.legacyEnvPrefix}${name}`];
-  if (legacy !== undefined && legacy !== '') return legacy;
+  if (legacy !== undefined && legacy !== "") return legacy;
   return undefined;
 }

@@ -4,5 +4,5 @@
 //   - types: contract-types.ts (local mirror; swap at TL2 merge)
 //   - merge: MatchEvidence-confidence-driven catalog merge
 
-export * from 'webflix-contracts';
-export * from './merge';
+export * from "webflix-contracts";
+export * from "./merge";

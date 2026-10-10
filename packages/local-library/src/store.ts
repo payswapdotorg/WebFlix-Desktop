@@ -1,13 +1,13 @@
-import { mkdirSync } from 'node:fs';
-import { join, resolve } from 'node:path';
-import { DB_FILENAME } from './constants';
-import { createSqliteDatabase, type SqliteDatabase } from './db/adapter';
-import { runMigrations } from './db/migrate';
-import { migration0001Init } from './db/migrations/0001_init';
-import type { Migration } from './db/migrate';
-import { ValidationError } from './errors';
-import { LocalStore, type LocalStoreOptions } from './localStore';
-import { assertNotDefaultDataRootInTests } from './paths';
+import { mkdirSync } from "node:fs";
+import { join, resolve } from "node:path";
+import { DB_FILENAME } from "./constants";
+import { createSqliteDatabase, type SqliteDatabase } from "./db/adapter";
+import { runMigrations } from "./db/migrate";
+import { migration0001Init } from "./db/migrations/0001_init";
+import type { Migration } from "./db/migrate";
+import { ValidationError } from "./errors";
+import { LocalStore, type LocalStoreOptions } from "./localStore";
+import { assertNotDefaultDataRootInTests } from "./paths";
 
 export const ALL_MIGRATIONS: readonly Migration[] = [migration0001Init];
 
@@ -29,13 +29,13 @@ export class WebFlixStore {
     public readonly local: LocalStore,
   ) {}
 
-  get engine(): SqliteDatabase['engine'] {
+  get engine(): SqliteDatabase["engine"] {
     return this.db.engine;
   }
 
   journalMode(): string {
-    const row = this.db.prepare('PRAGMA journal_mode').get();
-    return row ? String(row['journal_mode'] ?? '') : '';
+    const row = this.db.prepare("PRAGMA journal_mode").get();
+    return row ? String(row["journal_mode"] ?? "") : "";
   }
 
   close(): void {
@@ -49,8 +49,8 @@ export class WebFlixStore {
  * migrations. `baseDir` is constructor-injected; tests use temp dirs.
  */
 export async function openStore(options: OpenStoreOptions): Promise<WebFlixStore> {
-  if (typeof options.baseDir !== 'string' || options.baseDir.trim().length === 0) {
-    throw new ValidationError('OpenStoreOptions.baseDir must be a non-empty string');
+  if (typeof options.baseDir !== "string" || options.baseDir.trim().length === 0) {
+    throw new ValidationError("OpenStoreOptions.baseDir must be a non-empty string");
   }
   const baseDir = resolve(options.baseDir);
   assertNotDefaultDataRootInTests(baseDir);

@@ -1,6 +1,6 @@
-import { createHash } from 'node:crypto';
-import { inTransaction, type SqliteDatabase } from './adapter';
-import { MigrationError, MigrationHashMismatchError } from '../errors';
+import { createHash } from "node:crypto";
+import { inTransaction, type SqliteDatabase } from "./adapter";
+import { MigrationError, MigrationHashMismatchError } from "../errors";
 
 export interface Migration {
   id: number;
@@ -25,18 +25,18 @@ CREATE TABLE IF NOT EXISTS schema_migrations (
 `;
 
 export function migrationHash(migration: Migration): string {
-  return createHash('sha256').update(migration.sql, 'utf8').digest('hex');
+  return createHash("sha256").update(migration.sql, "utf8").digest("hex");
 }
 
 export function listAppliedMigrations(db: SqliteDatabase): AppliedMigration[] {
   return db
-    .prepare('SELECT id, name, hash, applied_at FROM schema_migrations ORDER BY id')
+    .prepare("SELECT id, name, hash, applied_at FROM schema_migrations ORDER BY id")
     .all()
     .map((row) => ({
-      id: Number(row['id']),
-      name: String(row['name']),
-      hash: String(row['hash']),
-      appliedAt: Number(row['applied_at']),
+      id: Number(row["id"]),
+      name: String(row["name"]),
+      hash: String(row["hash"]),
+      appliedAt: Number(row["applied_at"]),
     }));
 }
 
@@ -46,7 +46,11 @@ export function listAppliedMigrations(db: SqliteDatabase): AppliedMigration[] {
  * store re-verifies every recorded hash — any tampering or source rewrite stops
  * the store from opening. There are no down migrations.
  */
-export function runMigrations(db: SqliteDatabase, migrations: readonly Migration[], now: number = Date.now()): number {
+export function runMigrations(
+  db: SqliteDatabase,
+  migrations: readonly Migration[],
+  now: number = Date.now(),
+): number {
   const seen = new Set<number>();
   for (const migration of migrations) {
     if (seen.has(migration.id)) {
@@ -56,7 +60,7 @@ export function runMigrations(db: SqliteDatabase, migrations: readonly Migration
   }
   for (let i = 1; i < migrations.length; i += 1) {
     if (migrations[i].id <= migrations[i - 1].id) {
-      throw new MigrationError('migrations must be listed in strictly ascending id order');
+      throw new MigrationError("migrations must be listed in strictly ascending id order");
     }
   }
 
@@ -91,12 +95,9 @@ export function runMigrations(db: SqliteDatabase, migrations: readonly Migration
     }
     inTransaction(db, () => {
       db.exec(migration.sql);
-      db.prepare('INSERT INTO schema_migrations (id, name, hash, applied_at) VALUES (?, ?, ?, ?)').run(
-        migration.id,
-        migration.name,
-        migrationHash(migration),
-        now,
-      );
+      db.prepare(
+        "INSERT INTO schema_migrations (id, name, hash, applied_at) VALUES (?, ?, ?, ?)",
+      ).run(migration.id, migration.name, migrationHash(migration), now);
     });
     appliedNow += 1;
   }

@@ -16,7 +16,13 @@
         "title": "Fixture: container gardening basics",
         "description": "Fixture-only abridged description.",
         "channelTitle": "Fixture Channel",
-        "thumbnails": { "default": { "url": "https://i.ytimg.com/vi/FIXVID00001/default.jpg", "width": 120, "height": 90 } },
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/FIXVID00001/default.jpg",
+            "width": 120,
+            "height": 90
+          }
+        },
         "liveBroadcastContent": "none"
       }
     },
@@ -30,7 +36,13 @@
         "title": "Fixture: winter soil prep",
         "description": "Fixture-only abridged description.",
         "channelTitle": "Fixture Channel",
-        "thumbnails": { "default": { "url": "https://i.ytimg.com/vi/FIXVID00002/default.jpg", "width": 120, "height": 90 } },
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/FIXVID00002/default.jpg",
+            "width": 120,
+            "height": 90
+          }
+        },
         "liveBroadcastContent": "none"
       }
     }

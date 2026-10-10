@@ -1,4 +1,4 @@
-export type LibraryEntryKind = 'movie' | 'series' | 'episode' | 'other';
+export type LibraryEntryKind = "movie" | "series" | "episode" | "other";
 
 export interface LibraryEntry {
   id: string;
@@ -26,7 +26,7 @@ export interface LibraryEntryInput {
 }
 
 export type LibraryEntryPatch = Partial<
-  Pick<LibraryEntry, 'title' | 'kind' | 'sizeBytes' | 'mtimeMs' | 'fingerprint' | 'missing'>
+  Pick<LibraryEntry, "title" | "kind" | "sizeBytes" | "mtimeMs" | "fingerprint" | "missing">
 >;
 
 export interface LibraryQuery {
@@ -89,7 +89,7 @@ export interface ProviderMetadataInput {
   now?: number;
 }
 
-export type JobState = 'queued' | 'running' | 'done' | 'failed' | 'cancelled';
+export type JobState = "queued" | "running" | "done" | "failed" | "cancelled";
 
 export interface Job {
   id: string;

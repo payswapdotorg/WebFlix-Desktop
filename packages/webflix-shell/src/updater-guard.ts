@@ -29,7 +29,7 @@
  * only missing or malformed versions such as `0.0` are rejected.
  */
 
-export type InvalidVersionReason = 'missing' | 'not-semver';
+export type InvalidVersionReason = "missing" | "not-semver";
 
 export interface ValidVersionCheck {
   readonly valid: true;
@@ -56,19 +56,19 @@ const SEMVER_PATTERN =
  */
 export function validateAppVersion(version: string | undefined | null): VersionCheck {
   if (version === undefined || version === null) {
-    return { valid: false, reason: 'missing', version: null };
+    return { valid: false, reason: "missing", version: null };
   }
   const trimmed = version.trim();
-  if (trimmed === '') {
-    return { valid: false, reason: 'missing', version };
+  if (trimmed === "") {
+    return { valid: false, reason: "missing", version };
   }
   if (!SEMVER_PATTERN.test(trimmed)) {
-    return { valid: false, reason: 'not-semver', version: trimmed };
+    return { valid: false, reason: "not-semver", version: trimmed };
   }
   return { valid: true, version: trimmed };
 }
 
-export type AutoUpdaterStatus = 'constructed' | 'skipped';
+export type AutoUpdaterStatus = "constructed" | "skipped";
 
 export interface AutoUpdaterInitResult<T = unknown> {
   readonly status: AutoUpdaterStatus;
@@ -107,13 +107,13 @@ export function initializeAutoUpdater<T = unknown>(
 
   const result: AutoUpdaterInitResult<T> = check.valid
     ? {
-        status: 'constructed',
+        status: "constructed",
         updater: constructUpdater(),
         skipReason: undefined,
         appVersion: check.version,
       }
     : {
-        status: 'skipped',
+        status: "skipped",
         updater: undefined,
         skipReason: check.reason,
         appVersion: check.version,
@@ -142,16 +142,16 @@ export interface CheckableUpdater {
 
 export function hasCheckForUpdates(updater: unknown): updater is CheckableUpdater {
   return (
-    typeof updater === 'object' &&
+    typeof updater === "object" &&
     updater !== null &&
-    typeof (updater as { checkForUpdates?: unknown }).checkForUpdates === 'function'
+    typeof (updater as { checkForUpdates?: unknown }).checkForUpdates === "function"
   );
 }
 
 export type UpdateCheckOutcome =
-  | { readonly kind: 'checked'; readonly value: unknown }
-  | { readonly kind: 'no-updater' }
-  | { readonly kind: 'error'; readonly error: unknown };
+  | { readonly kind: "checked"; readonly value: unknown }
+  | { readonly kind: "no-updater" }
+  | { readonly kind: "error"; readonly error: unknown };
 
 /**
  * Fire `updater.checkForUpdates()` only when a constructed updater exposes
@@ -160,12 +160,12 @@ export type UpdateCheckOutcome =
  */
 export async function safeCheckForUpdates(updater: unknown): Promise<UpdateCheckOutcome> {
   if (!hasCheckForUpdates(updater)) {
-    return { kind: 'no-updater' };
+    return { kind: "no-updater" };
   }
   try {
     const value = await updater.checkForUpdates();
-    return { kind: 'checked', value };
+    return { kind: "checked", value };
   } catch (error) {
-    return { kind: 'error', error };
+    return { kind: "error", error };
   }
 }

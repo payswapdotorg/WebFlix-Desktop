@@ -1,11 +1,21 @@
-import { readdirSync, realpathSync, statSync } from 'node:fs';
-import { basename, join, resolve } from 'node:path';
-import { IndexCancelledError, PathSafetyError } from './errors';
-import { fingerprintFor } from './fingerprint';
-import { isInside, titleFromPath } from './paths';
-import type { IndexedFileInfo, LibraryEntryKind } from './types';
+import { readdirSync, realpathSync, statSync } from "node:fs";
+import { basename, join, resolve } from "node:path";
+import { IndexCancelledError, PathSafetyError } from "./errors";
+import { fingerprintFor } from "./fingerprint";
+import { isInside, titleFromPath } from "./paths";
+import type { IndexedFileInfo, LibraryEntryKind } from "./types";
 
-export const DEFAULT_MEDIA_EXTENSIONS = ['.mp4', '.m4v', '.mkv', '.mov', '.webm', '.avi', '.mpg', '.mpeg', '.ts'];
+export const DEFAULT_MEDIA_EXTENSIONS = [
+  ".mp4",
+  ".m4v",
+  ".mkv",
+  ".mov",
+  ".webm",
+  ".avi",
+  ".mpg",
+  ".mpeg",
+  ".ts",
+];
 
 export interface IndexOptions {
   extensions?: readonly string[];
@@ -26,7 +36,7 @@ export function hasMediaExtension(fileName: string, extensions: ReadonlySet<stri
 
 function throwIfAborted(signal?: AbortSignal): void {
   if (signal?.aborted) {
-    throw new IndexCancelledError('indexing cancelled by AbortSignal');
+    throw new IndexCancelledError("indexing cancelled by AbortSignal");
   }
 }
 
@@ -58,12 +68,14 @@ function buildEntry(
  * - Cancellable between every directory entry via AbortSignal.
  */
 export function indexPath(root: string, options: IndexOptions = {}): IndexedFileInfo[] {
-  if (typeof root !== 'string' || root.length === 0 || root.includes('\0')) {
+  if (typeof root !== "string" || root.length === 0 || root.includes("\0")) {
     throw new PathSafetyError(`unsafe index root: ${JSON.stringify(root)}`);
   }
   const rootReal = realpathSync(resolve(root)); // throws if the root does not exist
-  const extensions = new Set((options.extensions ?? DEFAULT_MEDIA_EXTENSIONS).map((ext) => ext.toLowerCase()));
-  const kind = options.kind ?? 'other';
+  const extensions = new Set(
+    (options.extensions ?? DEFAULT_MEDIA_EXTENSIONS).map((ext) => ext.toLowerCase()),
+  );
+  const kind = options.kind ?? "other";
   const results: IndexedFileInfo[] = [];
   let scanned = 0;
 

@@ -61,18 +61,14 @@ export const AbsoluteUrlSchema = z
     message: "must be an absolute http(s) or app-scheme URL",
   })
   .refine((value) => !looksLikeSecret(value), {
-    message:
-      "url must not contain raw secret material (tokens, api keys, passwords, signatures)",
+    message: "url must not contain raw secret material (tokens, api keys, passwords, signatures)",
   });
 export type AbsoluteUrl = z.infer<typeof AbsoluteUrlSchema>;
 
 /** A string that must never contain raw secret material. */
-export const SecretFreeStringSchema = z
-  .string()
-  .refine((value) => !looksLikeSecret(value), {
-    message:
-      "string must not contain raw secret material (tokens, api keys, passwords, signatures)",
-  });
+export const SecretFreeStringSchema = z.string().refine((value) => !looksLikeSecret(value), {
+  message: "string must not contain raw secret material (tokens, api keys, passwords, signatures)",
+});
 
 /**
  * A string-keyed record whose keys and string values are free of secret
@@ -83,11 +79,8 @@ export const SecretFreeRecordSchema = z
   .refine(
     (record) =>
       Object.keys(record).every((key) => !looksLikeSecret(key)) &&
-      Object.values(record).every(
-        (value) => typeof value !== "string" || !looksLikeSecret(value),
-      ),
+      Object.values(record).every((value) => typeof value !== "string" || !looksLikeSecret(value)),
     {
-      message:
-        "record must not contain raw secret material in keys or string values",
+      message: "record must not contain raw secret material in keys or string values",
     },
   );

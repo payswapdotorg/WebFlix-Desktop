@@ -68,8 +68,7 @@ const T1 = "2025-06-01T12:01:00Z";
 const T2 = "2025-06-01T12:02:00Z";
 const T3 = "2025-06-01T12:03:00Z";
 const T4 = "2025-06-01T12:04:00Z";
-const SHA256_TEST =
-  "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08";
+const SHA256_TEST = "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08";
 
 function expectKind<T extends CatalogMergeResult["kind"]>(
   result: CatalogMergeResult,
@@ -79,9 +78,7 @@ function expectKind<T extends CatalogMergeResult["kind"]>(
   return result as Extract<CatalogMergeResult, { kind: T }>;
 }
 
-function expectRetry(
-  decision: JobRetryDecision,
-): Extract<JobRetryDecision, { outcome: "retry" }> {
+function expectRetry(decision: JobRetryDecision): Extract<JobRetryDecision, { outcome: "retry" }> {
   expect(decision.outcome).toBe("retry");
   if (decision.outcome !== "retry") throw new Error("expected a retry decision");
   return decision;
@@ -175,10 +172,7 @@ describe("catalog merge", () => {
       }),
       "merged",
     );
-    expect(result.item.assets.map((asset) => asset.assetId)).toEqual([
-      "thumb-1",
-      "stream-1",
-    ]);
+    expect(result.item.assets.map((asset) => asset.assetId)).toEqual(["thumb-1", "stream-1"]);
     expect(result.item.matchEvidence?.confidence).toBe(0.95);
     expect(result.reason).toContain("attached");
   });
@@ -250,9 +244,7 @@ describe("catalog merge", () => {
       "merged",
     );
     expect(result.item.assets).toHaveLength(1);
-    expect(result.item.assets[0].reference).toBe(
-      "https://img.example.com/cat-001-v2.jpg",
-    );
+    expect(result.item.assets[0].reference).toBe("https://img.example.com/cat-001-v2.jpg");
     expect(result.reason).toContain("refreshed");
   });
 
@@ -300,9 +292,7 @@ describe("catalog merge", () => {
     expect(result.existing.assets).toHaveLength(1);
     expect(result.candidate.id).toBe("candidate:stream-1");
     expect(result.candidate.id).not.toBe(result.existing.id);
-    expect(result.candidate.assets.map((asset) => asset.assetId)).toEqual([
-      "stream-1",
-    ]);
+    expect(result.candidate.assets.map((asset) => asset.assetId)).toEqual(["stream-1"]);
     expect(result.candidate.matchEvidence?.confidence).toBe(0.7);
     expect(result.candidate.mediaKind).toBe("video");
   });
@@ -365,18 +355,16 @@ describe("catalog merge", () => {
 
   it("rejects inputs that are not valid contract instances", () => {
     expectWebFlixError(() =>
-      mergeCatalogItem(
-        undefined as unknown as CatalogItem,
-        streamAsset,
-        { confidence: 0.99, evidence: [] },
-      ),
+      mergeCatalogItem(undefined as unknown as CatalogItem, streamAsset, {
+        confidence: 0.99,
+        evidence: [],
+      }),
     );
     expectWebFlixError(() =>
-      mergeCatalogItem(
-        existingItem,
-        null as unknown as ProviderAsset,
-        { confidence: 0.99, evidence: [] },
-      ),
+      mergeCatalogItem(existingItem, null as unknown as ProviderAsset, {
+        confidence: 0.99,
+        evidence: [],
+      }),
     );
   });
 
@@ -474,9 +462,7 @@ describe("collection rules", () => {
       createdAt: T0,
       updatedAt: T0,
     } as unknown as Collection);
-    expect(violations).toEqual([
-      { code: "invalid-shape", message: expect.any(String) },
-    ]);
+    expect(violations).toEqual([{ code: "invalid-shape", message: expect.any(String) }]);
   });
 
   it("adds, dedupes and rejects membership writes", () => {
@@ -613,19 +599,8 @@ describe("playlist rules", () => {
       createdAt: T0,
       updatedAt: T0,
     });
-    expect(playlistPlaybackOrder(looper, { passes: 2 })).toEqual([
-      "a",
-      "b",
-      "c",
-      "a",
-      "b",
-      "c",
-    ]);
-    expect(playlistPlaybackOrder(base(), { passes: 3 })).toEqual([
-      "a",
-      "b",
-      "c",
-    ]);
+    expect(playlistPlaybackOrder(looper, { passes: 2 })).toEqual(["a", "b", "c", "a", "b", "c"]);
+    expect(playlistPlaybackOrder(base(), { passes: 3 })).toEqual(["a", "b", "c"]);
     const shuffler = LocalPlaylistSchema.parse({
       id: "pl-4",
       name: "Shuffled",
@@ -669,10 +644,7 @@ describe("watched-state rules", () => {
   });
 
   it("moves unwatched → in-progress (partial) on first progress", () => {
-    const t = applyWatchedProgress(
-      initialWatchedState("cat-001", T0),
-      progress(60000, T1),
-    );
+    const t = applyWatchedProgress(initialWatchedState("cat-001", T0), progress(60000, T1));
     expect(t.outcome).toBe("started");
     expect(t.state.status).toBe("in-progress");
     expect(t.state.watchedFraction).toBe(60000 / DURATION);
@@ -685,15 +657,9 @@ describe("watched-state rules", () => {
       initialWatchedState("cat-001", T0),
       progress(120000, T2),
     ).state;
-    expect(applyWatchedProgress(state, progress(240000, T3)).outcome).toBe(
-      "advanced",
-    );
-    expect(applyWatchedProgress(state, progress(60000, T3)).outcome).toBe(
-      "rewound",
-    );
-    expect(applyWatchedProgress(state, progress(240000, T2)).outcome).toBe(
-      "advanced",
-    );
+    expect(applyWatchedProgress(state, progress(240000, T3)).outcome).toBe("advanced");
+    expect(applyWatchedProgress(state, progress(60000, T3)).outcome).toBe("rewound");
+    expect(applyWatchedProgress(state, progress(240000, T2)).outcome).toBe("advanced");
   });
 
   it("ignores out-of-order (stale) progress", () => {
@@ -735,9 +701,7 @@ describe("watched-state rules", () => {
         completionToleranceMs: 1000,
       }).outcome,
     ).toBe("completed");
-    expect(
-      applyWatchedProgress(state, progress(DURATION - 500, T3)).outcome,
-    ).toBe("advanced");
+    expect(applyWatchedProgress(state, progress(DURATION - 500, T3)).outcome).toBe("advanced");
     expectWebFlixError(() =>
       applyWatchedProgress(state, progress(1000, T3), {
         completionToleranceMs: -1,
@@ -762,9 +726,7 @@ describe("watched-state rules", () => {
     expect(restarted.state.lastPositionMs).toBe(0);
     expect(restarted.state.watchedFraction).toBe(0);
     expect(restarted.state.completedAt).toBeUndefined();
-    expect(restartWatching(initialWatchedState("cat-001", T0), T3).outcome).toBe(
-      "unchanged",
-    );
+    expect(restartWatching(initialWatchedState("cat-001", T0), T3).outcome).toBe("unchanged");
   });
 
   it("handles unknown durations without dividing into zero", () => {
@@ -781,9 +743,7 @@ describe("watched-state rules", () => {
 
   it("ignores progress for a different item and rejects malformed progress", () => {
     const state = initialWatchedState("cat-001", T0);
-    expect(
-      applyWatchedProgress(state, progress(1000, T1, "cat-002")).outcome,
-    ).toBe("ignored");
+    expect(applyWatchedProgress(state, progress(1000, T1, "cat-002")).outcome).toBe("ignored");
     expectWebFlixError(() =>
       applyWatchedProgress(state, {
         itemId: "cat-001",
@@ -816,9 +776,7 @@ describe("watched-state rules", () => {
   });
 
   it("enforces watched-state invariants", () => {
-    expect(validateWatchedStateInvariants(initialWatchedState("cat-001", T0))).toEqual(
-      [],
-    );
+    expect(validateWatchedStateInvariants(initialWatchedState("cat-001", T0))).toEqual([]);
     const watched = markWatched(initialWatchedState("cat-001", T0), T1).state;
     expect(validateWatchedStateInvariants(watched)).toEqual([]);
     const broken = {
@@ -832,9 +790,7 @@ describe("watched-state rules", () => {
       "watched-without-completion",
     ]);
     expect(
-      validateWatchedStateInvariants({} as unknown as WatchedState).map(
-        (v) => v.code,
-      ),
+      validateWatchedStateInvariants({} as unknown as WatchedState).map((v) => v.code),
     ).toEqual(["invalid-shape"]);
   });
 });
@@ -907,15 +863,11 @@ describe("job retry semantics", () => {
   });
 
   it("never retries cancelled, running, or cancellation-requested jobs", () => {
-    expect(decideRetry(makeJob({ state: "cancelled" }), networkFailure).outcome).toBe(
+    expect(decideRetry(makeJob({ state: "cancelled" }), networkFailure).outcome).toBe("no-retry");
+    expect(decideRetry(makeJob({ state: "running" }), networkFailure).outcome).toBe("no-retry");
+    expect(decideRetry(makeJob({ cancelRequested: true }), networkFailure).outcome).toBe(
       "no-retry",
     );
-    expect(decideRetry(makeJob({ state: "running" }), networkFailure).outcome).toBe(
-      "no-retry",
-    );
-    expect(
-      decideRetry(makeJob({ cancelRequested: true }), networkFailure).outcome,
-    ).toBe("no-retry");
   });
 
   it("computes capped backoff", () => {
@@ -925,8 +877,12 @@ describe("job retry semantics", () => {
       multiplier: 2,
       on: [],
     };
-    expect(computeBackoffMs({ maxAttempts: 3, backoffMs: 500, multiplier: 2, on: [] }, 0)).toBe(500);
-    expect(computeBackoffMs({ maxAttempts: 3, backoffMs: 500, multiplier: 2, on: [] }, 2)).toBe(2000);
+    expect(computeBackoffMs({ maxAttempts: 3, backoffMs: 500, multiplier: 2, on: [] }, 0)).toBe(
+      500,
+    );
+    expect(computeBackoffMs({ maxAttempts: 3, backoffMs: 500, multiplier: 2, on: [] }, 2)).toBe(
+      2000,
+    );
     expect(computeBackoffMs(policy, 1)).toBe(300000);
     expect(computeBackoffMs(policy, 1, { maxBackoffMs: 1000 })).toBe(1000);
   });
@@ -981,19 +937,14 @@ describe("job cancellation and lifecycle", () => {
     expect(requested.job.state).toBe("queued");
     expect(requested.job.updatedAt).toBe(T2);
     expect(requestCancellation(requested.job, T3).outcome).toBe("unchanged");
-    expect(requestCancellation(makeJob({ state: "succeeded" }), T2).outcome).toBe(
-      "unchanged",
-    );
-    expect(requestCancellation(makeJob({ state: "cancelled" }), T2).outcome).toBe(
-      "unchanged",
-    );
+    expect(requestCancellation(makeJob({ state: "succeeded" }), T2).outcome).toBe("unchanged");
+    expect(requestCancellation(makeJob({ state: "cancelled" }), T2).outcome).toBe("unchanged");
   });
 
   it("acknowledges cancellation at checkpoints, respecting cancellable", () => {
-    expect(
-      acknowledgeCancellation(makeJob({ state: "running", startedAt: T1 }), T2)
-        .outcome,
-    ).toBe("rejected");
+    expect(acknowledgeCancellation(makeJob({ state: "running", startedAt: T1 }), T2).outcome).toBe(
+      "rejected",
+    );
     expect(
       acknowledgeCancellation(
         makeJob({ state: "running", startedAt: T1, cancellable: false, cancelRequested: true }),
@@ -1026,15 +977,9 @@ describe("job cancellation and lifecycle", () => {
     const finished = transitionJob(started.job, "succeeded", T3);
     if (finished.outcome !== "transitioned") throw new Error("expected transition");
     expect(finished.job.finishedAt).toBe(T3);
-    expect(transitionJob(makeJob({ state: "queued" }), "succeeded", T2).outcome).toBe(
-      "rejected",
-    );
-    expect(transitionJob(makeJob({ state: "succeeded" }), "running", T2).outcome).toBe(
-      "rejected",
-    );
-    expect(transitionJob(makeJob({ state: "failed" }), "queued", T2).outcome).toBe(
-      "rejected",
-    );
+    expect(transitionJob(makeJob({ state: "queued" }), "succeeded", T2).outcome).toBe("rejected");
+    expect(transitionJob(makeJob({ state: "succeeded" }), "running", T2).outcome).toBe("rejected");
+    expect(transitionJob(makeJob({ state: "failed" }), "queued", T2).outcome).toBe("rejected");
   });
 
   it("preserves provenance across every transformation", () => {

@@ -1,11 +1,11 @@
-import { realpathSync } from 'node:fs';
-import { homedir } from 'node:os';
-import { basename, isAbsolute, join, resolve, sep } from 'node:path';
-import { PathSafetyError, ValidationError } from './errors';
+import { realpathSync } from "node:fs";
+import { homedir } from "node:os";
+import { basename, isAbsolute, join, resolve, sep } from "node:path";
+import { PathSafetyError, ValidationError } from "./errors";
 
 /** Production WebFlix data root (~/.webflix). NEVER open this in tests — inject a temp dir instead. */
 export function defaultDataRoot(): string {
-  return join(homedir(), '.webflix');
+  return join(homedir(), ".webflix");
 }
 
 /**
@@ -14,9 +14,9 @@ export function defaultDataRoot(): string {
  */
 export function assertNotDefaultDataRootInTests(baseDir: string): void {
   const underTest =
-    process.env['VITEST'] === 'true' ||
-    process.env['VITEST_WORKER_ID'] !== undefined ||
-    process.env['NODE_ENV'] === 'test';
+    process.env["VITEST"] === "true" ||
+    process.env["VITEST_WORKER_ID"] !== undefined ||
+    process.env["NODE_ENV"] === "test";
   if (!underTest) {
     return;
   }
@@ -29,11 +29,11 @@ export function assertNotDefaultDataRootInTests(baseDir: string): void {
   }
 }
 
-export function assertSafeAbsolutePath(candidate: string, label = 'path'): string {
-  if (typeof candidate !== 'string' || candidate.trim().length === 0) {
+export function assertSafeAbsolutePath(candidate: string, label = "path"): string {
+  if (typeof candidate !== "string" || candidate.trim().length === 0) {
     throw new ValidationError(`${label} must be a non-empty string`);
   }
-  if (candidate.includes('\0')) {
+  if (candidate.includes("\0")) {
     throw new PathSafetyError(`${label} contains a NUL byte: ${JSON.stringify(candidate)}`);
   }
   const resolved = resolve(candidate);
@@ -64,6 +64,6 @@ export function statableRealOrResolve(path: string): string {
 
 export function titleFromPath(path: string): string {
   const base = basename(path);
-  const dot = base.lastIndexOf('.');
+  const dot = base.lastIndexOf(".");
   return dot > 0 ? base.slice(0, dot) : base;
 }

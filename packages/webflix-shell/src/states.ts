@@ -10,18 +10,18 @@
 //      where nothing can be done, the state says so instead of showing a dead
 //      button.
 
-import type { CapabilityStatus, CatalogItem } from 'webflix-contracts';
+import type { CapabilityStatus, CatalogItem } from "webflix-contracts";
 
 /** The exhaustive honest-state vocabulary (freeze §2.3). */
 export const HONEST_STATES = [
-  'ready',
-  'loading',
-  'empty',
-  'requires-auth',
-  'rate-limited',
-  'unsupported',
-  'unavailable',
-  'status-unknown',
+  "ready",
+  "loading",
+  "empty",
+  "requires-auth",
+  "rate-limited",
+  "unsupported",
+  "unavailable",
+  "status-unknown",
 ] as const;
 
 export type HonestState = (typeof HONEST_STATES)[number];
@@ -29,19 +29,19 @@ export type HonestState = (typeof HONEST_STATES)[number];
 /** CapabilityStatus → UI state. Total over every `kind` of CapabilityStatus. */
 export function toHonestState(status: CapabilityStatus): HonestState {
   switch (status.kind) {
-    case 'available':
-      return 'ready';
-    case 'requires-auth':
-      return 'requires-auth';
-    case 'rate-limited':
-      return 'rate-limited';
-    case 'unsupported':
-      return 'unsupported';
-    case 'unavailable':
-      return 'unavailable';
-    case 'unknown':
+    case "available":
+      return "ready";
+    case "requires-auth":
+      return "requires-auth";
+    case "rate-limited":
+      return "rate-limited";
+    case "unsupported":
+      return "unsupported";
+    case "unavailable":
+      return "unavailable";
+    case "unknown":
       // Freeze §2.3: an inconclusive probe is reported as unknown, honestly.
-      return 'status-unknown';
+      return "status-unknown";
     default: {
       // Exhaustiveness guard: if the freeze grows a new kind, this fails fast
       // instead of rendering a dishonest state.
@@ -62,45 +62,45 @@ export interface HonestCopy {
 
 export const HONEST_COPY: Record<HonestState, HonestCopy> = {
   ready: {
-    title: 'Ready',
-    message: 'Available now.',
+    title: "Ready",
+    message: "Available now.",
     actionLabel: null,
   },
   loading: {
-    title: 'Loading…',
-    message: 'Checking what is actually available — nothing is assumed.',
+    title: "Loading…",
+    message: "Checking what is actually available — nothing is assumed.",
     actionLabel: null,
   },
   empty: {
-    title: 'Nothing here yet',
-    message: 'The search finished and found no results. That is everything we know.',
+    title: "Nothing here yet",
+    message: "The search finished and found no results. That is everything we know.",
     actionLabel: null,
   },
-  'requires-auth': {
-    title: 'Sign-in required',
-    message: 'This capability needs a connected account before it can show anything.',
-    actionLabel: 'Connect account',
+  "requires-auth": {
+    title: "Sign-in required",
+    message: "This capability needs a connected account before it can show anything.",
+    actionLabel: "Connect account",
   },
-  'rate-limited': {
-    title: 'Rate limited',
+  "rate-limited": {
+    title: "Rate limited",
     message:
-      'The provider quota is exhausted, so results are withheld rather than faked. Try again later.',
+      "The provider quota is exhausted, so results are withheld rather than faked. Try again later.",
     actionLabel: null,
   },
   unsupported: {
-    title: 'Unsupported',
-    message: 'The current provider does not support this, so there is genuinely nothing to show.',
+    title: "Unsupported",
+    message: "The current provider does not support this, so there is genuinely nothing to show.",
     actionLabel: null,
   },
   unavailable: {
-    title: 'Unavailable',
-    message: 'The provider could not serve this right now.',
-    actionLabel: 'Retry',
+    title: "Unavailable",
+    message: "The provider could not serve this right now.",
+    actionLabel: "Retry",
   },
-  'status-unknown': {
-    title: 'Status unknown',
-    message: 'The capability check did not complete, so WebFlix cannot claim anything either way.',
-    actionLabel: 'Check again',
+  "status-unknown": {
+    title: "Status unknown",
+    message: "The capability check did not complete, so WebFlix cannot claim anything either way.",
+    actionLabel: "Check again",
   },
 };
 
@@ -114,17 +114,17 @@ export function describeCapability(status: CapabilityStatus): {
   const copy = HONEST_COPY[state];
   let detail: string | undefined;
   switch (status.kind) {
-    case 'unsupported':
-    case 'unavailable':
+    case "unsupported":
+    case "unavailable":
       detail = status.reason;
       break;
-    case 'rate-limited':
+    case "rate-limited":
       detail =
         status.retryAfterSeconds === undefined
           ? undefined
           : `Quota should reset in about ${status.retryAfterSeconds}s.`;
       break;
-    case 'unknown':
+    case "unknown":
       detail = status.detail;
       break;
     default:
@@ -135,20 +135,20 @@ export function describeCapability(status: CapabilityStatus): {
 
 /** Result-area phases for the Search screen — HonestState plus search bookends. */
 export type SearchState =
-  | { readonly phase: 'idle' }
-  | { readonly phase: 'loading'; readonly query: string }
-  | { readonly phase: 'results'; readonly query: string; readonly items: readonly CatalogItem[] }
-  | { readonly phase: 'empty'; readonly query: string }
+  | { readonly phase: "idle" }
+  | { readonly phase: "loading"; readonly query: string }
+  | { readonly phase: "results"; readonly query: string; readonly items: readonly CatalogItem[] }
+  | { readonly phase: "empty"; readonly query: string }
   | {
-      readonly phase: 'requires-auth';
+      readonly phase: "requires-auth";
       readonly query: string;
       readonly providerId: string;
       readonly connectUrl?: string;
     }
-  | { readonly phase: 'rate-limited'; readonly query: string; readonly retryAfterSeconds?: number }
-  | { readonly phase: 'unsupported'; readonly query: string; readonly reason: string }
-  | { readonly phase: 'unavailable'; readonly query: string; readonly reason: string }
-  | { readonly phase: 'status-unknown'; readonly query: string; readonly detail?: string };
+  | { readonly phase: "rate-limited"; readonly query: string; readonly retryAfterSeconds?: number }
+  | { readonly phase: "unsupported"; readonly query: string; readonly reason: string }
+  | { readonly phase: "unavailable"; readonly query: string; readonly reason: string }
+  | { readonly phase: "status-unknown"; readonly query: string; readonly detail?: string };
 
 /** Map a capability probe (§2.3) onto the search results area. */
 export function searchStateFromCapability(
@@ -157,24 +157,24 @@ export function searchStateFromCapability(
   items?: readonly CatalogItem[],
 ): SearchState {
   switch (status.kind) {
-    case 'available':
+    case "available":
       return items && items.length > 0
-        ? { phase: 'results', query, items }
-        : { phase: 'empty', query };
-    case 'requires-auth':
+        ? { phase: "results", query, items }
+        : { phase: "empty", query };
+    case "requires-auth":
       return {
-        phase: 'requires-auth',
+        phase: "requires-auth",
         query,
         providerId: status.providerId,
         connectUrl: status.connectUrl,
       };
-    case 'rate-limited':
-      return { phase: 'rate-limited', query, retryAfterSeconds: status.retryAfterSeconds };
-    case 'unsupported':
-      return { phase: 'unsupported', query, reason: status.reason };
-    case 'unavailable':
-      return { phase: 'unavailable', query, reason: status.reason };
-    case 'unknown':
-      return { phase: 'status-unknown', query, detail: status.detail };
+    case "rate-limited":
+      return { phase: "rate-limited", query, retryAfterSeconds: status.retryAfterSeconds };
+    case "unsupported":
+      return { phase: "unsupported", query, reason: status.reason };
+    case "unavailable":
+      return { phase: "unavailable", query, reason: status.reason };
+    case "unknown":
+      return { phase: "status-unknown", query, detail: status.detail };
   }
 }

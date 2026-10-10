@@ -67,14 +67,10 @@ import {
 
 const ISO_NOW = "2025-06-01T12:00:00Z";
 const ISO_LATER = "2025-07-01T00:00:00Z";
-const SHA256_TEST =
-  "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08";
+const SHA256_TEST = "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08";
 
 /** Parses `valid`, asserts the output deep-equals the input and survives JSON. */
-function expectRoundTrip(
-  schema: { parse(value: unknown): unknown },
-  valid: unknown,
-): void {
+function expectRoundTrip(schema: { parse(value: unknown): unknown }, valid: unknown): void {
   const parsed = schema.parse(valid);
   expect(parsed).toEqual(valid);
   expect(JSON.parse(JSON.stringify(parsed))).toEqual(valid);
@@ -166,18 +162,13 @@ describe("internal/primitives", () => {
 
   it("looksLikeSecret flags obvious credential material", () => {
     expect(looksLikeSecret("api_key=hunter2")).toBe(true);
-    expect(looksLikeSecret("https://cdn.example.com/file?token=hunter2")).toBe(
-      true,
-    );
+    expect(looksLikeSecret("https://cdn.example.com/file?token=hunter2")).toBe(true);
     expect(looksLikeSecret("https://example.com/watch?v=abc")).toBe(false);
   });
 
   it("SecretFreeStringSchema rejects token-bearing strings", () => {
     expectRoundTrip(SecretFreeStringSchema, "https://example.com/watch?v=abc");
-    expectRejected(
-      SecretFreeStringSchema,
-      "https://cdn.example.com/file?token=hunter2",
-    );
+    expectRejected(SecretFreeStringSchema, "https://cdn.example.com/file?token=hunter2");
   });
 
   it("SecretFreeRecordSchema rejects secret keys and secret string values", () => {
@@ -194,14 +185,7 @@ describe("internal/primitives", () => {
 
 describe("catalog", () => {
   it("MediaKindSchema accepts exactly the six locked kinds", () => {
-    for (const kind of [
-      "video",
-      "short",
-      "live",
-      "podcast",
-      "audio",
-      "local-file",
-    ]) {
+    for (const kind of ["video", "short", "live", "podcast", "audio", "local-file"]) {
       expect(MediaKindSchema.parse(kind)).toBe(kind);
     }
     expectRejected(MediaKindSchema, "hologram");
@@ -749,8 +733,7 @@ describe("account", () => {
       expiresAt: "2025-06-01T13:00:00Z",
     };
     expectRoundTrip(ProviderAccountRecordSchema, recordFixture);
-    const record: ProviderAccountRecord =
-      ProviderAccountRecordSchema.parse(recordFixture);
+    const record: ProviderAccountRecord = ProviderAccountRecordSchema.parse(recordFixture);
     expect(record.grantedScopes).toEqual(["youtube.readonly"]);
   });
 
@@ -781,9 +764,9 @@ describe("account", () => {
       }),
     };
     expect(typeof keychainStub.getToken).toBe("function");
-    await expect(keychainStub.getToken("youtube", "acct-001")).resolves.toEqual(
-      { handle: "keychain://youtube/acct-001" },
-    );
+    await expect(keychainStub.getToken("youtube", "acct-001")).resolves.toEqual({
+      handle: "keychain://youtube/acct-001",
+    });
   });
 });
 
@@ -815,14 +798,7 @@ describe("jobs", () => {
   };
 
   it("JobStateSchema accepts exactly the six locked states", () => {
-    for (const state of [
-      "queued",
-      "running",
-      "paused",
-      "succeeded",
-      "failed",
-      "cancelled",
-    ]) {
+    for (const state of ["queued", "running", "paused", "succeeded", "failed", "cancelled"]) {
       expect(JobStateSchema.parse(state)).toBe(state);
     }
     expectRejected(JobStateSchema, "archived");
@@ -906,9 +882,7 @@ describe("errors", () => {
       retryable: false,
       context: { path: "/home/z/media/vanished.mkv" },
     });
-    expect(WebFlixErrorShapeSchema.parse(error.toJSON())).toEqual(
-      error.toJSON(),
-    );
+    expect(WebFlixErrorShapeSchema.parse(error.toJSON())).toEqual(error.toJSON());
   });
 
   it("WebFlixError defaults context to an empty object", () => {

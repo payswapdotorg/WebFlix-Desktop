@@ -1,8 +1,7 @@
 import { ErrorCode, WebFlixError } from "webflix-contracts";
 import type { IsoDateTime } from "webflix-contracts";
 
-const ISO_INSTANT_RE =
-  /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d{1,3}))?Z$/;
+const ISO_INSTANT_RE = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d{1,3}))?Z$/;
 
 /**
  * Pure ISO 8601 UTC instant → epoch milliseconds.

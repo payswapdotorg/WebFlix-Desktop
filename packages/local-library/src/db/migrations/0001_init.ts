@@ -1,4 +1,4 @@
-import type { Migration } from '../migrate';
+import type { Migration } from "../migrate";
 
 /**
  * 0001_init — initial WebFlix local-library schema.
@@ -6,7 +6,7 @@ import type { Migration } from '../migrate';
  */
 export const migration0001Init: Migration = {
   id: 1,
-  name: '0001_init',
+  name: "0001_init",
   sql: `
 CREATE TABLE IF NOT EXISTS library_entries (
   id              TEXT PRIMARY KEY,

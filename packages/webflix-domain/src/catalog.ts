@@ -5,12 +5,7 @@ import {
   ProviderAssetSchema,
   WebFlixError,
 } from "webflix-contracts";
-import type {
-  CatalogItem,
-  MatchEvidence,
-  MediaKind,
-  ProviderAsset,
-} from "webflix-contracts";
+import type { CatalogItem, MatchEvidence, MediaKind, ProviderAsset } from "webflix-contracts";
 import { parseOrThrow } from "./internal/parse";
 
 /**
@@ -157,13 +152,9 @@ export function mergeCatalogItem(
     ErrorCode.CatalogMatchFailed,
     "MatchEvidence",
   );
-  const thresholds = validatedThresholds(
-    options.thresholds ?? DEFAULT_MERGE_THRESHOLDS,
-  );
+  const thresholds = validatedThresholds(options.thresholds ?? DEFAULT_MERGE_THRESHOLDS);
 
-  const sameId = item.assets.find(
-    (candidate) => candidate.assetId === asset.assetId,
-  );
+  const sameId = item.assets.find((candidate) => candidate.assetId === asset.assetId);
   if (sameId !== undefined) {
     if (sameId.kind === asset.kind && sameId.reference === asset.reference) {
       return {
@@ -195,8 +186,7 @@ export function mergeCatalogItem(
   }
 
   const duplicateReference = item.assets.find(
-    (candidate) =>
-      candidate.kind === asset.kind && candidate.reference === asset.reference,
+    (candidate) => candidate.kind === asset.kind && candidate.reference === asset.reference,
   );
   if (duplicateReference !== undefined) {
     return {

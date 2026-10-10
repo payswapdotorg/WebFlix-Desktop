@@ -1,4 +1,4 @@
-import { SqliteUnavailableError } from '../errors';
+import { SqliteUnavailableError } from "../errors";
 
 /**
  * Minimal, engine-agnostic SQLite surface used across the local-library package.
@@ -24,7 +24,7 @@ export interface SqliteStatement {
   all(...params: SqlParam[]): Array<Record<string, unknown>>;
 }
 
-export type SqliteEngineName = 'better-sqlite3' | 'node:sqlite';
+export type SqliteEngineName = "better-sqlite3" | "node:sqlite";
 
 export interface SqliteDatabase {
   readonly engine: SqliteEngineName;
@@ -36,8 +36,9 @@ export interface SqliteDatabase {
 export function toSqlParam(value: unknown): SqlParam {
   if (value === undefined) return null;
   if (value === null) return null;
-  if (typeof value === 'boolean') return value ? 1 : 0;
-  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'bigint') return value;
+  if (typeof value === "boolean") return value ? 1 : 0;
+  if (typeof value === "string" || typeof value === "number" || typeof value === "bigint")
+    return value;
   if (value instanceof Uint8Array) return value;
   throw new TypeError(`unsupported SQLite bind value: ${typeof value}`);
 }
@@ -63,10 +64,14 @@ async function loadBetterSqlite3(): Promise<BetterSqlite3Constructor | null> {
     return cachedBetterSqlite3;
   }
   try {
-    const specifier = 'better-sqlite3';
-    const mod = (await import(/* @vite-ignore */ specifier)) as { default?: unknown } & Record<string, unknown>;
+    const specifier = "better-sqlite3";
+    const mod = (await import(/* @vite-ignore */ specifier)) as { default?: unknown } & Record<
+      string,
+      unknown
+    >;
     const candidate = (mod?.default ?? mod) as unknown;
-    cachedBetterSqlite3 = typeof candidate === 'function' ? (candidate as BetterSqlite3Constructor) : null;
+    cachedBetterSqlite3 =
+      typeof candidate === "function" ? (candidate as BetterSqlite3Constructor) : null;
   } catch {
     // Not installed in this harness (or native rebuild unavailable) → node:sqlite fallback.
     cachedBetterSqlite3 = null;
@@ -87,7 +92,8 @@ function wrapRaw(engine: SqliteEngineName, raw: RawEngine): SqliteDatabase {
           const info = statement.run(...params);
           return { changes: Number(info.changes), lastInsertRowid: Number(info.lastInsertRowid) };
         },
-        get: (...params: SqlParam[]) => statement.get(...params) as Record<string, unknown> | undefined,
+        get: (...params: SqlParam[]) =>
+          statement.get(...params) as Record<string, unknown> | undefined,
         all: (...params: SqlParam[]) => statement.all(...params) as Array<Record<string, unknown>>,
       };
     },
@@ -100,29 +106,29 @@ function wrapRaw(engine: SqliteEngineName, raw: RawEngine): SqliteDatabase {
 async function openNodeSqlite(file: string): Promise<SqliteDatabase> {
   let DatabaseSync: new (path: string) => RawEngine;
   try {
-    ({ DatabaseSync } = (await import('node:sqlite')) as unknown as {
+    ({ DatabaseSync } = (await import("node:sqlite")) as unknown as {
       DatabaseSync: new (path: string) => RawEngine;
     });
   } catch (error) {
     throw new SqliteUnavailableError(
-      'neither better-sqlite3 nor node:sqlite could be loaded in this runtime',
+      "neither better-sqlite3 nor node:sqlite could be loaded in this runtime",
       { cause: error },
     );
   }
-  return wrapRaw('node:sqlite', new DatabaseSync(file));
+  return wrapRaw("node:sqlite", new DatabaseSync(file));
 }
 
 function configureConnection(db: SqliteDatabase): void {
-  db.exec('PRAGMA journal_mode = WAL;');
-  db.exec('PRAGMA foreign_keys = ON;');
-  db.exec('PRAGMA busy_timeout = 5000;');
-  db.exec('PRAGMA synchronous = NORMAL;');
+  db.exec("PRAGMA journal_mode = WAL;");
+  db.exec("PRAGMA foreign_keys = ON;");
+  db.exec("PRAGMA busy_timeout = 5000;");
+  db.exec("PRAGMA synchronous = NORMAL;");
 }
 
 export async function createSqliteDatabase(file: string): Promise<SqliteDatabase> {
   const BetterSqlite3 = await loadBetterSqlite3();
   if (BetterSqlite3) {
-    const db = wrapRaw('better-sqlite3', new BetterSqlite3(file));
+    const db = wrapRaw("better-sqlite3", new BetterSqlite3(file));
     configureConnection(db);
     return db;
   }
@@ -133,14 +139,14 @@ export async function createSqliteDatabase(file: string): Promise<SqliteDatabase
 
 /** Manual transaction; do not nest. */
 export function inTransaction<T>(db: SqliteDatabase, work: () => T): T {
-  db.exec('BEGIN IMMEDIATE');
+  db.exec("BEGIN IMMEDIATE");
   try {
     const result = work();
-    db.exec('COMMIT');
+    db.exec("COMMIT");
     return result;
   } catch (error) {
     try {
-      db.exec('ROLLBACK');
+      db.exec("ROLLBACK");
     } catch {
       // best effort: the outer error is what matters
     }
