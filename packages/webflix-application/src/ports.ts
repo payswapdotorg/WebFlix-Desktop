@@ -24,6 +24,7 @@ import type {
   TrackId,
   TrackProbe,
 } from "./types";
+import type { DerivedArtifact, FeedbackEvent, UserObjective } from "webflix-contracts";
 
 /**
  * The credential contract is frozen in `@webflix/contracts`; re-exported here
@@ -156,4 +157,59 @@ export type ProviderMetadataOutcome =
  */
 export interface ProviderMetadataPort {
   fetch(trackId: TrackId, provider: ProviderId): Promise<ProviderMetadataOutcome>;
+}
+
+// ---------------------------------------------------------------------------
+// Media intelligence (Phase 4, P4-CONTRACTS) — objective / feedback /
+// artifact-bookkeeping seams
+//
+// Per-user, per-profile isolation (ADR-0003): every port instance is
+// profile-scoped by construction — the composition root creates one store
+// per profile, and no port crosses profiles. Durability, stated plainly:
+// the in-memory defaults shipped this order are NOT durable; persistence is
+// deferred (P4-ARTIFACTS owns the artifact registry storage, and the
+// objective/feedback stores land with the store milestone that claims
+// them). The port boundary is the stable seam; swapping an in-memory
+// default for a persistent adapter changes nothing above this line.
+// ---------------------------------------------------------------------------
+
+/** Outcome of an idempotent feedback append. */
+export type FeedbackAppendResult =
+  | { readonly outcome: "appended"; readonly event: FeedbackEvent }
+  /** Same id as a stored event: the store returns the stored one; the use-case decides idempotency vs conflict. */
+  | { readonly outcome: "duplicate"; readonly existing: FeedbackEvent };
+
+/**
+ * Per-profile objective store. `put` replaces the objective wholesale —
+ * objectives are the user's CURRENT goals, editable any time (never
+ * inferred, never versioned history this order; evaluation replay is
+ * P4-EVALLOOP's concern).
+ */
+export interface ObjectiveStore {
+  /** The current objective, or null when the user never set one. */
+  get(): Promise<UserObjective | null>;
+  put(objective: UserObjective): Promise<void>;
+}
+
+/**
+ * Per-profile feedback store with idempotent-append semantics keyed by
+ * event id: re-appending a stored id MUST NOT create a second entry —
+ * implementations return the stored event instead.
+ */
+export interface FeedbackStore {
+  append(event: FeedbackEvent): Promise<FeedbackAppendResult>;
+  get(id: string): Promise<FeedbackEvent | null>;
+  list(): Promise<readonly FeedbackEvent[]>;
+}
+
+/**
+ * Per-profile derived-artifact descriptor registry. Stores descriptors
+ * ONLY — structural original/derived separation: nothing here can write
+ * into a catalog item, and the original catalog snapshot is supplied by the
+ * caller at each create call for the lineage check.
+ */
+export interface ArtifactRegistry {
+  put(descriptor: DerivedArtifact): Promise<void>;
+  get(id: string): Promise<DerivedArtifact | null>;
+  list(): Promise<readonly DerivedArtifact[]>;
 }

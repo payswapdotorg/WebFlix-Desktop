@@ -23,6 +23,14 @@ export enum ErrorCode {
   CredentialUnavailable = "credential/unavailable",
   // capability
   CapabilityUnsupported = "capability/unsupported",
+  // media intelligence (Phase 4, P4-CONTRACTS — appended per the enum's
+  // additive-only rule; the §3 vocabulary carries MI failures)
+  IntelligencePolicyUnsupported = "intelligence/policy-unsupported",
+  IntelligenceObjectiveInvalid = "intelligence/objective-invalid",
+  IntelligenceFeedbackInvalid = "intelligence/feedback-invalid",
+  IntelligenceFeedbackConflict = "intelligence/feedback-conflict",
+  IntelligenceRankingInvalid = "intelligence/ranking-invalid",
+  IntelligenceArtifactInvalid = "intelligence/artifact-invalid",
   // cross-cutting
   RateLimited = "common/rate-limited",
   Network = "common/network",

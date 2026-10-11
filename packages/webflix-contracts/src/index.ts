@@ -28,5 +28,10 @@ export * from "./account";
 // Jobs: JobDescriptor, JobState (cancellable, retryable, provenance-preserving).
 export * from "./jobs";
 
+// Intelligence (Phase 4, P4-CONTRACTS): UserObjective, FeedbackEvent, LibraryFact,
+// RankingPolicy (+ canonical v1 weights), RankedItem/RankingResult, DerivedArtifact,
+// RankerPort. ADDITIVE per §3 — frozen §2.1–2.6 untouched.
+export * from "./intelligence";
+
 // Errors: ErrorCode, WebFlixError.
 export * from "./errors";
