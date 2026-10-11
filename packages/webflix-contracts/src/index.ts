@@ -37,6 +37,12 @@ export * from "./intelligence";
 // additive section, split to its own sibling at the parent's max-lines
 // limit — same entrypoint surface, byte-identical exports).
 export * from "./intelligence-translate-tts";
+// The §2.7 intelligence module's P4-EVALLOOP continuation (0.6.0 -> 0.7.0
+// additive section, the same sibling-module precedent): the experiment/
+// evaluation loop shapes — EvaluationRequest/Result/Outcome, the
+// population-carrying metric shapes, the configuration union. Policy enum
+// and kind enum stay closed; evaluations are NOT DerivedArtifacts.
+export * from "./intelligence-evaluation";
 
 // Errors: ErrorCode, WebFlixError.
 export * from "./errors";

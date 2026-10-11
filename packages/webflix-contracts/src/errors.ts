@@ -86,6 +86,19 @@ export enum ErrorCode {
   IntelligenceTtsEngineUnavailable = "intelligence/tts-engine-unavailable",
   IntelligenceTtsEngineFailed = "intelligence/tts-engine-failed",
   IntelligenceTextPayloadAbsent = "intelligence/text-payload-absent",
+  // P4-EVALLOOP: the evaluation loop's one caller-defect code. Carries the
+  // mi.evaluate request defects — malformed request shapes, duplicate
+  // universe/filter ids, literal-duplicate configurations, an empty
+  // configuration list, item ids absent from the supplied catalog snapshot
+  // (validated BEFORE the job exists where caller-controlled) — and the
+  // read-time variant: a feedbackEventIds entry the store does not know
+  // (a caller defect discovered at read time; the job is stamped failed
+  // and the typed cause rethrown, the mi-text-intelligence pattern).
+  // Engine-side failures need NO new code: a configuration that cannot run
+  // is PER-CONFIGURATION fail-soft data in the result (the honest
+  // comparison never throws away the other sides), and typed cancellation
+  // reuses the existing cross-cutting `common/cancelled`.
+  IntelligenceEvaluationInvalid = "intelligence/evaluation-invalid",
   // cross-cutting
   RateLimited = "common/rate-limited",
   Network = "common/network",

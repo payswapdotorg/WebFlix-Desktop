@@ -936,3 +936,221 @@ describe("NonEmptyArray type-level enforcement (checked by tsc)", () => {
     expect(reasonless).toBeTruthy();
   });
 });
+
+describe("evaluation contract schemas (P4-EVALLOOP, 0.7.0)", () => {
+  const AGREEMENT = {
+    likedTotal: 3,
+    likedInTopK: 2,
+    dislikedTotal: 4,
+    dislikedInBottomK: 3,
+    abstained: 2,
+    likedShare: 2 / 3,
+    dislikedShare: 0.75,
+    agreedShare: 5 / 7,
+  };
+  const STATS = { count: 6, min: 0.12, max: 0.84, mean: 0.4, median: 0.38 };
+  const RANKED = {
+    kind: "ranked",
+    policyVersion: "v1",
+    items: [
+      {
+        itemId: "item-a",
+        score: 0.5,
+        reasons: [
+          {
+            family: "library-affinity",
+            text: "In your library",
+            contribution: 0.15,
+            evidence: [{ kind: "library-fact", itemId: "item-a" }],
+          },
+        ],
+      },
+    ],
+  };
+
+  it("EvaluationConfiguration round-trips all three kinds and rejects blank adapter ids", () => {
+    const builtIn = { kind: "built-in" };
+    const adapter = { kind: "adapter", adapterId: "webflix.built-in-ranker" };
+    const selected = { kind: "selected" };
+    expectRoundTrip(contracts.EvaluationConfigurationSchema, builtIn);
+    expectRoundTrip(contracts.EvaluationConfigurationSchema, adapter);
+    expectRoundTrip(contracts.EvaluationConfigurationSchema, selected);
+    expectRejected(contracts.EvaluationConfigurationSchema, { kind: "adapter", adapterId: "" });
+    expectRejected(contracts.EvaluationConfigurationSchema, { kind: "adapter", adapterId: " " });
+    expectRejected(contracts.EvaluationConfigurationSchema, { kind: "mystery" });
+  });
+
+  it("EvaluationRequest round-trips a good request and allows the honest-empty universe", () => {
+    const request = {
+      itemIds: [],
+      configurations: [
+        { kind: "built-in" },
+        { kind: "adapter", adapterId: "webflix.built-in-ranker" },
+        { kind: "selected" },
+      ],
+      k: 5,
+      asOf: ISO_NOW,
+    };
+    expectRoundTrip(contracts.EvaluationRequestSchema, request);
+    const withFilter = { ...request, feedbackEventIds: ["fb-001", "fb-002"] };
+    expectRoundTrip(contracts.EvaluationRequestSchema, withFilter);
+  });
+
+  it("EvaluationRequest rejects the caller defects: duplicate ids, duplicate configurations, empty sides, bad k, bad asOf", () => {
+    const base = {
+      itemIds: ["item-a", "item-b"],
+      configurations: [{ kind: "built-in" }],
+      k: 3,
+      asOf: ISO_NOW,
+    };
+    expectRejected(contracts.EvaluationRequestSchema, { ...base, itemIds: ["item-a", "item-a"] });
+    expectRejected(contracts.EvaluationRequestSchema, {
+      ...base,
+      feedbackEventIds: ["fb-1", "fb-1"],
+    });
+    expectRejected(contracts.EvaluationRequestSchema, {
+      ...base,
+      configurations: [
+        { kind: "adapter", adapterId: "x" },
+        { kind: "adapter", adapterId: "x" },
+      ],
+    });
+    expectRejected(contracts.EvaluationRequestSchema, { ...base, configurations: [] });
+    expectRejected(contracts.EvaluationRequestSchema, { ...base, k: 0 });
+    expectRejected(contracts.EvaluationRequestSchema, { ...base, k: 1.5 });
+    expectRejected(contracts.EvaluationRequestSchema, { ...base, asOf: "not-an-instant" });
+    expectRejected(contracts.EvaluationRequestSchema, { ...base, itemIds: [""] });
+  });
+
+  it("runtime-identical sides are NOT literal duplicates — selected + built-in is a legal comparison", () => {
+    const request = {
+      itemIds: ["item-a"],
+      configurations: [{ kind: "built-in" }, { kind: "selected" }],
+      k: 1,
+      asOf: ISO_NOW,
+    };
+    expect(contracts.EvaluationRequestSchema.safeParse(request).success).toBe(true);
+  });
+
+  it("the metric shapes carry their populations and reject out-of-range shares", () => {
+    expectRoundTrip(contracts.ExplicitFeedbackAgreementSchema, AGREEMENT);
+    expectRoundTrip(contracts.ScoreDistributionStatsSchema, STATS);
+    // null shares are the honest no-population values, never 0/100 fabrications.
+    expectRoundTrip(contracts.ExplicitFeedbackAgreementSchema, {
+      ...AGREEMENT,
+      likedShare: null,
+      dislikedShare: null,
+      agreedShare: null,
+    });
+    expectRoundTrip(contracts.ScoreDistributionStatsSchema, {
+      count: 0,
+      min: null,
+      max: null,
+      mean: null,
+      median: null,
+    });
+    expectRejected(contracts.ExplicitFeedbackAgreementSchema, { ...AGREEMENT, likedShare: 1.5 });
+    expectRejected(contracts.ExplicitFeedbackAgreementSchema, { ...AGREEMENT, likedTotal: -1 });
+    expectRejected(contracts.ScoreDistributionStatsSchema, { ...STATS, count: -1 });
+    expectRejected(contracts.ScoreDistributionStatsSchema, { ...STATS, max: 1.2 });
+  });
+
+  it("EvaluationOutcome round-trips both kinds — evaluated carries the metrics, failed carries the honest reason", () => {
+    const evaluated = {
+      kind: "evaluated",
+      configurationIndex: 0,
+      configuration: { kind: "built-in" },
+      rankerId: "webflix.built-in-ranker",
+      rankerLabel: "Built-in ranker (v1)",
+      resolutionNote: "the built-in deterministic ranking policy (v1)",
+      ranking: RANKED,
+      agreement: AGREEMENT,
+      scoreStats: STATS,
+    };
+    const failed = {
+      kind: "failed",
+      configurationIndex: 1,
+      configuration: { kind: "adapter", adapterId: "gone-adapter" },
+      rankerId: "gone-adapter",
+      reason: 'the configured ranker adapter "gone-adapter" is not in the registry',
+    };
+    expectRoundTrip(contracts.EvaluationOutcomeSchema, evaluated);
+    expectRoundTrip(contracts.EvaluationOutcomeSchema, failed);
+    // An evaluated outcome without metrics is unrepresentable.
+    expectRejected(contracts.EvaluationOutcomeSchema, { ...evaluated, agreement: undefined });
+    // A failed outcome without a reason is unrepresentable.
+    expectRejected(contracts.EvaluationOutcomeSchema, { ...failed, reason: "" });
+  });
+
+  it("EvaluationResult round-trips the full read-out and rejects run timestamps (determinism)", () => {
+    const result = {
+      k: 5,
+      asOf: ISO_NOW,
+      itemIds: ["item-a"],
+      replay: {
+        feedbackTotalStored: 3,
+        feedbackReplayed: 3,
+        explicitUnderTest: 2,
+        implicitUnderTest: 1,
+        objectivesApplied: true,
+        itemsUnderTest: 1,
+      },
+      outcomes: [
+        {
+          kind: "evaluated",
+          configurationIndex: 0,
+          configuration: { kind: "built-in" },
+          rankerId: "webflix.built-in-ranker",
+          rankerLabel: "Built-in ranker (v1)",
+          resolutionNote: "the built-in deterministic ranking policy (v1)",
+          ranking: RANKED,
+          agreement: AGREEMENT,
+          scoreStats: STATS,
+        },
+      ],
+      pairwiseOverlaps: [{ a: 0, b: 1, overlap: 1, sizeA: 1, sizeB: 1, share: 1 }],
+    };
+    expectRoundTrip(contracts.EvaluationResultSchema, result);
+    // The empty pairwise list is legal (fewer than two evaluated sides).
+    expectRoundTrip(contracts.EvaluationResultSchema, { ...result, pairwiseOverlaps: [] });
+    // Unknown keys are stripped: a run timestamp cannot ride along — the
+    // result deterministically carries ONLY its declared fields.
+    const stripped = contracts.EvaluationResultSchema.parse({ ...result, finishedAt: ISO_NOW });
+    expect(Object.hasOwn(stripped as object, "finishedAt")).toBe(false);
+    expectRejected(contracts.EvaluationResultSchema, { ...result, k: 0 });
+  });
+
+  it("PairwiseTopKOverlap carries both actual sizes and the null-when-empty share", () => {
+    expectRoundTrip(contracts.PairwiseTopKOverlapSchema, {
+      a: 0,
+      b: 1,
+      overlap: 2,
+      sizeA: 3,
+      sizeB: 5,
+      share: 0.4,
+    });
+    expectRoundTrip(contracts.PairwiseTopKOverlapSchema, {
+      a: 0,
+      b: 1,
+      overlap: 0,
+      sizeA: 0,
+      sizeB: 0,
+      share: null,
+    });
+    expectRejected(contracts.PairwiseTopKOverlapSchema, {
+      a: -1,
+      b: 1,
+      overlap: 0,
+      sizeA: 0,
+      sizeB: 0,
+    });
+  });
+
+  it("the new error code exists and no policy v2 / new artifact kind shipped", () => {
+    expect(ErrorCode.IntelligenceEvaluationInvalid).toBe("intelligence/evaluation-invalid");
+    expect(contracts.RankingPolicyVersionSchema.safeParse("v2").success).toBe(false);
+    expect(contracts.RankingPolicyVersionSchema.safeParse("v1").success).toBe(true);
+    expect(contracts.DerivedArtifactKindSchema.safeParse("evaluation").success).toBe(false);
+    expect(contracts.EvaluationResultSchema.safeParse({}).success).toBe(false);
+  });
+});

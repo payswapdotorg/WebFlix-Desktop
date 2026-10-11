@@ -83,3 +83,14 @@ export * from "./fixture-replay-translation-engine";
 export * from "./fixture-replay-tts-engine";
 export * from "./mi-translate";
 export * from "./mi-tts";
+
+// P4-EVALLOOP: the experiment/evaluation loop — the pure metric
+// computations (population-named honest metrics), the deterministic
+// read-only replay core (ranker resolution + per-configuration replay),
+// the mi.evaluate use case riding the frozen §2.6 wrapper (the result is
+// returned in the job result — NOT a DerivedArtifact, nothing persisted),
+// and the fixture-replay ranker TEST DOUBLE the evaluation tests use.
+export * from "./evaluation-metrics";
+export * from "./evaluation-replay";
+export * from "./mi-evaluate";
+export * from "./fixture-replay-ranker";

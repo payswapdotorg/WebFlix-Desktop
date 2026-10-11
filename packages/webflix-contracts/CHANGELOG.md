@@ -5,6 +5,87 @@ TL2 approval + migration notes; additive changes bump minor with a consumer
 impact note. No CHANGELOG existed before 0.2.0 — the 0.1.0 history is the git
 log of this package (frozen §2 shapes, D2-LOCAL lane).
 
+## 0.7.0 — 2026-10-11 — the experiment/evaluation loop shapes (P4-EVALLOOP)
+
+Phase-4 row 7 (the FINAL Phase-4 row). Adds the offline-replay contract
+shapes: the evaluation request (profile-scoped replay scope + universe +
+configurations + yardstick), the per-configuration outcomes with their
+POPULATION-CARRYING metrics, and the one genuinely-needed caller-defect
+error code. Frozen §2.1–2.6 module files untouched; `intelligence.ts` and
+`intelligence-translate-tts.ts` untouched (the new section ships as the
+sibling module `intelligence-evaluation.ts`, re-exported from the same
+entrypoint — byte-identical public-surface method); the
+RankingPolicyVersion enum stays CLOSED at `["v1"]` (the loop compares the
+built-in v1 against SELECTED adapters, never an invented v2); the
+DerivedArtifact kind enum stays CLOSED at six kinds — an evaluation is an
+experiment READ-OUT returned in the job result, NOT a derived artifact of
+a catalog item (no shape here references DerivedArtifact, and the
+mi.evaluate use case writes nothing to the artifact registry). Consumer
+impact: none on existing consumers (purely additive; no existing export
+changed shape).
+
+### Added
+
+- `src/intelligence-evaluation.ts` (NEW sibling module — the §2.7
+  intelligence module's additive continuation, the
+  `intelligence-translate-tts.ts` precedent):
+  - `EvaluationConfiguration` (+ schema) — the comparison's sides, exactly
+    three kinds: `built-in` (the deterministic policy v1), `adapter` (an
+    explicit registry-known adapter id — the typical source being the
+    selection store's stored `adapterId`, read by the caller), and
+    `selected` (resolve the profile's CURRENT selection at run time; no
+    stored selection => the documented default, stated so in the outcome's
+    resolution note; a DRIFTED selection is a per-configuration honest
+    failure, never a silent switch).
+  - `EvaluationRequest` (+ schema, hand-declared readonly type — the
+    SummaryRequest precedent) — `itemIds` (the replay universe; MAY be
+    empty = the honest-empty population-0 case; duplicates rejected),
+    optional `feedbackEventIds` scope filter (absent = replay all stored
+    events; duplicates rejected), `configurations` (min 1; literal
+    duplicates rejected — a comparison needs distinct sides),
+    `k` (int >= 1, one yardstick for every side), `asOf` (the deterministic
+    reference instant, the RankerInput precedent).
+  - `ExplicitFeedbackAgreement` (+ schema) — the agreement metric with the
+    counted populations NAMED: `likedTotal` / `likedInTopK` /
+    `dislikedTotal` / `dislikedInBottomK` / `abstained`, plus
+    `likedShare` / `dislikedShare` / `agreedShare` — each NULL when its
+    denominator is 0 (no population => no share, so a 1/1 "100%" can never
+    masquerade as strong evidence). Disliked items ABSENT from the ranking
+    (suppressed) count as agreeing — the policy's strongest "not
+    recommended" (documented on the field). NO fabricated ground truth:
+    the metric measures agreement with the USER'S OWN explicit signals and
+    its name says so.
+  - `ScoreDistributionStats` (+ schema) — descriptive stats over the
+    produced ranking's scores (`count`/`min`/`max`/`mean`/`median`), every
+    stat null at count 0 (honest empty), all quantized to 4 decimals.
+  - `PairwiseTopKOverlap` (+ schema) — the A/B overlap@k between two
+    EVALUATED sides: `overlap`, the ACTUAL per-side top-k sizes
+    (`sizeA`/`sizeB` = min(k, ranked count)), and `share` =
+    overlap/max(sizeA, sizeB), NULL when both are 0 (two empty rankings —
+    nothing to compare, never a fabricated 0%).
+  - `EvaluationOutcome` (+ schema) — per request configuration, in request
+    order: `evaluated` (the resolved ranker identity + the honest
+    `resolutionNote` + the verbatim frozen `RankingResult` + the metrics)
+    or `failed` (the per-configuration FAIL-SOFT outcome: an
+    unknown adapter id / a thrown ranker — surfaced as DATA, the other
+    sides still evaluated, nothing fabricated for a side that did not
+    run).
+  - `EvaluationReplaySummary` (+ schema) — the replay's populations: total
+    stored feedback, replayed count, explicit/implicit under test,
+    objectives applied, items under test.
+  - `EvaluationResult` (+ schema) — `k`, the echoed `asOf`, the canonical
+    SORTED `itemIds`, the replay summary, the outcomes, and the pairwise
+    overlaps for every unordered pair of evaluated sides. Carries NO run
+    timestamps (determinism is over the whole result; job metadata lives
+    ONLY in the frozen §2.6 descriptor).
+- `ErrorCode.IntelligenceEvaluationInvalid` (`intelligence/evaluation-invalid`)
+  — the ONE new error code: the mi.evaluate caller defects (malformed
+  request, duplicate ids, literal-duplicate configurations, empty
+  configuration list, universe ids absent from the supplied catalog
+  snapshot) plus the read-time unknown-feedbackEventIds variant. Ranker
+  failures need no new code (per-configuration fail-soft data); typed
+  cancellation reuses the existing `common/cancelled`.
+
 ## 0.6.0 — 2026-10-11 — translation + TTS engine seams (P4-TRANSLATE)
 
 Phase-4 row 6. Adds the two LOCAL engine ports (translation + TTS) + their
