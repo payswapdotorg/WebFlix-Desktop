@@ -58,7 +58,7 @@ reset (replay stack rebuilt first — "always fix the replay").
   the pure vitest-green modules (c40eff1).
 - Mirror swaps: found INCOMPLETE — playback's imports still referenced the
   deleted mirror (its tests had also never run in the root suite: the vitest
-  include missed top-level __tests__). Playback fully reconciled to frozen
+  include missed top-level **tests**). Playback fully reconciled to frozen
   §2.2 (f7d324f, reference implementation for MIRROR-RECON).
 - Whole-tree gate results: see the DESKTOP-ACCEPTANCE-1 ledger row for the
   full evidence string. Deviations recorded honestly: ui+web root tsc
@@ -76,4 +76,3 @@ reset (replay stack rebuilt first — "always fix the replay").
   Desktop acceptance tier-4 minimum: PASSED with recorded limitations.
   Tier-6 packaging remains open on a CI-class box; MIRROR-RECON is the
   Phase-2 opener.
-

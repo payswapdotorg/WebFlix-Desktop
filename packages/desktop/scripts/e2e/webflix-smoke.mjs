@@ -182,7 +182,11 @@ async function main() {
         bootOk.domReady ? "renderer dom-ready fired" : "no dom-ready marker",
       );
       const refused = /ERR_CONNECTION_REFUSED/.test(mainLog.join("\n"));
-      record("launch:renderer-served", !refused, refused ? "renderer URL refused (vite down?)" : "renderer URL accepted");
+      record(
+        "launch:renderer-served",
+        !refused,
+        refused ? "renderer URL refused (vite down?)" : "renderer URL accepted",
+      );
       // CDP --remote-debugging-port does not bind reliably in this environment
       // (DevToolsActivePort write races app dir creation) — informational only;
       // the tier-4 evidence is the app's own window/dom-ready markers above.
@@ -195,7 +199,9 @@ async function main() {
       } catch {
         cdpReachable = false;
       }
-      console.log(`INFO  launch:cdp-probe — ${cdpReachable ? "bound (bonus)" : "not bound in this env (non-fatal)"}`);
+      console.log(
+        `INFO  launch:cdp-probe — ${cdpReachable ? "bound (bonus)" : "not bound in this env (non-fatal)"}`,
+      );
 
       // give the app a moment to finish boot (host fork, settings, buses)
       await sleep(12_000);
@@ -211,8 +217,13 @@ async function main() {
       // the flavor disables the updater before init (this app's path), or the
       // updater-guard skips construction on the invalid dev version.
       const guardHit =
-        /disabled for this desktop product flavor/.test(log) || /platform updater not constructed/.test(log);
-      record("updater:guard", guardHit, "updater surface absent at boot (flavor-disabled or guard-skipped)");
+        /disabled for this desktop product flavor/.test(log) ||
+        /platform updater not constructed/.test(log);
+      record(
+        "updater:guard",
+        guardHit,
+        "updater surface absent at boot (flavor-disabled or guard-skipped)",
+      );
       const updaterCrash = /not a valid semver|AppImageUpdater/.test(log) && /Error/.test(log);
       record("updater:no-crash", !updaterCrash, "no semver/updater construction crash");
       const isolationHit = /chrome import IPC not registered/.test(log);
