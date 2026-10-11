@@ -1,0 +1,17 @@
+{
+  "data": [
+    {
+      "broadcaster_id": "71092938",
+      "broadcaster_login": "streamerfixture",
+      "broadcaster_name": "StreamerFixture",
+      "followed_at": "2026-09-01T10:00:00Z"
+    },
+    {
+      "broadcaster_id": "141981764",
+      "broadcaster_login": "twitch",
+      "broadcaster_name": "Twitch",
+      "followed_at": "2026-08-15T09:30:00Z"
+    }
+  ],
+  "pagination": { "cursor": "eyJiIjp7Ik9GRlNFUIiOnt9LCJhIjp7Ik9mZnNldCI6Mn19fQ==" }
+}

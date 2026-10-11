@@ -1,0 +1,16 @@
+{
+  "data": [
+    {
+      "id": "141981764",
+      "login": "twitch",
+      "display_name": "Twitch",
+      "type": "",
+      "broadcaster_type": "partner",
+      "description": "The official Twitch channel!",
+      "profile_image_url": "https://static-cdn.jtvnw.net/jtv_user_pictures/twitch-profile_image-55a5c4583a9f3ee9-300x300.png",
+      "offline_image_url": "https://static-cdn.jtvnw.net/jtv_user_pictures/twitch-channel_offline_image-1920x1080.png",
+      "view_count": 123456789,
+      "created_at": "2011-05-02T12:00:00Z"
+    }
+  ]
+}

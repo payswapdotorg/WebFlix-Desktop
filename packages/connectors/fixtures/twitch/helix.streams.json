@@ -1,0 +1,35 @@
+{
+  "data": [
+    {
+      "id": "50973264932",
+      "user_id": "141981764",
+      "user_login": "twitch",
+      "user_name": "Twitch",
+      "game_id": "509658",
+      "game_name": "Just Chatting",
+      "type": "live",
+      "title": "Welcome to the Twitch main channel!",
+      "viewer_count": 8123,
+      "started_at": "2026-10-11T03:00:00Z",
+      "language": "en",
+      "thumbnail_url": "https://static-cdn.jtvnw.net/previews-ttv/live_user_twitch-{width}x{height}.jpg",
+      "tag_ids": []
+    },
+    {
+      "id": "50973264933",
+      "user_id": "71092938",
+      "user_login": "streamerfixture",
+      "user_name": "StreamerFixture",
+      "game_id": "21779",
+      "game_name": "League of Legends",
+      "type": "live",
+      "title": "RANKED GRIND TO CHALLENGER !discord !socials",
+      "viewer_count": 4502,
+      "started_at": "2026-10-11T01:45:00Z",
+      "language": "en",
+      "thumbnail_url": "https://static-cdn.jtvnw.net/previews-ttv/live_user_streamerfixture-{width}x{height}.jpg",
+      "tag_ids": []
+    }
+  ],
+  "pagination": { "cursor": "eyJiIjp7Ik9GRlNFUIiOnt9LCJBIjp7Ik9mZnNldCI6MjB9fX0=" }
+}

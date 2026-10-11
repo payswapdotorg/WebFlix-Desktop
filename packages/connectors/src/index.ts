@@ -30,3 +30,15 @@ export * from "./tiktok/playback";
 export * from "./tiktok/oauth";
 export * from "./tiktok/service";
 export * from "./tiktok/substitutes";
+// Twitch — third platform on the same frozen contracts (TWITCH-CONNECT).
+// NOTE: twitch/oauth.ts deliberately does NOT re-export the provider-neutral
+// OAuth substrate it imports from ./youtube/oauth (same discipline as
+// tiktok/oauth — the package index exports those names once via the YouTube
+// module; a second `export *` would make them ambiguous).
+export * from "./twitch/manifest";
+export * from "./twitch/helixApi";
+export * from "./twitch/oauth";
+export * from "./twitch/catalogMapping";
+export * from "./twitch/playback";
+export * from "./twitch/service";
+export * from "./twitch/substitutes";

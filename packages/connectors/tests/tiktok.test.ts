@@ -226,13 +226,14 @@ function fixtureTikTokFetcher(options: { refreshRejectedCode?: string } = {}) {
 // ---------------------------------------------------------------------------
 
 describe("tiktok manifest honesty (frozen §2.3 + AUDIT-SOURCES §5)", () => {
-  it("registers in the default registry alongside youtube (second platform, same contracts)", () => {
+  it("registers in the default registry alongside youtube (second platform, same contracts; twitch joined at TWITCH-CONNECT)", () => {
     const registry = createDefaultRegistry();
     expect(registry.require("tiktok")).toBe(tiktokManifest);
     expect(registry.has("youtube")).toBe(true);
-    expect(registry.size).toBe(2);
+    expect(registry.size).toBe(3);
     expect(registry.list().map((m: ConnectorManifest) => m.providerId)).toEqual([
       "tiktok",
+      "twitch",
       "youtube",
     ]);
   });

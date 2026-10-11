@@ -654,3 +654,67 @@ describe("tiktok official-embed lane (TIKTOK-CONNECT watch path)", () => {
     expect(disallowed.recovery?.action).toBe("open-provider-app");
   });
 });
+
+// ---------------------------------------------------------------------------
+// TWITCH-CONNECT — the Twitch official-embed lane through this resolver
+// ---------------------------------------------------------------------------
+
+describe("twitch official-embed lane (TWITCH-CONNECT watch path)", () => {
+  // Structural twin of connectors' exported TWITCH_PLAYBACK_CONNECTOR
+  // (architecture-policy keeps playback from importing connectors; the two
+  // packages meet at the canonical §2.2 PlaybackPlan shape. The connectors
+  // suite asserts the constant's fields; this proves the resolver accepts
+  // that exact structural shape and emits the official player.twitch.tv URL
+  // the shell WatchScreen renders — with the REQUIRED parent parameter
+  // pinned (live-verified 2026-10-11: no parent → the player answers
+  // 302 /embed-error.html?errorCode=NoParent; with parent it serves a CSP
+  // frame-ancestors pinning exactly that origin). The dev-time parent is the
+  // documented localhost origin; the production webview origin is the
+  // parity-matrix integration note — the app layer owns that override).
+  const TWITCH_CONNECTOR: Connector = {
+    id: "twitch",
+    providerId: "twitch",
+    version: "1.0.0",
+    embed: {
+      providerId: "twitch",
+      urlTemplate: "https://player.twitch.tv/?channel={mediaId}&parent=localhost",
+      allowsEmbedding: true,
+    },
+  };
+
+  it("resolves a twitch channel listing to the official embed player URL (parent pinned)", () => {
+    const plan = resolvePlaybackPlan(
+      request({
+        listings: [{ providerId: "twitch", externalId: "twitch" }],
+        connectors: [TWITCH_CONNECTOR],
+      }),
+    );
+    if (plan.kind !== "official-embed") {
+      throw new Error(`expected official-embed, got ${plan.kind}`);
+    }
+    expect(plan.providerId).toBe("twitch");
+    expect(plan.embedSpec.embedUrl).toBe(
+      "https://player.twitch.tv/?channel=twitch&parent=localhost",
+    );
+    expect(isPlayablePlan(plan)).toBe(true);
+  });
+
+  it("stays honest when the twitch connector is absent or embedding is disallowed", () => {
+    const noConnector = resolvePlaybackPlan(
+      request({ listings: [{ providerId: "twitch", externalId: "twitch" }] }),
+    );
+    expect(noConnector).toMatchObject({ kind: "unavailable", reason: "unsupported" });
+
+    const disallowed = resolvePlaybackPlan(
+      request({
+        listings: [{ providerId: "twitch", externalId: "twitch" }],
+        connectors: [
+          { ...TWITCH_CONNECTOR, embed: { ...TWITCH_CONNECTOR.embed!, allowsEmbedding: false } },
+        ],
+      }),
+    );
+    expect(disallowed).toMatchObject({ kind: "unavailable", reason: "unsupported" });
+    if (disallowed.kind !== "unavailable") throw new Error("unreachable");
+    expect(disallowed.recovery?.action).toBe("open-provider-app");
+  });
+});

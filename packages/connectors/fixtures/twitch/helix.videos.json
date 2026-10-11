@@ -1,0 +1,39 @@
+{
+  "data": [
+    {
+      "id": "1973304310",
+      "user_id": "141981764",
+      "user_login": "twitch",
+      "user_name": "Twitch",
+      "title": "TwitchCon 2026 — Opening Ceremony VOD",
+      "description": "The full opening ceremony stream VOD from TwitchCon 2026.",
+      "created_at": "2026-10-08T18:00:00Z",
+      "published_at": "2026-10-08T20:00:00Z",
+      "url": "https://www.twitch.tv/videos/1973304310",
+      "thumbnail_url": "https://static-cdn.jtvnw.net/cf_vods/d2fb594c1e34ef17d78b/twitch/1973304310/thumb/thumb0-1280x720.jpg",
+      "viewable": "public",
+      "view_count": 104562,
+      "language": "en",
+      "type": "archive",
+      "duration": "3h8m33s"
+    },
+    {
+      "id": "1973405501",
+      "user_id": "141981764",
+      "user_login": "twitch",
+      "user_name": "Twitch",
+      "title": "Best moments of the week — highlights",
+      "description": "",
+      "created_at": "2026-10-09T12:00:00Z",
+      "published_at": "2026-10-09T12:30:00Z",
+      "url": "https://www.twitch.tv/videos/1973405501",
+      "thumbnail_url": "https://static-cdn.jtvnw.net/cf_vods/d2fb594c1e34ef17d78b/twitch/1973405501/thumb/thumb0-1280x720.jpg",
+      "viewable": "public",
+      "view_count": 20981,
+      "language": "en",
+      "type": "highlight",
+      "duration": "12m40s"
+    }
+  ],
+  "pagination": { "cursor": "eyJiIjp7Ik9GRlNFUIiOnsibGltaXQiOjIwfX0=" }
+}
