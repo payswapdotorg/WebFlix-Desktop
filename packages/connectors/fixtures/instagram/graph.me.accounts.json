@@ -1,0 +1,17 @@
+{
+  "data": [
+    {
+      "access_token": "EAACwXFIXTURE-PAGE-TOKEN-NOT-A-SECRET",
+      "category": "App Page",
+      "category_list": [
+        {
+          "id": "2301",
+          "name": "App Page"
+        }
+      ],
+      "name": "Metricsaurus",
+      "id": "134895793791914",
+      "tasks": ["ANALYZE", "ADVERTISE", "MODERATE", "CREATE_CONTENT", "MANAGE"]
+    }
+  ]
+}

@@ -1,0 +1,55 @@
+{
+  "data": [
+    {
+      "name": "impressions",
+      "period": "day",
+      "values": [
+        {
+          "value": 32,
+          "end_time": "2018-01-11T08:00:00+0000"
+        },
+        {
+          "value": 32,
+          "end_time": "2018-01-12T08:00:00+0000"
+        }
+      ],
+      "title": "Impressions",
+      "description": "Total number of times the Business Account's media objects have been viewed",
+      "id": "17841405822304914/insights/impressions/day"
+    },
+    {
+      "name": "reach",
+      "period": "day",
+      "values": [
+        {
+          "value": 12,
+          "end_time": "2018-01-11T08:00:00+0000"
+        },
+        {
+          "value": 12,
+          "end_time": "2018-01-12T08:00:00+0000"
+        }
+      ],
+      "title": "Reach",
+      "description": "Total number of times the Business Account's media objects have been uniquely viewed",
+      "id": "17841405822304914/insights/reach/day"
+    },
+    {
+      "name": "profile_views",
+      "period": "day",
+      "values": [
+        {
+          "value": 15,
+          "end_time": "2018-01-11T08:00:00+0000"
+        },
+        {
+          "value": 15,
+          "end_time": "2018-01-12T08:00:00+0000"
+        }
+      ],
+      "title": "Profile Views",
+      "description": "Total number of users who have viewed the Business Account's profile within the specified time period",
+      "id": "17841405822304914/insights/profile_views/day"
+    }
+  ]
+}

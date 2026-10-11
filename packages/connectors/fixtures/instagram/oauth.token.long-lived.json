@@ -1,0 +1,5 @@
+{
+  "access_token": "FIXTURE-LONG-LIVED-USER-TOKEN-NOT-A-SECRET",
+  "token_type": "bearer",
+  "expires_in": 5183944
+}

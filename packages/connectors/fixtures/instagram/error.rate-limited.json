@@ -1,0 +1,11 @@
+{
+  "error": {
+    "message": "Application request limit reached",
+    "type": "OAuthException",
+    "code": 4,
+    "is_transient": true,
+    "error_user_title": "",
+    "error_user_msg": "Application request limit reached",
+    "fbtrace_id": "MODELED-FIXTURE-UNVERIFIED-BASIS-SEE-INSTAGRAM-PARITY-MATRIX"
+  }
+}

@@ -42,3 +42,18 @@ export * from "./twitch/catalogMapping";
 export * from "./twitch/playback";
 export * from "./twitch/service";
 export * from "./twitch/substitutes";
+// Instagram — fourth platform, honesty-forward by design (INSTAGRAM-CONNECT:
+// professional-account Graph reads + Facebook Login + the honest-unsupported
+// totality for every discovery surface the platform does not offer
+// officially). NOTE: instagram/oauth.ts deliberately does NOT re-export the
+// provider-neutral OAuth substrate it imports from ./youtube/oauth (same
+// discipline as tiktok/twitch — the package index exports those names once
+// via the YouTube module; a second `export *` would make them ambiguous).
+export * from "./instagram/manifest";
+export * from "./instagram/graphApi";
+export * from "./instagram/oembed";
+export * from "./instagram/oauth";
+export * from "./instagram/catalogMapping";
+export * from "./instagram/playback";
+export * from "./instagram/service";
+export * from "./instagram/substitutes";

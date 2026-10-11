@@ -718,3 +718,64 @@ describe("twitch official-embed lane (TWITCH-CONNECT watch path)", () => {
     expect(disallowed.recovery?.action).toBe("open-provider-app");
   });
 });
+
+// ---------------------------------------------------------------------------
+// INSTAGRAM-CONNECT — the Instagram lane through this resolver
+// ---------------------------------------------------------------------------
+
+describe("instagram lane (INSTAGRAM-CONNECT watch path — honest default OFF)", () => {
+  // Structural twin of connectors' exported INSTAGRAM_PLAYBACK_CONNECTOR
+  // (architecture-policy keeps playback from importing connectors; the two
+  // packages meet at the canonical §2.2 PlaybackPlan shape). Unlike the
+  // tiktok/twitch lanes, the connector ships with allowsEmbedding FALSE —
+  // the work-order-mandated honest default: Instagram's official embed
+  // surface (oEmbed → blockquote + embeds.js → the /p|reel/<shortcode>/embed/
+  // page) is gated behind the operator's Meta app review chain, and the
+  // embed page's framing behavior is request-context-driven (live-verified
+  // 2026-10-11: x-frame-options DENY on direct navigation, NO x-frame-options
+  // for iframe-context requests) — so the resolver's honest answer is the
+  // unavailable plan until the operator flips the approved-credential flag
+  // (parity matrix §watch).
+  const INSTAGRAM_CONNECTOR: Connector = {
+    id: "instagram",
+    providerId: "instagram",
+    version: "1.0.0",
+    embed: {
+      providerId: "instagram",
+      urlTemplate: "https://www.instagram.com/p/{mediaId}/embed/",
+      allowsEmbedding: false,
+    },
+  };
+
+  it("answers the honest unavailable plan for instagram listings by default", () => {
+    const plan = resolvePlaybackPlan(
+      request({
+        listings: [{ providerId: "instagram", externalId: "CxFeedVid01" }],
+        connectors: [INSTAGRAM_CONNECTOR],
+      }),
+    );
+    expect(plan).toMatchObject({ kind: "unavailable", reason: "unsupported" });
+    if (plan.kind !== "unavailable") throw new Error("unreachable");
+    expect(plan.recovery?.action).toBe("open-provider-app");
+  });
+
+  it("resolves the official embed page once the operator approves (allowsEmbedding flipped)", () => {
+    const approved = resolvePlaybackPlan(
+      request({
+        listings: [{ providerId: "instagram", externalId: "CxFeedVid01" }],
+        connectors: [
+          {
+            ...INSTAGRAM_CONNECTOR,
+            embed: { ...INSTAGRAM_CONNECTOR.embed!, allowsEmbedding: true },
+          },
+        ],
+      }),
+    );
+    if (approved.kind !== "official-embed") {
+      throw new Error(`expected official-embed, got ${approved.kind}`);
+    }
+    expect(approved.providerId).toBe("instagram");
+    expect(approved.embedSpec.embedUrl).toBe("https://www.instagram.com/p/CxFeedVid01/embed/");
+    expect(isPlayablePlan(approved)).toBe(true);
+  });
+});

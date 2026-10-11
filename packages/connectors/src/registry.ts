@@ -26,6 +26,7 @@ import type { CapabilityStatus, ConnectorManifest, OperationCapability } from "w
 import { youtubeManifest } from "./youtube/manifest";
 import { tiktokManifest } from "./tiktok/manifest";
 import { twitchManifest } from "./twitch/manifest";
+import { instagramManifest } from "./instagram/manifest";
 
 export class RegistryError extends Error {
   constructor(message: string) {
@@ -153,5 +154,9 @@ export function createDefaultRegistry(): ConnectorRegistry {
       .register(tiktokManifest)
       // TWITCH-CONNECT: the third platform on the same frozen contracts.
       .register(twitchManifest)
+      // INSTAGRAM-CONNECT: the fourth platform, honesty-forward by design
+      // (professional-account reads + the honest-unsupported totality for
+      // every discovery surface the platform does not offer officially).
+      .register(instagramManifest)
   );
 }
