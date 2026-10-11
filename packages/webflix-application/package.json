@@ -11,6 +11,7 @@
     "test:unit": "../../node_modules/.bin/vitest run --config ../../vitest.config.ts"
   },
   "dependencies": {
-    "webflix-contracts": "workspace:*"
+    "webflix-contracts": "workspace:*",
+    "webflix-domain": "workspace:*"
   }
 }

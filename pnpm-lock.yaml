@@ -1362,6 +1362,9 @@ importers:
       webflix-contracts:
         specifier: workspace:*
         version: link:../webflix-contracts
+      webflix-domain:
+        specifier: workspace:*
+        version: link:../webflix-domain
 
   packages/webflix-contracts:
     dependencies:

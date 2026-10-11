@@ -24,19 +24,19 @@
  *   timestamps, so the same inputs (including asOf) always produce
  *   byte-for-byte the same payload (canonicalRankingJson). Job metadata
  *   (ids, timestamps) lives ONLY in the descriptor, never in the payload.
- * - The default ranker is the built-in deterministic v1 (./built-in-ranker,
- *   contracts-only); `deps.ranker` overrides it for tests and, later,
- *   user-selected adapters (P4-ADAPTERS) — never a hidden LLM, no network
- *   in any implementation.
+ * - The default ranker is the built-in deterministic v1 (./built-in-ranker);
+ *   `deps.ranker` overrides it for tests and, later, user-selected adapters
+ *   (P4-ADAPTERS) — never a hidden LLM, no network in any implementation.
  *
- * The three job transitions used here are the frozen §2.6 table rows
- * `queued -> cancelled`, `queued -> running`, `running -> succeeded`
- * (webflix-domain's JOB_TRANSITIONS is the authority; the stamps follow its
- * transitionJob rules: startedAt on entering running, finishedAt on any
- * terminal state — inlined because application cannot import webflix-domain
- * this order, see the P4-FD1 proposal).
+ * The three job transitions used here ride webflix-domain's transitionJob
+ * (P4-ARTIFACTS row 0 collapse: the frozen §2.6 table rows `queued ->
+ * cancelled`, `queued -> running`, `running -> succeeded` were inlined
+ * while the application->domain edge was missing; the edge landed, so the
+ * stamps now come from the domain authority — startedAt on entering
+ * running, finishedAt on any terminal state — with identical descriptor
+ * results, pinned by the corpus and wrapper tests).
  */
-import { JobDescriptorSchema, RankingPolicySchema } from "webflix-contracts";
+import { JobDescriptorSchema, RankingPolicySchema, WebFlixError } from "webflix-contracts";
 import { ErrorCode } from "webflix-contracts";
 import type {
   CatalogItem,
@@ -49,8 +49,8 @@ import type {
   UserObjective,
   WatchedState,
 } from "webflix-contracts";
+import { parseOrThrow, transitionJob } from "webflix-domain";
 import type { ClockPort, IdGenerator } from "./ports";
-import { parseContractOrThrow } from "./contract-parse";
 import {
   BUILT_IN_RANKER,
   BUILT_IN_RANKER_ID,
@@ -93,7 +93,7 @@ export class GenerateRecommendations {
   async execute(input: GenerateRecommendationsInput): Promise<GenerateRecommendationsOutput> {
     // 1. Validate inputs BEFORE the job exists — caller defects are typed
     //    Intelligence errors, never job failures.
-    parseContractOrThrow(
+    parseOrThrow(
       RankingPolicySchema,
       input.policy,
       ErrorCode.IntelligencePolicyUnsupported,
@@ -102,7 +102,7 @@ export class GenerateRecommendations {
     const signalState: "aborted" | "live" = input.signal?.aborted === true ? "aborted" : "live";
 
     const createdAt = this.deps.clock.now().toISOString();
-    const job: JobDescriptor = parseContractOrThrow(
+    const job: JobDescriptor = parseOrThrow(
       JobDescriptorSchema,
       {
         id: this.deps.generateId(),
@@ -136,23 +136,18 @@ export class GenerateRecommendations {
 
     // 2. Cancellation at the boundary: queued -> cancelled, results discarded.
     if (signalState === "aborted") {
-      const cancelled = stampTerminal(job, "cancelled", createdAt);
+      const cancelled = expectTransitioned(
+        transitionJob(job, "cancelled", createdAt),
+        "queued -> cancelled",
+      );
       return { job: cancelled, ranking: null, canonical: null };
     }
 
     // 3. Run: queued -> running -> succeeded; synchronous pure computation.
     const startInstant = this.deps.clock.now().toISOString();
-    const running: JobDescriptor = {
-      ...job,
-      state: "running",
-      startedAt: job.startedAt ?? startInstant,
-      updatedAt: startInstant,
-    };
-    parseContractOrThrow(
-      JobDescriptorSchema,
-      running,
-      ErrorCode.IntelligenceRankingInvalid,
-      "JobDescriptor(running)",
+    const running = expectTransitioned(
+      transitionJob(job, "running", startInstant),
+      "queued -> running",
     );
 
     const ranker = this.deps.ranker ?? BUILT_IN_RANKER;
@@ -167,23 +162,31 @@ export class GenerateRecommendations {
     });
 
     const finishedInstant = this.deps.clock.now().toISOString();
-    const succeeded = stampTerminal(running, "succeeded", finishedInstant);
+    const succeeded = expectTransitioned(
+      transitionJob(running, "succeeded", finishedInstant),
+      "running -> succeeded",
+    );
     return { job: succeeded, ranking, canonical: canonicalRankingJson(ranking) };
   }
 }
 
-/** Terminal stamp per the frozen transitionJob rules (finishedAt on terminal states). */
-function stampTerminal(
-  job: JobDescriptor,
-  state: "cancelled" | "succeeded",
-  at: string,
+/**
+ * Unwraps a domain transition result. The three rows used above are
+ * structurally legal (a freshly-constructed queued job; the running job it
+ * becomes), so a rejection is an internal invariant break — surfaced as a
+ * typed IntelligenceRankingInvalid instead of being swallowed.
+ */
+function expectTransitioned(
+  transition: ReturnType<typeof transitionJob>,
+  what: string,
 ): JobDescriptor {
-  const next: JobDescriptor = { ...job, state, updatedAt: at, finishedAt: at };
-  parseContractOrThrow(
-    JobDescriptorSchema,
-    next,
-    ErrorCode.IntelligenceRankingInvalid,
-    `JobDescriptor(${state})`,
-  );
-  return next;
+  if (transition.outcome !== "transitioned") {
+    throw new WebFlixError({
+      code: ErrorCode.IntelligenceRankingInvalid,
+      reason: `job transition ${what} was rejected by the domain state machine: ${transition.reason}`,
+      retryable: false,
+      context: { transition: what },
+    });
+  }
+  return transition.job;
 }

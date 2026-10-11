@@ -1,13 +1,14 @@
 /**
  * The built-in DETERMINISTIC ranker — RankingPolicy v1 (P4-CONTRACTS row 4).
  *
- * Home note, stated honestly: this engine ships in webflix-application
- * because application cannot import webflix-domain this order (the manifest
- * edge in the binding freeze table needs a root pnpm-lock.yaml change —
- * outside this order's allowed paths; see the P4-FD1 proposal). It imports
- * webflix-contracts ONLY; the domain package carries the shared MI
- * invariants, and this engine enforces the reasons-mandatory rule through
- * the same locked schema (single source of enforcement).
+ * Home note, updated at P4-ARTIFACTS row 0: the frozen application->domain
+ * edge has landed (workspace dependency + root lockfile importers), so the
+ * P4-FD1 mirror era is over — the parseIsoToEpochMs helper and the
+ * contract-parse guard collapsed to webflix-domain imports. The engine
+ * itself remains homed HERE per the charter's enumerated mirror collapse
+ * (only the helper within this file was a mirror); it enforces the
+ * reasons-mandatory rule through the locked schema (single source of
+ * enforcement, shared with the domain guard).
  *
  * Contract (phase4-mi-plan §4/§5/§6): pure, LOCAL signals only, no ML, no
  * randomness, no network; every kept item carries reasons[] with evidence
@@ -74,7 +75,7 @@ import type {
   RankingReason,
   WatchedState,
 } from "webflix-contracts";
-import { parseContractOrThrow } from "./contract-parse";
+import { parseIsoToEpochMs, parseOrThrow } from "webflix-domain";
 
 /** Identity of this implementation, for job provenance and (later) the adapter registry. */
 export const BUILT_IN_RANKER_ID = "webflix.built-in-ranker";
@@ -104,25 +105,9 @@ export function titleTokens(title: string): Set<string> {
 
 const DAY_MS = 86400000;
 
-/** Epoch-ms helper over plain ISO strings (no Date.parse quirks; mirrors domain's parseIsoToEpochMs). */
-function isoToEpochMs(iso: string): number {
-  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d{1,3}))?Z$/.exec(iso);
-  if (match === null) return Number.NaN;
-  const millis = match[7] === undefined ? 0 : Number(match[7].padEnd(3, "0"));
-  return Date.UTC(
-    Number(match[1]),
-    Number(match[2]) - 1,
-    Number(match[3]),
-    Number(match[4]),
-    Number(match[5]),
-    Number(match[6]),
-    millis,
-  );
-}
-
 /** 7-day linear recency decay over epoch-ms distance; future timestamps clamp to full weight. */
 function recencyDecay(asOfEpochMs: number, updatedAt: string): number {
-  const updatedEpochMs = isoToEpochMs(updatedAt);
+  const updatedEpochMs = parseIsoToEpochMs(updatedAt);
   if (Number.isNaN(updatedEpochMs)) return 0;
   const days = (asOfEpochMs - updatedEpochMs) / DAY_MS;
   if (days <= 0) return 1;
@@ -170,7 +155,7 @@ function resolvePolicy(policy: RankerInput["policy"]): {
   version: RankingPolicyVersion;
   weights: ReturnType<typeof RankingWeightsSchema.parse>;
 } {
-  const parsed = parseContractOrThrow(
+  const parsed = parseOrThrow(
     RankingPolicySchema,
     policy,
     ErrorCode.IntelligencePolicyUnsupported,
@@ -188,7 +173,7 @@ function resolvePolicy(policy: RankerInput["policy"]): {
   }
   return {
     version: parsed.version,
-    weights: parseContractOrThrow(
+    weights: parseOrThrow(
       RankingWeightsSchema,
       RANKING_POLICY_V1_WEIGHTS,
       ErrorCode.IntelligencePolicyUnsupported,
@@ -205,7 +190,7 @@ function resolvePolicy(policy: RankerInput["policy"]): {
  * recommendation cannot escape this function).
  */
 export function rankWithBuiltInPolicy(input: RankerInput): RankingResult {
-  const asOfEpochMs = isoToEpochMs(input.asOf);
+  const asOfEpochMs = parseIsoToEpochMs(input.asOf);
   if (Number.isNaN(asOfEpochMs)) {
     throw new WebFlixError({
       code: ErrorCode.IntelligenceRankingInvalid,
@@ -420,7 +405,7 @@ export function rankWithBuiltInPolicy(input: RankerInput): RankingResult {
   kept.sort((a, b) => (b.score !== a.score ? b.score - a.score : a.itemId < b.itemId ? -1 : 1));
   // Self-check: the reasons-mandatory rule enforced through the locked
   // schema — a reasonless recommendation can never leave this function.
-  return parseContractOrThrow(
+  return parseOrThrow(
     RankingResultSchema,
     { kind: "ranked", policyVersion: version, items: kept },
     ErrorCode.IntelligenceRankingInvalid,

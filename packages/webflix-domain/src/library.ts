@@ -292,7 +292,11 @@ export function moveInPlaylist(
     };
   }
   const itemIds = [...parsed.itemIds];
-  const [moved] = itemIds.splice(from, 1);
+  // `from` is a validated index (indexOf !== -1 above), so splice returns
+  // exactly one element — the cast carries that proof. (P4-ARTIFACTS row 0:
+  // domain source now compiles under the application lane's stricter
+  // noUncheckedIndexedAccess flags since the edge landed.)
+  const [moved] = itemIds.splice(from, 1) as [string];
   itemIds.splice(target, 0, moved);
   return { outcome: "moved", playlist: { ...parsed, itemIds } };
 }
@@ -339,9 +343,11 @@ function seededShuffle(itemIds: string[], seed: number): string[] {
   const items = [...itemIds];
   const random = mulberry32(seed);
   for (let i = items.length - 1; i > 0; i -= 1) {
+    // i is a valid index by loop construction; j ∈ [0, i] because the
+    // mulberry32 stream returns [0, 1) — both casts carry that proof.
     const j = Math.floor(random() * (i + 1));
-    const tmp = items[i];
-    items[i] = items[j];
+    const tmp = items[i] as string;
+    items[i] = items[j] as string;
     items[j] = tmp;
   }
   return items;

@@ -15,8 +15,8 @@
 import { FeedbackEventSchema, WebFlixError } from "webflix-contracts";
 import { ErrorCode } from "webflix-contracts";
 import type { FeedbackEvent } from "webflix-contracts";
+import { parseOrThrow } from "webflix-domain";
 import type { FeedbackStore } from "./ports";
-import { parseContractOrThrow } from "./contract-parse";
 
 export type RecordFeedbackResult =
   | { readonly outcome: "appended"; readonly event: FeedbackEvent }
@@ -30,7 +30,7 @@ export class RecordFeedback {
   constructor(private readonly deps: RecordFeedbackDeps) {}
 
   async record(event: FeedbackEvent): Promise<RecordFeedbackResult> {
-    const validated = parseContractOrThrow(
+    const validated = parseOrThrow(
       FeedbackEventSchema,
       event,
       ErrorCode.IntelligenceFeedbackInvalid,

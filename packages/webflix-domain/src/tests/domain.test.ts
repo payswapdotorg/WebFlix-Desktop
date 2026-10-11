@@ -133,8 +133,43 @@ describe("public entrypoint", () => {
       "isProvenancePreserved",
       "compareInstants",
       "parseIsoToEpochMs",
+      "parseOrThrow",
     ]) {
       expect(domain).toHaveProperty(name);
+    }
+  });
+});
+
+// P4-ARTIFACTS row 0: parseOrThrow became public domain surface when the
+// application->domain edge landed — this is the direct domain test for the
+// guard that application previously carried as the mirrored
+// parseContractOrThrow (P4-FD1 collapsed).
+describe("parseOrThrow (public contract-parse guard)", () => {
+  const item: CatalogItem = {
+    id: "item-x",
+    providerId: "youtube",
+    title: "Title",
+    mediaKind: "video",
+    assets: [],
+    matchEvidence: undefined,
+    availability: undefined,
+    metadata: {},
+  };
+
+  it("passes valid values through the schema unchanged", () => {
+    const value = domain.parseOrThrow(CatalogItemSchema, item, ErrorCode.Unknown, "CatalogItem");
+    expect(value.id).toBe("item-x");
+  });
+
+  it("rethrows schema failures as the caller's typed WebFlixError code", () => {
+    try {
+      domain.parseOrThrow(CatalogItemSchema, { ...item, id: "" }, ErrorCode.Unknown, "CatalogItem");
+      throw new Error("expected a WebFlixError, nothing was thrown");
+    } catch (err) {
+      expect(WebFlixError.is(err)).toBe(true);
+      const wfe = err as WebFlixError;
+      expect(wfe.code).toBe(ErrorCode.Unknown);
+      expect(wfe.reason).toContain("CatalogItem");
     }
   });
 });

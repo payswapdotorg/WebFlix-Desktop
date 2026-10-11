@@ -203,7 +203,7 @@ describe("SetObjectives / GetObjectives", () => {
     expect(wfe.reason).toContain("UserObjective");
   });
 
-  it("rejects focus/exclusion overlap and duplicate entries (list rules)", async () => {
+  it("surfaces domain objective-rule violations as the typed objective-invalid error (rule matrix pinned directly in webflix-domain tests)", async () => {
     const useCase = new SetObjectives({
       store: new InMemoryObjectiveStore(),
       clock: new FakeClock(),
@@ -602,7 +602,7 @@ describe("DeriveArtifactBookkeeping", () => {
     expect(JSON.stringify(catalog)).toBe(before);
   });
 
-  it("rejects a dangling source with the typed artifact-invalid error", async () => {
+  it("surfaces a domain lineage violation as the typed artifact-invalid error (dangling source)", async () => {
     const bookkeeping = new DeriveArtifactBookkeeping({
       registry: new InMemoryArtifactRegistry(),
       clock: new FakeClock(),
