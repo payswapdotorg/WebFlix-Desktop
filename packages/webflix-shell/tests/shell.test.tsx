@@ -34,6 +34,7 @@ import type {
   Collection,
   PlaybackPlan,
   ProviderAccountRecord,
+  SearchBudgetView,
 } from "../src/index";
 
 // The harness may or may not register global auto-cleanup; be explicit.
@@ -486,5 +487,177 @@ describe("theme", () => {
     expect(theme.colors.accent.toLowerCase()).not.toBe("#ff0000");
     expect(theme.notice.text).toMatch(/independent/i);
     expect(theme.notice.text).toMatch(/not affiliated/i);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// YOUTUBE-EXPAND — honest quota surfacing + the connector-shaped watch plan
+// ---------------------------------------------------------------------------
+
+describe("SearchScreen: remaining-quota surfacing (YOUTUBE-EXPAND row 1)", () => {
+  it("renders the budget line next to results (ok state)", () => {
+    render(
+      <SearchScreen
+        state={{
+          phase: "results",
+          query: "donut",
+          items: [catalogItem()],
+          budget: {
+            state: "ok",
+            unitsRemainingToday: 9_900,
+            unitsLimitToday: 10_000,
+            searchCallsRemainingToday: 99,
+            providerReportedExhaustion: false,
+          },
+        }}
+      />,
+    );
+    const budget = screen.getByTestId("search-budget");
+    expect(budget.textContent).toContain("99 searches left today");
+    // budgetLine renders raw numbers (no locale formatting) — pinned here so
+    // the format contract between states.ts and the screen stays explicit.
+    expect(budget.textContent).toContain("9900 of 10000");
+  });
+
+  it("warns plainly in the low state and explains exhaustion in the rate-limited state", () => {
+    const { rerender } = render(
+      <SearchScreen
+        state={{
+          phase: "results",
+          query: "donut",
+          items: [catalogItem()],
+          budget: {
+            state: "low",
+            unitsRemainingToday: 300,
+            unitsLimitToday: 10_000,
+            searchCallsRemainingToday: 3,
+            providerReportedExhaustion: false,
+          },
+        }}
+      />,
+    );
+    expect(screen.getByTestId("search-budget").textContent).toContain("running low");
+    expect(screen.getByTestId("search-budget").textContent).toContain("3 searches");
+
+    rerender(
+      <SearchScreen
+        state={{
+          phase: "rate-limited",
+          query: "donut",
+          detail: "quota exhausted",
+          budget: {
+            state: "exhausted",
+            unitsRemainingToday: 0,
+            unitsLimitToday: 10_000,
+            searchCallsRemainingToday: 0,
+            providerReportedExhaustion: true,
+          },
+        }}
+      />,
+    );
+    const exhausted = screen.getByTestId("search-budget").textContent ?? "";
+    expect(exhausted).toContain("exhausted");
+    expect(exhausted).toContain("the provider reported it");
+  });
+
+  it("renders no budget line when no snapshot was provided (nothing invented)", () => {
+    render(<SearchScreen state={{ phase: "results", query: "donut", items: [catalogItem()] }} />);
+    expect(screen.queryByTestId("search-budget")).toBeNull();
+  });
+
+  it("searchStateFromCapability carries the budget into the quota-relevant phases", () => {
+    const budget: SearchBudgetView = {
+      state: "ok",
+      unitsRemainingToday: 9_900,
+      unitsLimitToday: 10_000,
+      searchCallsRemainingToday: 99,
+      providerReportedExhaustion: false,
+    };
+    const results = searchStateFromCapability(
+      "donut",
+      "youtube",
+      { status: "supported" },
+      [catalogItem()],
+      budget,
+    );
+    expect(results).toMatchObject({ phase: "results", budget });
+
+    const empty = searchStateFromCapability(
+      "donut",
+      "youtube",
+      { status: "supported" },
+      [],
+      budget,
+    );
+    expect(empty).toMatchObject({ phase: "empty", budget });
+
+    // rate-limited capability (as the connectors' searchCapabilityFromError
+    // produces for QuotaExceededError/RateLimitedError) + exhausted budget.
+    const limited = searchStateFromCapability(
+      "donut",
+      "youtube",
+      { status: "rate-limited", detail: "blocked locally" },
+      undefined,
+      {
+        state: "exhausted",
+        unitsRemainingToday: 0,
+        unitsLimitToday: 10_000,
+        searchCallsRemainingToday: 0,
+        providerReportedExhaustion: false,
+      },
+    );
+    expect(limited).toMatchObject({ phase: "rate-limited" });
+    expect(limited).toHaveProperty("budget.state", "exhausted");
+  });
+});
+
+describe("WatchScreen: the connector-built official-embed plan (YOUTUBE-EXPAND row 2)", () => {
+  it("renders the exact plan shape the youtube connector builder emits", () => {
+    // Verbatim shape of buildYouTubePlaybackPlan output (privacy-enhanced
+    // domain, playerVars folded into embedUrl, iframe attribute bundle) —
+    // the shell may not import the connectors package (architecture-policy),
+    // so the continuity contract is the canonical §2.2 shape itself, and the
+    // connectors suite pins the builder side of it.
+    const plan: PlaybackPlan = {
+      kind: "official-embed",
+      providerId: "youtube",
+      embedSpec: {
+        videoId: "FIXVID00001",
+        embedUrl:
+          "https://www.youtube-nocookie.com/embed/FIXVID00001?autoplay=0&controls=1&rel=0&playsinline=1",
+        domain: "youtube-nocookie.com",
+        playerVars: { autoplay: 0, controls: 1, rel: 0, playsinline: 1 },
+        iframe: {
+          width: 560,
+          height: 315,
+          title: "Fixture: container gardening basics",
+          allow:
+            "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share",
+          allowFullScreen: true,
+          referrerPolicy: "strict-origin-when-cross-origin",
+          style: "border: 0;",
+        },
+        notes: [
+          "Official IFrame embed only (ADR-0003); no stream extraction or signature deciphering.",
+          "No origin supplied: the IFrame JS API is not enabled (enablejsapi requires a pinned origin in this design).",
+          "Privacy-enhanced mode (youtube-nocookie.com) is the official embed domain variant.",
+        ],
+        provenance: [
+          {
+            label: "YouTube IFrame Player API reference (official)",
+            url: "https://developers.google.com/youtube/iframe_api_reference",
+          },
+        ],
+      },
+    };
+    render(<WatchScreen title="Fixture: container gardening basics" plan={plan} />);
+    const frame = screen.getByTestId("watch-embed") as HTMLIFrameElement;
+    expect(frame.getAttribute("src")).toBe(
+      "https://www.youtube-nocookie.com/embed/FIXVID00001?autoplay=0&controls=1&rel=0&playsinline=1",
+    );
+    expect(frame.getAttribute("title")).toBe(
+      "Fixture: container gardening basics — official embed",
+    );
+    expect(screen.getByText(/never wraps scraped streams/)).toBeTruthy();
   });
 });

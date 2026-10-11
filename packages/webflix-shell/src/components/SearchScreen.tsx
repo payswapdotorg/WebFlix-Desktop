@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { theme } from "../theme";
 import type { CatalogItem } from "webflix-contracts";
-import { HONEST_COPY } from "../states";
-import type { SearchState } from "../states";
+import { HONEST_COPY, budgetLine } from "../states";
+import type { SearchBudgetView, SearchState } from "../states";
 
 export interface SearchScreenProps {
   readonly state: SearchState;
@@ -71,6 +71,18 @@ const styles: Record<string, React.CSSProperties> = {
   },
   list: { listStyle: "none", margin: 0, padding: 0, width: "100%" },
 };
+
+function BudgetLine(props: { budget?: SearchBudgetView }) {
+  // YOUTUBE-EXPAND: remaining-quota is surfaced honestly next to the results
+  // it paid for (and in the states where it matters). Absent budget = the
+  // app layer had no snapshot to show — nothing is invented here.
+  if (!props.budget) return null;
+  return (
+    <p data-testid="search-budget" style={styles.muted}>
+      {budgetLine(props.budget)}
+    </p>
+  );
+}
 
 export function SearchScreen(props: SearchScreenProps) {
   const { state, onQueryChange, onSubmit, onRetry, onConnect, onSelectItem } = props;
@@ -147,6 +159,7 @@ function ResultsArea(props: {
           <p style={styles.panelTitle}>
             {state.items.length} result{state.items.length === 1 ? "" : "s"} for “{state.query}”
           </p>
+          <BudgetLine budget={state.budget} />
           <ul style={styles.list}>
             {state.items.map((item) => (
               <li key={item.id} style={styles.row}>
@@ -176,6 +189,7 @@ function ResultsArea(props: {
         <div data-testid="search-empty" role="status" style={styles.panel}>
           <p style={styles.panelTitle}>{HONEST_COPY.empty.title}</p>
           <p style={styles.muted}>{HONEST_COPY.empty.message}</p>
+          <BudgetLine budget={state.budget} />
         </div>
       );
 
@@ -199,6 +213,7 @@ function ResultsArea(props: {
               (the frozen shapes carry no structured retryAfterSeconds —
               freeze-deviation MR-FD1). */}
           {state.detail && <p style={styles.muted}>{state.detail}</p>}
+          <BudgetLine budget={state.budget} />
           {onRetry && (
             <button type="button" style={styles.ghostButton} onClick={onRetry}>
               Retry
@@ -238,6 +253,7 @@ function ResultsArea(props: {
           <p style={styles.panelTitle}>{HONEST_COPY.degraded.title}</p>
           <p style={styles.muted}>{HONEST_COPY.degraded.message}</p>
           {state.detail && <p style={styles.muted}>{state.detail}</p>}
+          <BudgetLine budget={state.budget} />
           {state.items.length > 0 && (
             <ul style={styles.list}>
               {state.items.map((item) => (

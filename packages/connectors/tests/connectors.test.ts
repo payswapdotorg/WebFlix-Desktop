@@ -873,3 +873,520 @@ describe("playback plans (official-embed)", () => {
     expect(spec.notes.join(" ")).toContain("No origin supplied");
   });
 });
+
+// ---------------------------------------------------------------------------
+// YOUTUBE-EXPAND — trending browse, canonical catalog mapping, service glue,
+// honest-state mapping, watch bridge, local substitutes
+// ---------------------------------------------------------------------------
+
+import trendingFixture from "../fixtures/youtube/videos.list.chart-mostPopular.json";
+import channelsContentDetailsFixture from "../fixtures/youtube/channels.list.contentDetails.json";
+import uploadsPlaylistItemsFixture from "../fixtures/youtube/playlistItems.list.uploads.json";
+import {
+  catalogItemFromPlaylistItem,
+  catalogItemFromSearchItem,
+  catalogItemFromVideoItem,
+  catalogItemsFromSearchResponse,
+  uploadsPlaylistIdOf,
+  videoIdOf,
+} from "../src/youtube/catalogMapping";
+import {
+  channelUploadsCatalog,
+  listChannelPlaylists,
+  playbackPlanForCatalogItem,
+  playlistVideosCatalog,
+  searchCapabilityFromError,
+  searchYouTubeCatalog,
+  trendingYouTubeCatalog,
+  YOUTUBE_PLAYBACK_CONNECTOR,
+} from "../src/youtube/service";
+import {
+  assertSubstitutesCoverManifest,
+  substituteFor,
+  YOUTUBE_UNSUPPORTED_SUBSTITUTES,
+} from "../src/youtube/substitutes";
+import type { CatalogItem } from "webflix-contracts";
+
+const OBSERVED_AT = "2026-10-11T00:00:00Z";
+
+describe("youtube trending browse (videos.list chart=mostPopular)", () => {
+  it("requests the official chart with region/category params and charges 1 unit", async () => {
+    const fetch = fixtureFetch([
+      {
+        match: (url) =>
+          url.startsWith(`${YOUTUBE_API_BASE}/videos?`) && url.includes("chart=mostPopular"),
+        respond: () => jsonResponse(trendingFixture),
+      },
+    ]);
+    const client = new YouTubeDataApiClient({
+      fetchImpl: fetch,
+      apiKey: FIXTURE_API_KEY,
+      clock: () => NOW,
+    });
+
+    const page = await client.getTrendingVideos({ regionCode: "US", maxResults: 3 });
+    expect(page.items).toHaveLength(3);
+    expect(fetch.calls[0]).toContain("chart=mostPopular");
+    expect(fetch.calls[0]).toContain("regionCode=US");
+    expect(fetch.calls[0]).toContain("part=snippet%2CcontentDetails%2Cstatistics");
+
+    const ledger = client.getLedger();
+    expect(ledger).toHaveLength(1);
+    expect(ledger[0]).toMatchObject({
+      operationId: "videos.list",
+      cost: 1,
+      ok: true,
+      outcome: "success",
+    });
+    expect(client.getSearchBudget().unitsUsedToday).toBe(1);
+  });
+
+  it("is honest about fewer results than requested (no padding)", async () => {
+    const fetch = fixtureFetch([
+      {
+        match: (url) => url.includes("chart=mostPopular"),
+        respond: () =>
+          jsonResponse({ ...trendingFixture, items: trendingFixture.items.slice(0, 1) }),
+      },
+    ]);
+    const client = new YouTubeDataApiClient({ fetchImpl: fetch, apiKey: FIXTURE_API_KEY });
+    const page = await client.getTrendingVideos({ regionCode: "DE" });
+    expect(page.items).toHaveLength(1);
+  });
+});
+
+describe("youtube catalog mapping (canonical §2.1 CatalogItems)", () => {
+  it("maps a search item to a provider-attributed item with the video id in the metadata bag", () => {
+    const item = catalogItemFromSearchItem(searchFixture.items[0]!, {
+      regionCode: "US",
+      observedAt: OBSERVED_AT,
+    });
+    if (item === null) throw new Error("expected a mapped item");
+    expect(item.providerId).toBe("youtube");
+    expect(item.id).toBe("youtube:video:FIXVID00001");
+    expect(item.title).toBe("Fixture: container gardening basics");
+    expect(item.mediaKind).toBe("video");
+    expect(item.metadata.externalIds).toEqual({ youtube: "FIXVID00001" });
+    expect(item.metadata.channelId).toBe("UCFIXCH0000000000000001");
+    expect(item.metadata.channelTitle).toBe("Fixture Channel");
+    expect(item.metadata.publishedAt).toBe("2024-11-02T10:00:00Z");
+    expect(item.metadata.year).toBe(2024);
+    // Provider-native provenance, not a fabricated match.
+    expect(item.matchEvidence?.confidence).toBe(1);
+    expect(item.matchEvidence?.evidence[0]).toContain("search.list hit videoId=FIXVID00001");
+    // One availability fact, region only because the response carried one.
+    expect(item.availability).toMatchObject({
+      providerId: "youtube",
+      region: "US",
+      available: true,
+      observedAt: OBSERVED_AT,
+    });
+    // Assets: the official embed reference + provider thumbnails.
+    const embed = item.assets.find((asset) => asset.kind === "embed");
+    expect(embed?.reference).toBe("https://www.youtube-nocookie.com/embed/FIXVID00001");
+    const thumb = item.assets.find((asset) => asset.kind === "thumbnail");
+    expect(thumb?.reference).toBe("https://i.ytimg.com/vi/FIXVID00001/default.jpg");
+  });
+
+  it("marks live broadcast content as mediaKind live (never guessed)", () => {
+    const liveRow = trendingFixture.items.find(
+      (row) => row.snippet?.liveBroadcastContent === "live",
+    );
+    if (!liveRow) throw new Error("fixture must contain a live row");
+    const item = catalogItemFromVideoItem(liveRow, {
+      regionCode: "US",
+      observedAt: OBSERVED_AT,
+      provenance: "provider-native: videos.list chart=mostPopular trending row",
+    });
+    expect(item?.mediaKind).toBe("live");
+    expect(item?.metadata.liveBroadcastContent).toBe("live");
+  });
+
+  it("maps playlistItems rows through resourceId.videoId", () => {
+    const item = catalogItemFromPlaylistItem(uploadsPlaylistItemsFixture.items[0]!, {
+      observedAt: OBSERVED_AT,
+    });
+    if (item === null) throw new Error("expected a mapped item");
+    expect(item.metadata.externalIds).toEqual({ youtube: "FIXVID00002" });
+    expect(item.matchEvidence?.evidence[0]).toContain(
+      "playlistItems.list entry videoId=FIXVID00002",
+    );
+    // No region known from a playlist read: NO availability fact (honest absence).
+    expect(item.availability).toBeUndefined();
+  });
+
+  it("drops non-video search results instead of inventing a mediaKind", () => {
+    const channelHit = {
+      kind: "youtube#searchResult",
+      id: { kind: "youtube#channel", channelId: "UCFIXCH0000000000000001" },
+      snippet: { title: "Fixture Channel" },
+    };
+    expect(catalogItemFromSearchItem(channelHit, { observedAt: OBSERVED_AT })).toBeNull();
+    // Malformed video ids are refused too.
+    expect(
+      catalogItemFromSearchItem(
+        { id: { kind: "youtube#video", videoId: "short" }, snippet: { title: "x" } },
+        { observedAt: OBSERVED_AT },
+      ),
+    ).toBeNull();
+  });
+
+  it("extracts the uploads playlist id from channels.list contentDetails", () => {
+    expect(uploadsPlaylistIdOf(channelsContentDetailsFixture.items[0]!)).toBe(
+      "UUFIXCH0000000000000001",
+    );
+    expect(uploadsPlaylistIdOf({ id: "UCX" })).toBeNull();
+  });
+
+  it("videoIdOf bridges metadata, embed reference and assetId (and refuses the rest)", () => {
+    const mapped = catalogItemsFromSearchResponse(searchFixture, { observedAt: OBSERVED_AT })[0]!;
+    expect(videoIdOf(mapped)).toBe("FIXVID00001");
+
+    const embedOnly: CatalogItem = {
+      id: "youtube:video:X",
+      providerId: "youtube",
+      title: "Embed-only item",
+      mediaKind: "video",
+      assets: [
+        {
+          assetId: "youtube:embed:FIXVID00002",
+          kind: "embed",
+          reference: "https://www.youtube-nocookie.com/embed/FIXVID00002",
+        },
+      ],
+      metadata: {},
+    };
+    expect(videoIdOf(embedOnly)).toBe("FIXVID00002");
+
+    const neither: CatalogItem = {
+      id: "youtube:video:none",
+      providerId: "youtube",
+      title: "No id anywhere",
+      mediaKind: "video",
+      assets: [],
+      metadata: {},
+    };
+    expect(videoIdOf(neither)).toBeNull();
+    expect(videoIdOf({ ...neither, providerId: "somebody-else" })).toBeNull();
+  });
+});
+
+describe("youtube service: quota-ledger-aware search & browse", () => {
+  it("searchYouTubeCatalog returns canonical items plus the honest budget snapshot", async () => {
+    const fetch = fixtureFetch([
+      {
+        match: (url) => url.startsWith(`${YOUTUBE_API_BASE}/search?`),
+        respond: () => jsonResponse(searchFixture),
+      },
+    ]);
+    const client = new YouTubeDataApiClient({
+      fetchImpl: fetch,
+      apiKey: FIXTURE_API_KEY,
+      clock: () => NOW,
+    });
+
+    const page = await searchYouTubeCatalog(
+      client,
+      { q: "container gardening" },
+      { observedAt: OBSERVED_AT },
+    );
+    expect(page.items).toHaveLength(2);
+    expect(page.items[0]?.metadata.externalIds).toEqual({ youtube: "FIXVID00001" });
+    expect(page.nextPageToken).toBe("FIXTURE-NEXT-PAGE-1");
+    // One search call: 100 units charged, 99 search-class calls remain.
+    expect(page.budget).toMatchObject({
+      state: "ok",
+      unitsUsedToday: 100,
+      unitsRemainingToday: 9_900,
+      searchCallsRemainingToday: 99,
+    });
+
+    const second = await searchYouTubeCatalog(
+      client,
+      { q: "winter soil" },
+      { observedAt: OBSERVED_AT },
+    );
+    expect(second.budget.searchCallsRemainingToday).toBe(98);
+    expect(client.getUnitsUsedToday()).toBe(200);
+  });
+
+  it("trendingYouTubeCatalog maps the chart and keeps the 1-unit budget arithmetic", async () => {
+    const fetch = fixtureFetch([
+      {
+        match: (url) => url.includes("chart=mostPopular"),
+        respond: () => jsonResponse(trendingFixture),
+      },
+    ]);
+    const client = new YouTubeDataApiClient({
+      fetchImpl: fetch,
+      apiKey: FIXTURE_API_KEY,
+      clock: () => NOW,
+    });
+    const page = await trendingYouTubeCatalog(
+      client,
+      { regionCode: "US" },
+      { observedAt: OBSERVED_AT },
+    );
+    expect(page.items).toHaveLength(3);
+    expect(page.items.map((item) => item.metadata.externalIds)).toEqual(
+      expect.arrayContaining([{ youtube: "FIXVID00003" }, { youtube: "FIXVID00004" }]),
+    );
+    expect(page.budget.unitsUsedToday).toBe(1);
+  });
+
+  it("channel browse: playlists list as containers, uploads shelf via contentDetails", async () => {
+    const fetch = fixtureFetch([
+      {
+        match: (url) => url.startsWith(`${YOUTUBE_API_BASE}/playlists?`),
+        respond: () => jsonResponse(playlistsFixture),
+      },
+      {
+        match: (url) => url.startsWith(`${YOUTUBE_API_BASE}/channels?`),
+        respond: () => jsonResponse(channelsContentDetailsFixture),
+      },
+      {
+        match: (url) => url.startsWith(`${YOUTUBE_API_BASE}/playlistItems?`),
+        respond: (url) =>
+          jsonResponse(
+            url.includes("UUFIXCH0000000000000001")
+              ? uploadsPlaylistItemsFixture
+              : playlistItemsFixture,
+          ),
+      },
+    ]);
+    const client = new YouTubeDataApiClient({
+      fetchImpl: fetch,
+      apiKey: FIXTURE_API_KEY,
+      clock: () => NOW,
+    });
+
+    const playlists = await listChannelPlaylists(client, {
+      channelId: "UCFIXCH0000000000000001",
+    });
+    expect(playlists.playlists.length).toBeGreaterThan(0);
+    expect(playlists.playlists[0]?.playlistId).toBe("PLFIX0000000000000001");
+
+    const uploads = await channelUploadsCatalog(
+      client,
+      { channelId: "UCFIXCH0000000000000001" },
+      { observedAt: OBSERVED_AT },
+    );
+    expect(uploads.playlistId).toBe("UUFIXCH0000000000000001");
+    expect(uploads.items).toHaveLength(2);
+    // Client-cumulative ledger: playlists.list (1) + channels.list (1) +
+    // playlistItems.list (1) = 3 units — the uploads browse itself costs 2.
+    expect(uploads.budget.unitsUsedToday).toBe(3);
+
+    const playlist = await playlistVideosCatalog(
+      client,
+      { playlistId: "PLFIX0000000000000001" },
+      { observedAt: OBSERVED_AT },
+    );
+    expect(playlist.items.map((item) => item.metadata.externalIds)).toEqual(
+      expect.arrayContaining([{ youtube: "FIXVID00001" }, { youtube: "FIXVID00002" }]),
+    );
+  });
+
+  it("searchCapabilityFromError maps typed errors onto the frozen §2.3 vocabulary", async () => {
+    // rate-limited: provider 429 (fixture) surfaces with Retry-After context.
+    const fetch429 = fixtureFetch([
+      {
+        match: (url) => url.includes("/search?"),
+        respond: () =>
+          jsonResponse(rateLimitExceededFixture, { status: 429, headers: { "retry-after": "42" } }),
+      },
+    ]);
+    const client429 = new YouTubeDataApiClient({ fetchImpl: fetch429, apiKey: FIXTURE_API_KEY });
+    const failure = await client429.searchVideos({ q: "x" }).then(
+      () => null,
+      (error: unknown) => error,
+    );
+    expect(failure).toBeInstanceOf(RateLimitedError);
+    const rateLimited = searchCapabilityFromError(failure);
+    expect(rateLimited.status).toBe("rate-limited");
+    expect(rateLimited.detail).toContain("Retry-After: 42s");
+
+    // rate-limited: local budget exhaustion (pre-flight block, nothing sent).
+    const fetchTiny = fixtureFetch([
+      { match: (url) => url.includes("/search?"), respond: () => jsonResponse(searchFixture) },
+    ]);
+    const tinyClient = new YouTubeDataApiClient({
+      fetchImpl: fetchTiny,
+      apiKey: FIXTURE_API_KEY,
+      quotaLimitToday: 150,
+      clock: () => NOW,
+    });
+    await tinyClient.searchVideos({ q: "first" });
+    const blocked = await tinyClient.searchVideos({ q: "second" }).then(
+      () => null,
+      (error: unknown) => error,
+    );
+    expect(blocked).toBeInstanceOf(QuotaExceededError);
+    expect(searchCapabilityFromError(blocked).status).toBe("rate-limited");
+
+    // requires-auth: authorized call without any credential.
+    const noAuthClient = new YouTubeDataApiClient({ apiKey: FIXTURE_API_KEY });
+    const missing = await noAuthClient.getChannel({ mine: true }).then(
+      () => null,
+      (error: unknown) => error,
+    );
+    expect(missing).toBeInstanceOf(MissingCredentialError);
+    expect(searchCapabilityFromError(missing).status).toBe("requires-auth");
+
+    // unknown: the fixture-only build refuses the network — check not completed.
+    const offlineClient = new YouTubeDataApiClient({ apiKey: FIXTURE_API_KEY });
+    const offline = await offlineClient.searchVideos({ q: "x" }).then(
+      () => null,
+      (error: unknown) => error,
+    );
+    expect(offline).toBeInstanceOf(LiveNetworkDisabledError);
+    expect(searchCapabilityFromError(offline).status).toBe("unknown");
+
+    // unavailable: a well-formed API error that is none of the above.
+    const notFound = new NotFoundError({ operationId: "videos.list", message: "no video" });
+    expect(searchCapabilityFromError(notFound).status).toBe("unavailable");
+    expect(searchCapabilityFromError(new Error("boom")).status).toBe("unknown");
+  });
+});
+
+describe("youtube watch bridge (catalog item → canonical PlaybackPlan)", () => {
+  it("builds an official-embed plan for a mapped search item, end to end", async () => {
+    const fetch = fixtureFetch([
+      {
+        match: (url) => url.startsWith(`${YOUTUBE_API_BASE}/search?`),
+        respond: () => jsonResponse(searchFixture),
+      },
+    ]);
+    const client = new YouTubeDataApiClient({
+      fetchImpl: fetch,
+      apiKey: FIXTURE_API_KEY,
+      clock: () => NOW,
+    });
+    const page = await searchYouTubeCatalog(
+      client,
+      { q: "container gardening" },
+      { observedAt: OBSERVED_AT },
+    );
+    const plan = playbackPlanForCatalogItem(page.items[0]!, {
+      origin: "https://app.webflix.local",
+    });
+    if (plan.kind !== "official-embed") throw new Error("expected an official-embed plan");
+    expect(plan.providerId).toBe("youtube");
+    const spec = plan.embedSpec as { videoId: string; embedUrl: string; iframe: { title: string } };
+    expect(spec.videoId).toBe("FIXVID00001");
+    // The exact key the shell WatchScreen renders (§2.2 embedSpec.embedUrl).
+    expect(spec.embedUrl).toContain("https://www.youtube-nocookie.com/embed/FIXVID00001");
+    expect(spec.embedUrl).toContain("origin=https%3A%2F%2Fapp.webflix.local");
+    expect(spec.iframe.title).toBe("Fixture: container gardening basics");
+  });
+
+  it("is total and honest: non-YouTube and id-less items become truthful unavailable plans", () => {
+    const foreign: CatalogItem = {
+      id: "other:1",
+      providerId: "somebody-else",
+      title: "Not ours",
+      mediaKind: "video",
+      assets: [],
+      metadata: {},
+    };
+    const foreignPlan = playbackPlanForCatalogItem(foreign);
+    expect(foreignPlan).toMatchObject({ kind: "unavailable", reason: "unsupported" });
+    if (foreignPlan.kind !== "unavailable") throw new Error("unreachable");
+    expect(foreignPlan.recovery?.action).toBe("open-system-settings");
+
+    const idLess: CatalogItem = {
+      id: "youtube:video:none",
+      providerId: "youtube",
+      title: "No video id",
+      mediaKind: "video",
+      assets: [],
+      metadata: {},
+    };
+    const idLessPlan = playbackPlanForCatalogItem(idLess);
+    expect(idLessPlan).toMatchObject({ kind: "unavailable", reason: "unsupported" });
+    if (idLessPlan.kind !== "unavailable") throw new Error("unreachable");
+    expect(idLessPlan.recovery?.action).toBe("open-provider-app");
+  });
+
+  it("exposes the structural adapter for the playback resolver seam", () => {
+    // The playback package accepts structural Connector input; this constant
+    // is what the app layer passes to resolvePlaybackPlan (no cross-package
+    // import — architecture-policy keeps connectors from importing playback).
+    expect(YOUTUBE_PLAYBACK_CONNECTOR.providerId).toBe("youtube");
+    expect(YOUTUBE_PLAYBACK_CONNECTOR.embed.allowsEmbedding).toBe(true);
+    expect(YOUTUBE_PLAYBACK_CONNECTOR.embed.urlTemplate).toBe(
+      "https://www.youtube-nocookie.com/embed/{mediaId}",
+    );
+    // Sanity: the template resolves to the same URL shape the watch bridge emits.
+    const resolved = YOUTUBE_PLAYBACK_CONNECTOR.embed.urlTemplate.replace(
+      "{mediaId}",
+      encodeURIComponent("FIXVID00001"),
+    );
+    expect(resolved).toBe("https://www.youtube-nocookie.com/embed/FIXVID00001");
+  });
+});
+
+describe("honest-unsupported rows: WebFlix-local substitutes (work order row 4)", () => {
+  it("every unsupported manifest row has exactly one substitute/handoff entry", () => {
+    expect(() => assertSubstitutesCoverManifest()).not.toThrow();
+    const unsupportedCount = Object.values(youtubeManifest.operations).filter(
+      (op) => op.status === "unsupported",
+    ).length;
+    expect(YOUTUBE_UNSUPPORTED_SUBSTITUTES).toHaveLength(unsupportedCount);
+  });
+
+  it("local substitutes exist only for history and home-feed, and are WebFlix-owned stores", () => {
+    expect(substituteFor("history")?.substitute).toBe("webflix-local-history");
+    expect(substituteFor("home-feed")?.substitute).toBe("webflix-local-library");
+    expect(substituteFor("history")?.substituteNote).toContain("WebFlix-owned");
+    expect(substituteFor("home-feed")?.substituteNote).toContain("never");
+    for (const row of YOUTUBE_UNSUPPORTED_SUBSTITUTES) {
+      expect(row.handoffNote.length).toBeGreaterThan(0);
+      if (row.substitute === "none") {
+        // The note must deny a substitute (no fabricated surface) — phrased
+        // as "No …" or "no official …; shows nothing".
+        expect(row.substituteNote).toMatch(/[Nn]o |nothing|never/);
+      }
+    }
+  });
+
+  it("no substitute claims provider data (the store boundary is WebFlix-local only)", () => {
+    for (const row of YOUTUBE_UNSUPPORTED_SUBSTITUTES) {
+      expect(row.substitute === "none" || row.substitute.startsWith("webflix-local")).toBe(true);
+      expect(row.substituteNote).toMatch(/WebFlix|[Nn]o |nothing|never/);
+    }
+  });
+});
+
+describe("catalog mapping feeds the canonical catalog merge (end-to-end seam)", () => {
+  it("mapped search items merge by provider-native evidence without duplicates", async () => {
+    const { mergeCatalogInto } = await import("catalog");
+    const fetch = fixtureFetch([
+      {
+        match: (url) => url.startsWith(`${YOUTUBE_API_BASE}/search?`),
+        respond: () => jsonResponse(searchFixture),
+      },
+    ]);
+    const client = new YouTubeDataApiClient({
+      fetchImpl: fetch,
+      apiKey: FIXTURE_API_KEY,
+      clock: () => NOW,
+    });
+    const first = await searchYouTubeCatalog(
+      client,
+      { q: "container gardening" },
+      { observedAt: OBSERVED_AT },
+    );
+    const second = await searchYouTubeCatalog(
+      client,
+      { q: "container gardening" },
+      { observedAt: OBSERVED_AT },
+    );
+
+    const result = mergeCatalogInto(first.items, second.items);
+    // Same provider + same asset ids → the second page dedupes into the first.
+    expect(result.items).toHaveLength(2);
+    expect(result.report.deduped).toBe(2);
+    expect(result.report.created).toBe(0);
+  });
+});

@@ -13,3 +13,6 @@ export * from "./youtube/manifest";
 export * from "./youtube/dataApi";
 export * from "./youtube/oauth";
 export * from "./youtube/playback";
+export * from "./youtube/catalogMapping";
+export * from "./youtube/service";
+export * from "./youtube/substitutes";

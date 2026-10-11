@@ -158,14 +158,24 @@ export function describeCapability(capability: OperationCapability): {
 export type SearchState =
   | { readonly phase: "idle" }
   | { readonly phase: "loading"; readonly query: string }
-  | { readonly phase: "results"; readonly query: string; readonly items: readonly CatalogItem[] }
-  | { readonly phase: "empty"; readonly query: string }
+  | {
+      readonly phase: "results";
+      readonly query: string;
+      readonly items: readonly CatalogItem[];
+      readonly budget?: SearchBudgetView;
+    }
+  | { readonly phase: "empty"; readonly query: string; readonly budget?: SearchBudgetView }
   | {
       readonly phase: "requires-auth";
       readonly query: string;
       readonly providerId: string;
     }
-  | { readonly phase: "rate-limited"; readonly query: string; readonly detail?: string }
+  | {
+      readonly phase: "rate-limited";
+      readonly query: string;
+      readonly detail?: string;
+      readonly budget?: SearchBudgetView;
+    }
   | { readonly phase: "unsupported"; readonly query: string; readonly detail?: string }
   | { readonly phase: "unavailable"; readonly query: string; readonly detail?: string }
   | {
@@ -173,32 +183,76 @@ export type SearchState =
       readonly query: string;
       readonly items: readonly CatalogItem[];
       readonly detail?: string;
+      readonly budget?: SearchBudgetView;
     }
   | { readonly phase: "status-unknown"; readonly query: string; readonly detail?: string };
+
+/**
+ * Shell-local view of the provider search budget (YOUTUBE-EXPAND: "surface
+ * remaining-quota honestly in the shell"). STRUCTURAL by design: the app
+ * layer maps the connector-side budget snapshot onto this view — the shell
+ * never imports the connectors package (architecture-policy dependency
+ * rules), and the view carries only what is rendered.
+ */
+export interface SearchBudgetView {
+  /** ok | low | exhausted — the connector-side honest budget states. */
+  readonly state: "ok" | "low" | "exhausted";
+  readonly unitsRemainingToday: number;
+  readonly unitsLimitToday: number;
+  readonly searchCallsRemainingToday: number;
+  /** True when the PROVIDER itself reported the day's quota exhausted. */
+  readonly providerReportedExhaustion: boolean;
+}
+
+/**
+ * One honest sentence about the remaining search budget. Quota is a
+ * first-class UX state (the 100-calls/day default cap is real), so the
+ * number is shown plainly — never hidden, never padded, never fabricated.
+ * "Next quota day" is deliberately vague where the reset instant is
+ * provider-side and not exposed by any official endpoint we call.
+ */
+export function budgetLine(view: SearchBudgetView): string {
+  const units = `${view.unitsRemainingToday} of ${view.unitsLimitToday} quota units left today`;
+  switch (view.state) {
+    case "ok":
+      return `Search budget: ${view.searchCallsRemainingToday} searches left today · ${units}.`;
+    case "low":
+      return `Search budget is running low: ${view.searchCallsRemainingToday} ${
+        view.searchCallsRemainingToday === 1 ? "search" : "searches"
+      } left today · ${units}.`;
+    case "exhausted":
+      return view.providerReportedExhaustion
+        ? "Daily search quota is exhausted — the provider reported it. No search calls are made until the next quota day."
+        : "Daily search budget is exhausted. No search calls are made until the next quota day.";
+  }
+}
 
 /**
  * Map a capability probe (§2.3) onto the search results area.
  *
  * The provider being searched is caller context (the frozen
  * OperationCapability carries no providerId); pass it so the requires-auth
- * panel can offer the correct connect action.
+ * panel can offer the correct connect action. The optional budget view
+ * (SearchBudgetView) is attached to the phases where quota is part of the
+ * honest picture: results, empty, degraded, rate-limited.
  */
 export function searchStateFromCapability(
   query: string,
   providerId: string,
   capability: OperationCapability,
   items?: readonly CatalogItem[],
+  budget?: SearchBudgetView,
 ): SearchState {
   const detail = capability.detail === "" ? undefined : capability.detail;
   switch (capability.status) {
     case "supported":
       return items && items.length > 0
-        ? { phase: "results", query, items }
-        : { phase: "empty", query };
+        ? { phase: "results", query, items, budget }
+        : { phase: "empty", query, budget };
     case "requires-auth":
       return { phase: "requires-auth", query, providerId };
     case "rate-limited":
-      return { phase: "rate-limited", query, detail };
+      return { phase: "rate-limited", query, detail, budget };
     case "unsupported":
       return { phase: "unsupported", query, detail };
     case "unavailable":
@@ -206,7 +260,7 @@ export function searchStateFromCapability(
     case "degraded":
       // Partial results are shown, clearly flagged — never hidden, never
       // dressed up as fully ready.
-      return { phase: "degraded", query, items: items ?? [], detail };
+      return { phase: "degraded", query, items: items ?? [], detail, budget };
     case "unknown":
       return { phase: "status-unknown", query, detail };
   }
