@@ -71,8 +71,11 @@ describe("local-library store (unit, temp dirs)", () => {
       const rows = store.db
         .prepare("SELECT id, name, hash FROM schema_migrations ORDER BY id")
         .all();
-      expect(rows).toHaveLength(1);
+      // P4-ARTIFACTS row 1: the additive 0002_media_intelligence migration
+      // ships with the durable MI stores — the set is [0001, 0002].
+      expect(rows).toHaveLength(2);
       expect(rows[0]["name"]).toBe("0001_init");
+      expect(rows[1]["name"]).toBe("0002_media_intelligence");
       expect(String(rows[0]["hash"])).toMatch(/^[0-9a-f]{64}$/);
     });
 
@@ -81,7 +84,7 @@ describe("local-library store (unit, temp dirs)", () => {
       store.close();
       const reopened = await open(dir);
       const count = reopened.db.prepare("SELECT COUNT(*) AS n FROM schema_migrations").get();
-      expect(Number(count?.["n"])).toBe(1);
+      expect(Number(count?.["n"])).toBe(2);
 
       const p = join(dir, "x.mp4");
       writeFileSync(p, "x");

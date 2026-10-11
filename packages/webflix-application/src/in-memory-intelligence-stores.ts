@@ -1,14 +1,17 @@
 /**
- * In-memory MI store defaults (P4-CONTRACTS).
+ * In-memory MI store defaults (P4-CONTRACTS; role narrowed at P4-ARTIFACTS
+ * row 1 to the PURE-TEST defaults).
  *
  * Honest boundary, stated plainly: these implementations live in memory
  * ONLY — nothing survives a restart, and they are per-profile by
  * construction (the composition root instantiates one set per profile;
- * ADR-0003 — no cross-profile data ever). Persistence is deferred: the
- * artifact registry is claimed by P4-ARTIFACTS; the objective/feedback
- * stores land with the store milestone that claims them. The port
- * interfaces in ./ports.ts are the stable seam — swapping these defaults
- * for persistent adapters changes nothing above the ports.
+ * ADR-0003 — no cross-profile data ever). The DURABLE adapters for all
+ * three ports shipped with P4-ARTIFACTS on the local-library storage seam
+ * (better-sqlite3, own `mi_*` tables, additive migration 0002, exported
+ * there for the composition root); these in-memory defaults remain for
+ * hermetic unit tests. The port interfaces in ./ports.ts are the stable
+ * seam — swapping defaults for persistent adapters changes nothing above
+ * the ports.
  */
 import type { DerivedArtifact, FeedbackEvent, UserObjective } from "webflix-contracts";
 import type {

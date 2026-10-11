@@ -165,12 +165,13 @@ export interface ProviderMetadataPort {
 //
 // Per-user, per-profile isolation (ADR-0003): every port instance is
 // profile-scoped by construction — the composition root creates one store
-// per profile, and no port crosses profiles. Durability, stated plainly:
-// the in-memory defaults shipped this order are NOT durable; persistence is
-// deferred (P4-ARTIFACTS owns the artifact registry storage, and the
-// objective/feedback stores land with the store milestone that claims
-// them). The port boundary is the stable seam; swapping an in-memory
-// default for a persistent adapter changes nothing above this line.
+// per profile, and no port crosses profiles. Durability update
+// (P4-ARTIFACTS row 1): the DURABLE adapters for all three ports ship on
+// the local-library storage seam (better-sqlite3, own `mi_*` tables,
+// additive migration 0002, per-profile by construction) and are exported
+// there for the composition root — wiring them here is explicitly a later
+// order. The in-memory defaults below remain the pure-test defaults; the
+// port boundary is the stable seam.
 // ---------------------------------------------------------------------------
 
 /** Outcome of an idempotent feedback append. */

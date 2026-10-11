@@ -43,3 +43,28 @@ export type {
 
 export { ALL_MIGRATIONS, openStore, WebFlixStore } from "./store";
 export type { OpenStoreOptions } from "./store";
+
+export { migration0002MediaIntelligence } from "./db/migrations/0002_media_intelligence";
+
+// Durable media-intelligence stores (P4-ARTIFACTS row 1): the MI store trio
+// on this package's storage seam, exported for the composition root (a
+// later order wires them — ports are structural mirrors of the application
+// layer's MI ports, per the LocalStorePort precedent).
+export {
+  createIntelligenceStores,
+  SqliteObjectiveStore,
+  SqliteFeedbackStore,
+  SqliteArtifactRegistry,
+} from "./intelligence-stores";
+export type {
+  ArtifactLineageStatus,
+  ArtifactRegistryPort,
+  DurableArtifactRegistry,
+  DurableFeedbackStore,
+  DurableObjectiveStore,
+  FeedbackAppendResult,
+  FeedbackStorePort,
+  IntelligenceStoreOptions,
+  IntelligenceStores,
+  ObjectiveStorePort,
+} from "./intelligence-stores";

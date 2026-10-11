@@ -4,12 +4,17 @@ import { DB_FILENAME } from "./constants";
 import { createSqliteDatabase, type SqliteDatabase } from "./db/adapter";
 import { runMigrations } from "./db/migrate";
 import { migration0001Init } from "./db/migrations/0001_init";
+import { migration0002MediaIntelligence } from "./db/migrations/0002_media_intelligence";
 import type { Migration } from "./db/migrate";
+import { createIntelligenceStores, type IntelligenceStores } from "./intelligence-stores";
 import { ValidationError } from "./errors";
 import { LocalStore, type LocalStoreOptions } from "./localStore";
 import { assertNotDefaultDataRootInTests } from "./paths";
 
-export const ALL_MIGRATIONS: readonly Migration[] = [migration0001Init];
+export const ALL_MIGRATIONS: readonly Migration[] = [
+  migration0001Init,
+  migration0002MediaIntelligence,
+];
 
 export interface OpenStoreOptions {
   /**
@@ -22,6 +27,8 @@ export interface OpenStoreOptions {
 }
 
 export class WebFlixStore {
+  private miStores: IntelligenceStores | undefined;
+
   constructor(
     public readonly baseDir: string,
     public readonly dbPath: string,
@@ -36,6 +43,17 @@ export class WebFlixStore {
   journalMode(): string {
     const row = this.db.prepare("PRAGMA journal_mode").get();
     return row ? String(row["journal_mode"] ?? "") : "";
+  }
+
+  /**
+   * Durable media-intelligence stores (P4-ARTIFACTS row 1) over this
+   * profile's database — per-profile by construction (ADR-0003). Lazy and
+   * stateless: the adapters only wrap the db handle. NOT composition-root
+   * wiring — connecting them to the application use-cases is a later order.
+   */
+  get intelligence(): IntelligenceStores {
+    this.miStores ??= createIntelligenceStores(this.db);
+    return this.miStores;
   }
 
   close(): void {
