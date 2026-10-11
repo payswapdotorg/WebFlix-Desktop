@@ -16,3 +16,17 @@ export * from "./youtube/playback";
 export * from "./youtube/catalogMapping";
 export * from "./youtube/service";
 export * from "./youtube/substitutes";
+// TikTok — second platform on the same frozen contracts (TIKTOK-CONNECT).
+// NOTE: tiktok/oauth.ts deliberately does NOT re-export the provider-neutral
+// OAuth substrate it imports from ./youtube/oauth (PKCE pair, state guard,
+// transitions, store types) — the package index already exports those once
+// via the YouTube module; a second `export *` of the same names would make
+// them ambiguous.
+export * from "./tiktok/manifest";
+export * from "./tiktok/displayApi";
+export * from "./tiktok/oembed";
+export * from "./tiktok/catalogMapping";
+export * from "./tiktok/playback";
+export * from "./tiktok/oauth";
+export * from "./tiktok/service";
+export * from "./tiktok/substitutes";

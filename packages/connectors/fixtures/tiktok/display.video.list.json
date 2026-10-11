@@ -1,0 +1,31 @@
+{
+  "data": {
+    "videos": [
+      {
+        "id": "7301234567890123456",
+        "title": "Morning routine with the crew",
+        "video_description": "How we start the day #morning #routine #fyp",
+        "duration": 14,
+        "cover_image_url": "https://p16-sign-va.tiktokcdn.com/obj/mosaic-legacy/fixture-cover-1~c5_720x1280.jpeg",
+        "embed_link": "https://www.tiktok.com/@fixture.creator/video/7301234567890123456",
+        "create_time": 1735000000
+      },
+      {
+        "id": "7298765432109876543",
+        "title": "Behind the scenes",
+        "video_description": "Setup tour",
+        "duration": 27,
+        "cover_image_url": "https://p16-sign-va.tiktokcdn.com/obj/mosaic-legacy/fixture-cover-2~c5_720x1280.jpeg",
+        "embed_link": "https://www.tiktok.com/@fixture.creator/video/7298765432109876543",
+        "create_time": 1734900000
+      }
+    ],
+    "cursor": 1734900000000,
+    "has_more": true
+  },
+  "error": {
+    "code": "ok",
+    "message": "",
+    "log_id": "20261011043236000FIXTURE00000000002"
+  }
+}

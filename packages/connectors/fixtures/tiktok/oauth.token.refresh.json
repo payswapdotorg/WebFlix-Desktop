@@ -1,0 +1,16 @@
+{
+  "data": {
+    "access_token": "act.FIXTURE-TIKTOK-REFRESHED-ACCESS-TOKEN-NOT-REAL",
+    "expires_in": 86400,
+    "open_id": "723f7d4a-e0f7-4d5a-9d3b-1f2e3d4c5b6a",
+    "refresh_expires_in": 30000000,
+    "refresh_token": "rt.FIXTURE-TIKTOK-REFRESHED-REFRESH-TOKEN-NOT-REAL",
+    "scope": "user.info.basic,user.info.profile,video.list",
+    "token_type": "Bearer"
+  },
+  "error": {
+    "code": "ok",
+    "message": "",
+    "log_id": "20261011043236000FIXTURE00000000004"
+  }
+}

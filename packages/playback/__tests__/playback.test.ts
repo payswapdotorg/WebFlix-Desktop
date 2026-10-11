@@ -595,3 +595,62 @@ describe("youtube official-embed lane (YOUTUBE-EXPAND watch path)", () => {
     expect(disallowed.recovery?.action).toBe("open-provider-app");
   });
 });
+
+// ---------------------------------------------------------------------------
+// TIKTOK-CONNECT — the TikTok official-embed lane through this resolver
+// ---------------------------------------------------------------------------
+
+describe("tiktok official-embed lane (TIKTOK-CONNECT watch path)", () => {
+  // Structural twin of connectors' exported TIKTOK_PLAYBACK_CONNECTOR
+  // (architecture-policy keeps playback from importing connectors; the two
+  // packages meet at the canonical §2.2 PlaybackPlan shape. The connectors
+  // suite asserts the constant's fields; this proves the resolver accepts
+  // that exact structural shape and emits the official embed-player URL the
+  // shell WatchScreen renders — the TikTok embed host is
+  // https://www.tiktok.com/embed/v2/<id>, live-verified as the official
+  // player surface, with the regional honesty recorded in the parity matrix).
+  const TIKTOK_CONNECTOR: Connector = {
+    id: "tiktok",
+    providerId: "tiktok",
+    version: "1.0.0",
+    embed: {
+      providerId: "tiktok",
+      urlTemplate: "https://www.tiktok.com/embed/v2/{mediaId}",
+      allowsEmbedding: true,
+    },
+  };
+
+  it("resolves a tiktok listing to the official embed player URL", () => {
+    const plan = resolvePlaybackPlan(
+      request({
+        listings: [{ providerId: "tiktok", externalId: "6718335390845095173" }],
+        connectors: [TIKTOK_CONNECTOR],
+      }),
+    );
+    if (plan.kind !== "official-embed") {
+      throw new Error(`expected official-embed, got ${plan.kind}`);
+    }
+    expect(plan.providerId).toBe("tiktok");
+    expect(plan.embedSpec.embedUrl).toBe("https://www.tiktok.com/embed/v2/6718335390845095173");
+    expect(isPlayablePlan(plan)).toBe(true);
+  });
+
+  it("stays honest when the tiktok connector is absent or embedding is disallowed", () => {
+    const noConnector = resolvePlaybackPlan(
+      request({ listings: [{ providerId: "tiktok", externalId: "6718335390845095173" }] }),
+    );
+    expect(noConnector).toMatchObject({ kind: "unavailable", reason: "unsupported" });
+
+    const disallowed = resolvePlaybackPlan(
+      request({
+        listings: [{ providerId: "tiktok", externalId: "6718335390845095173" }],
+        connectors: [
+          { ...TIKTOK_CONNECTOR, embed: { ...TIKTOK_CONNECTOR.embed!, allowsEmbedding: false } },
+        ],
+      }),
+    );
+    expect(disallowed).toMatchObject({ kind: "unavailable", reason: "unsupported" });
+    if (disallowed.kind !== "unavailable") throw new Error("unreachable");
+    expect(disallowed.recovery?.action).toBe("open-provider-app");
+  });
+});

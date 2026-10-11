@@ -24,6 +24,7 @@
  */
 import type { CapabilityStatus, ConnectorManifest, OperationCapability } from "webflix-contracts";
 import { youtubeManifest } from "./youtube/manifest";
+import { tiktokManifest } from "./tiktok/manifest";
 
 export class RegistryError extends Error {
   constructor(message: string) {
@@ -145,5 +146,5 @@ export function operationsWithStatus(
 
 /** Registry seeded with the official-surface manifests this package ships. */
 export function createDefaultRegistry(): ConnectorRegistry {
-  return new ConnectorRegistry().register(youtubeManifest);
+  return new ConnectorRegistry().register(youtubeManifest).register(tiktokManifest);
 }

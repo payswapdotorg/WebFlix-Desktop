@@ -225,10 +225,11 @@ describe("connector manifest registry", () => {
     expect(() => registry.register(youtubeManifest)).toThrowError(/already registered/);
   });
 
-  it("createDefaultRegistry seeds the youtube manifest", () => {
+  it("createDefaultRegistry seeds every shipped manifest (youtube, then tiktok at TIKTOK-CONNECT)", () => {
     const registry = createDefaultRegistry();
-    expect(registry.size).toBe(1);
+    expect(registry.size).toBe(2);
     expect(registry.require("youtube").providerId).toBe(YOUTUBE_PROVIDER_ID);
+    expect(registry.require("tiktok").providerId).toBe("tiktok");
   });
 
   it("validateManifest refuses dishonest rows", () => {

@@ -1,0 +1,8 @@
+{
+  "data": {},
+  "error": {
+    "code": "rate_limit_exceeded",
+    "message": "The rate limit exceeded, please try again later.",
+    "log_id": "20261011043236273A06A1F93F5D6A9A60"
+  }
+}
