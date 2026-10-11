@@ -1,9 +1,9 @@
 import React from "react";
 import { theme } from "../theme";
-import type { CatalogItem, LibraryCollection } from "webflix-contracts";
+import type { CatalogItem, Collection } from "webflix-contracts";
 
 export interface LibraryScreenProps {
-  readonly collections?: readonly LibraryCollection[];
+  readonly collections?: readonly Collection[];
   readonly localEntries?: readonly CatalogItem[];
   readonly onPlay?: (item: CatalogItem) => void;
 }
@@ -76,10 +76,12 @@ export function LibraryScreen(props: LibraryScreenProps) {
               <li key={collection.id} style={styles.row}>
                 <div>
                   <p style={styles.collectionName}>{collection.name}</p>
-                  {collection.description && <p style={styles.muted}>{collection.description}</p>}
+                  <p style={styles.muted}>
+                    {collection.kind === "smart" ? "Smart collection" : "Manual collection"}
+                  </p>
                 </div>
                 <span style={styles.muted}>
-                  {collection.itemIds.length} item{collection.itemIds.length === 1 ? "" : "s"}
+                  {collection.entryIds.length} item{collection.entryIds.length === 1 ? "" : "s"}
                 </span>
               </li>
             ))}

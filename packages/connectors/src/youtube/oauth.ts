@@ -5,6 +5,43 @@
 /**
  * Per-user YouTube OAuth — loopback + PKCE flow DESIGN and token lifecycle.
  *
+ * §2.5/§2.6 reconciliation (MIRROR-RECON, 2026-10-11): this module originally
+ * spoke a lane-local account model — ProviderAccountRecord with
+ * userId/providerAccountId/linkedAt/updatedAt and EMBEDDED credentials
+ * {accessToken, refreshToken, …}, statuses
+ * requires-auth|authorized|expired|revoked, and a CredentialPort with get/put.
+ * The FROZEN shapes are:
+ *   - ProviderAccountRecord {providerId, internalAccountId, displayName,
+ *     grantedScopes, status: connected|expired|revoked, connectedAt,
+ *     expiresAt?} — RENDERER-SAFE by construction (strict parse rejects
+ *     tokens; credentials never live on the record).
+ *   - CredentialPort.getToken(providerId, internalAccountId) → CredentialRef
+ *     {handle} — the handle is an opaque keychain lookup key, NEVER a token.
+ *
+ * Vocabulary map (mirror → frozen §2.5):
+ *   "authorized"     → "connected"
+ *   "expired"        → "expired" (derived from record.expiresAt vs the clock)
+ *   "revoked"        → "revoked"
+ *   "requires-auth"  → NO RECORD (absence is the honest not-connected state;
+ *                      the frozen account vocabulary has no requires-auth
+ *                      status — the UI's not-connected card covers it)
+ *   userId           → internalAccountId (the installation-local account id)
+ *   linkedAt         → connectedAt (ISO 8601 UTC instant)
+ *   credentials.*    → vault-side storage only (OAuthAccountStore below);
+ *                      record.expiresAt carries the grant expiry, renderer-safe
+ *   revoked → requires-auth (acknowledge) → remove the stored record; a fresh
+ *   consent then creates a new connected record (revoked → connected).
+ *
+ * The frozen CredentialPort covers ONLY the read side and returns handles —
+ * there is no canonical write/delete seam (filed as freeze-deviation
+ * MR-FD6). Persistence therefore flows through a connector-LOCAL store
+ * interface (OAuthAccountStore) — the same pattern the playback lane used at
+ * integration for ProviderHistoryWriteOp (f7d324f): the canonical seam is
+ * consumed exactly canonically via session.credentialPort(), which resolves
+ * opaque handles for main-process callers that only need "usable credential
+ * or not"; raw tokens never cross into renderer-visible shapes, logs, or the
+ * account record.
+ *
  * FLOW DESIGN (per-user, loopback + PKCE — the official installed-app flow):
  *  1. The app registers ConnectorManifests; YouTube requires OAuth with the
  *     official read-only scope set (see ./manifest).
@@ -19,13 +56,15 @@
  *  5. The app calls completeAuthorization({ code, state }); the state is matched
  *     against the pending request (CSRF guard) and the code is exchanged (with
  *     the verifier) at the official token endpoint.
- *  6. Tokens are stored ONLY through the CredentialPort for (providerId, userId)
- *     as a ProviderAccountRecord (freeze §2.5).
- *  7. getToken() serves access tokens from the port and transparently refreshes
- *     near/past expiry; a provider invalid_grant on refresh honestly transitions
- *     the account to 'revoked'. revoke() hits the official revocation endpoint.
- *     acknowledgeRevocation() moves 'revoked' → 'requires-auth' so the user can
- *     re-consent. No other transitions are legal (see OAUTH_TRANSITIONS).
+ *  6. Tokens are stored ONLY through OAuthAccountStore for
+ *     (providerId, internalAccountId) — tokens go to the vault side, the
+ *     renderer-safe ProviderAccountRecord to the account side.
+ *  7. getToken() serves access tokens from the store and transparently
+ *     refreshes near/past expiry (main-process callers only); a provider
+ *     invalid_grant on refresh honestly transitions the account to 'revoked'.
+ *     revoke() hits the official revocation endpoint. acknowledgeRevocation()
+ *     removes the stored record so a fresh consent can begin. No other
+ *     transitions are legal (see OAUTH_TRANSITIONS).
  *
  * This module contains NO real client id and performs NO live network calls:
  * the token fetcher is injected, and the default fetcher fails with
@@ -34,18 +73,48 @@
 import { createHash, randomBytes } from "node:crypto";
 
 import { LiveNetworkDisabledError } from "./dataApi";
-import { YOUTUBE_OAUTH_SCOPES, YOUTUBE_PROVIDER_ID } from "./manifest";
+import { YOUTUBE_DISPLAY_NAME, YOUTUBE_OAUTH_SCOPES, YOUTUBE_PROVIDER_ID } from "./manifest";
 import type {
   CredentialPort,
   ProviderAccountRecord,
   ProviderAccountStatus,
 } from "webflix-contracts";
 
-/** Alias used across the OAuth surface (same lifecycle as freeze §2.5). */
+/** The frozen account lifecycle vocabulary (freeze §2.5). */
 export type OAuthAccountStatus = ProviderAccountStatus;
 
 /** Access-token freshness window: refresh when expiry is within this skew. */
 export const DEFAULT_EXPIRY_SKEW_MS = 60_000;
+
+// ---------------------------------------------------------------------------
+// Persistence seams (connector-local; the frozen CredentialPort is read-only
+// handle resolution — MR-FD6. The host implements these behind its own
+// store/keychain boundary; nothing here is a re-declared contract shape.)
+// ---------------------------------------------------------------------------
+
+/** Raw OAuth tokens — main-process vault side ONLY, never renderer-visible. */
+export interface StoredOAuthTokens {
+  accessToken: string;
+  refreshToken: string | null;
+  /** Epoch ms when the access token expires, when the provider reported one. */
+  expiresAtMs: number | null;
+  scope: string;
+  tokenType: string;
+}
+
+/**
+ * Account + token persistence for one provider. The renderer-safe
+ * ProviderAccountRecord and the raw tokens are stored separately: the record
+ * is renderer data, the tokens live behind the OS-vault boundary (§2.5).
+ */
+export interface OAuthAccountStore {
+  loadAccount(internalAccountId: string): Promise<ProviderAccountRecord | null>;
+  saveAccount(record: ProviderAccountRecord): Promise<void>;
+  removeAccount(internalAccountId: string): Promise<void>;
+  loadTokens(internalAccountId: string): Promise<StoredOAuthTokens | null>;
+  saveTokens(internalAccountId: string, tokens: StoredOAuthTokens): Promise<void>;
+  removeTokens(internalAccountId: string): Promise<void>;
+}
 
 // ---------------------------------------------------------------------------
 // Configuration — official endpoints, placeholder client id (NO real client id)
@@ -211,16 +280,18 @@ export function validateCallbackState(
 }
 
 // ---------------------------------------------------------------------------
-// Token lifecycle state machine — authorized → expired → revoked → requires-auth
+// Token lifecycle state machine — connected → expired → revoked (frozen §2.5)
+// revoked → connected happens via a FRESH consent after acknowledgeRevocation()
+// removes the record (the mirror's revoked → requires-auth → authorized path
+// collapses; absence of a record is the not-connected state).
 // ---------------------------------------------------------------------------
 
 export const OAUTH_TRANSITIONS: Readonly<
   Record<OAuthAccountStatus, readonly OAuthAccountStatus[]>
 > = {
-  "requires-auth": ["authorized"],
-  authorized: ["expired", "revoked"],
-  expired: ["authorized", "revoked"],
-  revoked: ["requires-auth"],
+  connected: ["expired", "revoked"],
+  expired: ["connected", "revoked"],
+  revoked: ["connected"],
 };
 
 export function canTransition(from: OAuthAccountStatus, to: OAuthAccountStatus): boolean {
@@ -233,35 +304,35 @@ export function assertTransition(from: OAuthAccountStatus, to: OAuthAccountStatu
   }
 }
 
-/** Derives the honest current status from the stored record and the clock. */
+/**
+ * Derives the honest current status from the stored record and the clock.
+ * Returns null when NO account is linked (the honest not-connected state —
+ * the frozen vocabulary has no "requires-auth" account status).
+ */
 export function deriveAccountStatus(
   record: ProviderAccountRecord | null,
   now: number,
-): OAuthAccountStatus {
-  if (!record) return "requires-auth";
+): OAuthAccountStatus | null {
+  if (!record) return null;
   // account status is authoritative for terminal states (revoked clears
-  // credentials — the record still reports revoked, not requires-auth)
+  // the vault — the record still reports revoked, not absent)
   if (record.status === "revoked") return "revoked";
   if (record.status === "expired") return "expired";
-  if (!record.credentials || !record.credentials.accessToken) return "requires-auth";
-  if (record.credentials.expiresAt !== null && record.credentials.expiresAt <= now)
+  // A past grant expiry is honestly reported as expired even when the stored
+  // status still says connected (the record's expiresAt is renderer-safe data).
+  if (record.expiresAt !== undefined && Date.parse(record.expiresAt) <= now) {
     return "expired";
-  return record.status === "authorized" ? "authorized" : "requires-auth";
+  }
+  return record.status === "connected" ? "connected" : null;
 }
 
-/** Pure transition helper: validates, stamps updatedAt, clears credentials on revoked/requires-auth. */
+/** Pure transition helper: validates the transition and stamps the status. */
 export function transitionAccount(
   record: ProviderAccountRecord,
   to: OAuthAccountStatus,
-  now: number,
 ): ProviderAccountRecord {
   assertTransition(record.status, to);
-  return {
-    ...record,
-    status: to,
-    updatedAt: now,
-    credentials: to === "authorized" || to === "expired" ? record.credentials : null,
-  };
+  return { ...record, status: to };
 }
 
 // ---------------------------------------------------------------------------
@@ -294,12 +365,13 @@ export const liveNetworkDeniedTokenFetcher: OAuthTokenFetcher = async () => {
 };
 
 // ---------------------------------------------------------------------------
-// Session — getToken via CredentialPort; refresh; revoke
+// Session — flow + lifecycle over OAuthAccountStore; canonical CredentialPort
 // ---------------------------------------------------------------------------
 
 export interface YouTubeOAuthSessionOptions {
-  credentialPort: CredentialPort;
-  userId: string;
+  store: OAuthAccountStore;
+  /** Installation-local id of the linked account (frozen §2.5 vocabulary). */
+  internalAccountId: string;
   config?: OAuthLoopbackConfig;
   tokenFetcher?: OAuthTokenFetcher;
   clock?: () => number;
@@ -313,8 +385,8 @@ interface PendingAuthorization {
 }
 
 export class YouTubeOAuthSession {
-  private readonly credentialPort: CredentialPort;
-  private readonly userId: string;
+  private readonly store: OAuthAccountStore;
+  private readonly internalAccountId: string;
   private readonly config: OAuthLoopbackConfig;
   private readonly tokenFetcher: OAuthTokenFetcher;
   private readonly clock: () => number;
@@ -322,8 +394,8 @@ export class YouTubeOAuthSession {
   private readonly pending = new Map<string, PendingAuthorization>();
 
   constructor(options: YouTubeOAuthSessionOptions) {
-    this.credentialPort = options.credentialPort;
-    this.userId = options.userId;
+    this.store = options.store;
+    this.internalAccountId = options.internalAccountId;
     this.config = options.config ?? YOUTUBE_OAUTH_LOOPBACK_CONFIG;
     this.tokenFetcher = options.tokenFetcher ?? liveNetworkDeniedTokenFetcher;
     this.clock = options.clock ?? Date.now;
@@ -335,11 +407,41 @@ export class YouTubeOAuthSession {
   }
 
   async loadAccount(): Promise<ProviderAccountRecord | null> {
-    return this.credentialPort.get(YOUTUBE_PROVIDER_ID, this.userId);
+    return this.store.loadAccount(this.internalAccountId);
   }
 
-  async status(): Promise<OAuthAccountStatus> {
+  async status(): Promise<OAuthAccountStatus | null> {
     return deriveAccountStatus(await this.loadAccount(), this.now());
+  }
+
+  /**
+   * Canonical §2.5/§2.6 CredentialPort view of this session (main-process).
+   * Resolves an opaque CredentialRef HANDLE for (providerId, internalAccountId)
+   * — never a token; a missing/unusable credential rejects, which callers
+   * treat as honestly unauthenticated. The host opens the handle when it
+   * talks to the provider.
+   */
+  credentialPort(): CredentialPort {
+    return {
+      getToken: async (providerId: string, internalAccountId: string) => {
+        if (providerId !== YOUTUBE_PROVIDER_ID) {
+          throw new RequiresAuthError(
+            `youtube oauth session: providerId "${providerId}" is not "${YOUTUBE_PROVIDER_ID}"`,
+          );
+        }
+        const record = await this.store.loadAccount(internalAccountId);
+        const tokens = await this.store.loadTokens(internalAccountId);
+        const status = deriveAccountStatus(record, this.now());
+        if (!record || !tokens || status === null || status === "revoked") {
+          throw new RequiresAuthError(
+            `youtube oauth: no usable credential for account "${internalAccountId}" (status: ${
+              status ?? "no linked account"
+            })`,
+          );
+        }
+        return { handle: `${YOUTUBE_PROVIDER_ID}:${internalAccountId}` };
+      },
+    };
   }
 
   /** Step 2–3 of the flow: build the loopback+PKCE authorization URL and remember pending state. */
@@ -362,11 +464,10 @@ export class YouTubeOAuthSession {
     return request;
   }
 
-  /** Step 5–6: validate state, exchange the code (PKCE), persist via CredentialPort. */
+  /** Step 5–6: validate state, exchange the code (PKCE), persist vault + record. */
   async completeAuthorization(callback: {
     code: string;
     state: string;
-    providerAccountId?: string | null;
     displayName?: string | null;
   }): Promise<ProviderAccountRecord> {
     const pending = this.pending.get(callback.state);
@@ -384,64 +485,70 @@ export class YouTubeOAuthSession {
       throw new OAuthFlowError("token endpoint did not return a token for the authorization code");
     }
     const now = this.now();
+    const scope = result.token.scope ?? this.config.scopes.join(" ");
+    const tokens: StoredOAuthTokens = {
+      accessToken: result.token.access_token,
+      refreshToken: result.token.refresh_token ?? null,
+      expiresAtMs: now + result.token.expires_in * 1000,
+      scope,
+      tokenType: result.token.token_type ?? "Bearer",
+    };
+    await this.store.saveTokens(this.internalAccountId, tokens);
     const record: ProviderAccountRecord = {
       providerId: YOUTUBE_PROVIDER_ID,
-      userId: this.userId,
-      providerAccountId: callback.providerAccountId ?? null,
-      displayName: callback.displayName ?? null,
-      status: "authorized",
-      linkedAt: now,
-      updatedAt: now,
-      credentials: {
-        accessToken: result.token.access_token,
-        refreshToken: result.token.refresh_token ?? null,
-        expiresAt: now + result.token.expires_in * 1000,
-        scope: result.token.scope ?? this.config.scopes.join(" "),
-        tokenType: result.token.token_type ?? "Bearer",
-      },
+      internalAccountId: this.internalAccountId,
+      displayName: callback.displayName ?? `${YOUTUBE_DISPLAY_NAME} account`,
+      grantedScopes: scope.split(" ").filter((s) => s.length > 0),
+      status: "connected",
+      connectedAt: toIso(now),
+      expiresAt: tokens.expiresAtMs !== null ? toIso(tokens.expiresAtMs) : undefined,
     };
-    await this.credentialPort.put(record);
+    await this.store.saveAccount(record);
     return record;
   }
 
-  /** getToken via CredentialPort — refreshes transparently near/past expiry; never fakes availability. */
+  /** Vault-side access token for MAIN-PROCESS callers (Authorization headers). */
   async getToken(): Promise<string> {
     const record = await this.loadAccount();
+    const tokens = await this.store.loadTokens(this.internalAccountId);
     const status = deriveAccountStatus(record, this.now());
-    if (!record?.credentials?.accessToken || status === "requires-auth" || status === "revoked") {
+    if (!record || !tokens || status === null || status === "revoked") {
       throw new RequiresAuthError(
-        `youtube oauth: user "${this.userId}" is ${status}; no usable access token — run startAuthorization()/completeAuthorization() first`,
+        `youtube oauth: account "${this.internalAccountId}" is ${
+          status ?? "not linked"
+        }; no usable access token — run startAuthorization()/completeAuthorization() first`,
       );
     }
-    const expiresAt = record.credentials.expiresAt;
     const needsRefresh =
-      status === "expired" || (expiresAt !== null && expiresAt - this.expirySkewMs <= this.now());
+      status === "expired" ||
+      (tokens.expiresAtMs !== null && tokens.expiresAtMs - this.expirySkewMs <= this.now());
     if (needsRefresh) {
-      const refreshed = await this.refresh();
-      const token = refreshed.credentials?.accessToken;
-      if (!token) {
+      await this.refresh();
+      const refreshedTokens = await this.store.loadTokens(this.internalAccountId);
+      if (!refreshedTokens?.accessToken) {
         throw new RefreshFailedError(
           "youtube oauth: refresh completed without an access token",
           "no-token",
         );
       }
-      return token;
+      return refreshedTokens.accessToken;
     }
-    return record.credentials.accessToken;
+    return tokens.accessToken;
   }
 
   /** Refresh grant via the official token endpoint; invalid_grant honestly revokes the account. */
   async refresh(): Promise<ProviderAccountRecord> {
     const record = await this.loadAccount();
-    if (!record || !record.credentials) {
+    const tokens = await this.store.loadTokens(this.internalAccountId);
+    if (!record || !tokens) {
       throw new RequiresAuthError(
-        `youtube oauth: no stored account for user "${this.userId}" to refresh`,
+        `youtube oauth: no stored account for "${this.internalAccountId}" to refresh`,
       );
     }
-    const refreshToken = record.credentials.refreshToken;
+    const refreshToken = tokens.refreshToken;
     if (!refreshToken) {
       throw new RequiresAuthError(
-        `youtube oauth: stored account for user "${this.userId}" has no refresh token; re-run the loopback authorization flow`,
+        `youtube oauth: stored account for "${this.internalAccountId}" has no refresh token; re-run the loopback authorization flow`,
       );
     }
     let result: OAuthEndpointResult;
@@ -450,21 +557,16 @@ export class YouTubeOAuthSession {
     } catch (err) {
       const reason = (err as { reason?: string })?.reason ?? "unknown";
       if (reason === "invalid_grant") {
-        const now = this.now();
-        const revoked: ProviderAccountRecord = {
-          ...record,
-          status: "revoked",
-          credentials: null,
-          updatedAt: now,
-        };
-        await this.credentialPort.put(revoked);
+        const revoked = transitionAccount(record, "revoked");
+        await this.store.removeTokens(this.internalAccountId);
+        await this.store.saveAccount(revoked);
         throw new RefreshFailedError(
-          `youtube oauth: provider rejected refresh with invalid_grant for user "${this.userId}"; account marked revoked`,
+          `youtube oauth: provider rejected refresh with invalid_grant for "${this.internalAccountId}"; account marked revoked`,
           "invalid_grant",
         );
       }
       throw new RefreshFailedError(
-        `youtube oauth: refresh failed for user "${this.userId}": ${(err as Error | undefined)?.message ?? String(err)}`,
+        `youtube oauth: refresh failed for "${this.internalAccountId}": ${(err as Error | undefined)?.message ?? String(err)}`,
         reason,
       );
     }
@@ -472,35 +574,38 @@ export class YouTubeOAuthSession {
       throw new RefreshFailedError("youtube oauth: refresh endpoint returned no token", "no-token");
     }
     const now = this.now();
+    const refreshedTokens: StoredOAuthTokens = {
+      accessToken: result.token.access_token,
+      refreshToken: result.token.refresh_token ?? refreshToken,
+      expiresAtMs: now + result.token.expires_in * 1000,
+      scope: result.token.scope ?? tokens.scope,
+      tokenType: result.token.token_type ?? tokens.tokenType ?? "Bearer",
+    };
+    await this.store.saveTokens(this.internalAccountId, refreshedTokens);
     const refreshed: ProviderAccountRecord = {
       ...record,
-      status: "authorized",
-      updatedAt: now,
-      credentials: {
-        accessToken: result.token.access_token,
-        refreshToken: result.token.refresh_token ?? refreshToken,
-        expiresAt: now + result.token.expires_in * 1000,
-        scope: result.token.scope ?? record.credentials.scope,
-        tokenType: result.token.token_type ?? record.credentials.tokenType ?? "Bearer",
-      },
+      status: "connected",
+      expiresAt:
+        refreshedTokens.expiresAtMs !== null ? toIso(refreshedTokens.expiresAtMs) : undefined,
     };
-    await this.credentialPort.put(refreshed);
+    await this.store.saveAccount(refreshed);
     return refreshed;
   }
 
-  /** Revoke at the official revocation endpoint; authorized/expired → revoked; credentials destroyed. */
+  /** Revoke at the official revocation endpoint; connected/expired → revoked; vault cleared. */
   async revoke(): Promise<ProviderAccountRecord> {
     const record = await this.loadAccount();
+    const tokens = await this.store.loadTokens(this.internalAccountId);
     const status = deriveAccountStatus(record, this.now());
-    if (!record?.credentials || status === "requires-auth") {
+    if (!record || !tokens || status === null) {
       throw new RequiresAuthError(
-        `youtube oauth: nothing to revoke for user "${this.userId}" (status ${status})`,
+        `youtube oauth: nothing to revoke for "${this.internalAccountId}" (status ${status ?? "not linked"})`,
       );
     }
-    const token = record.credentials.accessToken ?? record.credentials.refreshToken;
+    const token = tokens.accessToken || tokens.refreshToken;
     if (!token) {
       throw new RequiresAuthError(
-        `youtube oauth: no token available to revoke for user "${this.userId}"`,
+        `youtube oauth: no token available to revoke for "${this.internalAccountId}"`,
       );
     }
     const result = await this.tokenFetcher({ kind: "revoke", token });
@@ -508,34 +613,34 @@ export class YouTubeOAuthSession {
       throw new OAuthFlowError("revocation endpoint returned an unexpected response");
     }
     assertTransition(status, "revoked");
-    const now = this.now();
-    const revoked: ProviderAccountRecord = {
-      ...record,
-      status: "revoked",
-      credentials: null,
-      updatedAt: now,
-    };
-    await this.credentialPort.put(revoked);
+    const revoked = transitionAccount(record, "revoked");
+    await this.store.removeTokens(this.internalAccountId);
+    await this.store.saveAccount(revoked);
     return revoked;
   }
 
-  /** revoked → requires-auth: the operator/user acknowledges so a fresh consent can begin. */
-  async acknowledgeRevocation(): Promise<ProviderAccountRecord> {
+  /**
+   * Removes the revoked account record so a fresh consent can begin
+   * (the mirror's revoked → requires-auth acknowledgement; absence of a
+   * record is the frozen not-connected state).
+   */
+  async acknowledgeRevocation(): Promise<void> {
     const record = await this.loadAccount();
     if (!record) {
       throw new RequiresAuthError(
-        `youtube oauth: no stored account to acknowledge for user "${this.userId}"`,
+        `youtube oauth: no stored account to acknowledge for "${this.internalAccountId}"`,
       );
     }
-    assertTransition(record.status, "requires-auth");
-    const now = this.now();
-    const next: ProviderAccountRecord = {
-      ...record,
-      status: "requires-auth",
-      credentials: null,
-      updatedAt: now,
-    };
-    await this.credentialPort.put(next);
-    return next;
+    if (record.status !== "revoked") {
+      throw new InvalidTransitionError(
+        `illegal oauth account transition: ${record.status} → acknowledged (only revoked accounts are acknowledged)`,
+      );
+    }
+    await this.store.removeTokens(this.internalAccountId);
+    await this.store.removeAccount(this.internalAccountId);
   }
+}
+
+function toIso(epochMs: number): string {
+  return new Date(epochMs).toISOString();
 }

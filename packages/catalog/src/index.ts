@@ -1,7 +1,9 @@
 // packages/catalog — public entrypoint.
 //
-// Catalog domain over the frozen §2.1/§2.2 contract shapes:
-//   - types: contract-types.ts (local mirror; swap at TL2 merge)
+// Catalog domain over the frozen §2.1 contract shapes (re-pointed to the
+// canonical webflix-contracts at integration; the lane-local mirror was
+// removed — MIRROR-RECON reconciled the merge to the item-attributed model):
+//   - types: canonical webflix-contracts (CatalogItem/ProviderAsset/MediaKind)
 //   - merge: MatchEvidence-confidence-driven catalog merge
 
 export * from "webflix-contracts";

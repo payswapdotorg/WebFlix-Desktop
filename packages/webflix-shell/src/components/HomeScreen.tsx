@@ -99,10 +99,10 @@ export function HomeScreen(props: HomeScreenProps) {
             </p>
             <ul style={styles.list}>
               {accounts.map((account) => (
-                <li key={account.accountId} style={styles.row}>
+                <li key={account.internalAccountId} style={styles.row}>
                   <span>{account.displayName}</span>
                   <span style={styles.muted}>
-                    {account.providerId} · {account.state}
+                    {account.providerId} · {account.status}
                   </span>
                 </li>
               ))}

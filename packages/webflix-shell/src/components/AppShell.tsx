@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { theme } from "../theme";
-import type { CatalogItem, LibraryCollection, ProviderAccountRecord } from "webflix-contracts";
+import type { CatalogItem, Collection, ProviderAccountRecord } from "webflix-contracts";
 import type { SearchState } from "../states";
 import { HomeScreen } from "./HomeScreen";
 import { SearchScreen } from "./SearchScreen";
@@ -20,7 +20,7 @@ export interface AppShellProps {
   readonly initialScreen?: ScreenId;
   readonly accounts?: readonly ProviderAccountRecord[];
   readonly recentItems?: readonly CatalogItem[];
-  readonly collections?: readonly LibraryCollection[];
+  readonly collections?: readonly Collection[];
   readonly localEntries?: readonly CatalogItem[];
   readonly searchState?: SearchState;
   readonly onPlay?: (item: CatalogItem) => void;

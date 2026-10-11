@@ -1,8 +1,26 @@
 /**
  * ConnectorManifest registry — the single place the app discovers what each
  * provider can honestly do. Registration validates honesty invariants so a
- * dishonest manifest (e.g. an "unsupported" row with a quota cost, or a
- * "supported" row with no official mechanism) cannot be registered at all.
+ * dishonest manifest (e.g. an "unsupported" row that does not explain itself)
+ * cannot be registered at all.
+ *
+ * §2.3 reconciliation (MIRROR-RECON, 2026-10-11): validation is re-expressed
+ * against the FROZEN ConnectorManifest
+ * ({providerId, operations: Record<OperationId, OperationCapability>, regions,
+ * quotas, provenance, failureModes}). The mirror's structural checks that had
+ * no frozen home (per-row mechanism/quotaCost/reasonUnsupported, the
+ * policy.officialSurfacesOnly pin, displayName/manifestVersion) are retired
+ * here — the data survives as connector-local package constants and the gaps
+ * are filed as freeze-deviation proposals MR-FD2/MR-FD3 for TL2.
+ *
+ * Honesty rules enforced on the frozen shapes:
+ *  - providerId must be a non-empty string.
+ *  - operations must be a non-empty record (a connector that declares nothing
+ *    is dishonest by construction).
+ *  - every operation status must be a legal frozen CapabilityStatus.
+ *  - every "unsupported" row MUST explain itself via OperationCapability.detail
+ *    (a bare "unsupported" with no reason invites the UI to guess — the exact
+ *    dishonesty this registry exists to prevent).
  */
 import type { CapabilityStatus, ConnectorManifest, OperationCapability } from "webflix-contracts";
 import { youtubeManifest } from "./youtube/manifest";
@@ -15,64 +33,39 @@ export class RegistryError extends Error {
   }
 }
 
-/**
- * Structural honesty validation. Rules:
- *  - ADR-0003 policy must be pinned (officialSurfacesOnly === true).
- *  - Every row needs operationId, a legal CapabilityStatus, and ≥1 provenance url.
- *  - quotaCost must be a non-negative integer.
- *  - unsupported rows: mechanism === null, quotaCost === 0, reason present.
- *  - supported-official rows: mechanism present, quotaCost > 0.
- */
+const LEGAL_STATUSES: readonly CapabilityStatus[] = [
+  "supported",
+  "requires-auth",
+  "unsupported",
+  "unavailable",
+  "rate-limited",
+  "degraded",
+  "unknown",
+];
+
+/** Structural honesty validation over the frozen §2.3 shapes. */
 export function validateManifest(manifest: ConnectorManifest): void {
   const problems: string[] = [];
   if (!manifest || typeof manifest.providerId !== "string" || manifest.providerId.length === 0) {
     problems.push("providerId is required");
   }
-  if (!manifest?.displayName) problems.push("displayName is required");
-  if (!manifest?.manifestVersion) problems.push("manifestVersion is required");
-  if (manifest?.policy?.officialSurfacesOnly !== true) {
-    problems.push("policy.officialSurfacesOnly must be true (ADR-0003)");
+  const operations =
+    manifest?.operations !== null && typeof manifest?.operations === "object"
+      ? manifest.operations
+      : undefined;
+  if (operations === undefined || Object.keys(operations).length === 0) {
+    problems.push("operations must be a non-empty record of OperationId → OperationCapability");
   }
-  if (!Array.isArray(manifest?.operations) || manifest.operations.length === 0) {
-    problems.push("operations must be a non-empty array");
-  }
-  for (const op of manifest?.operations ?? []) {
-    if (!op.operationId) problems.push("operation is missing operationId");
-    if (
-      !Array.isArray(op.provenance) ||
-      op.provenance.length === 0 ||
-      op.provenance.some((c) => !c || !c.url)
-    ) {
+  for (const [operationId, capability] of Object.entries(operations ?? {})) {
+    if (!LEGAL_STATUSES.includes(capability?.status)) {
       problems.push(
-        `operation "${op.operationId}" must cite at least one provenance source with a url`,
+        `operation "${operationId}" has an unknown CapabilityStatus ("${String(capability?.status)}")`,
       );
     }
-    if (typeof op.quotaCost !== "number" || !Number.isInteger(op.quotaCost) || op.quotaCost < 0) {
-      problems.push(`operation "${op.operationId}" quotaCost must be a non-negative integer`);
-    }
-    if (op.status === "unsupported") {
-      if (op.mechanism)
-        problems.push(`unsupported operation "${op.operationId}" must not declare a mechanism`);
-      if (op.quotaCost !== 0)
-        problems.push(`unsupported operation "${op.operationId}" must have quotaCost 0`);
-      if (!op.reasonUnsupported) {
-        problems.push(
-          `unsupported operation "${op.operationId}" must explain why it is unsupported`,
-        );
-      }
-    } else if (op.status === "supported-official") {
-      if (!op.mechanism) {
-        problems.push(
-          `supported-official operation "${op.operationId}" must name its official mechanism`,
-        );
-      }
-      if (op.quotaCost <= 0) {
-        problems.push(
-          `supported-official operation "${op.operationId}" must declare a positive quotaCost`,
-        );
-      }
-    } else {
-      problems.push(`operation "${op.operationId}" has an unknown CapabilityStatus`);
+    if (capability?.status === "unsupported" && !capability.detail) {
+      problems.push(
+        `unsupported operation "${operationId}" must explain why it is unsupported (OperationCapability.detail)`,
+      );
     }
   }
   if (problems.length > 0) {
@@ -127,7 +120,7 @@ export function findOperation(
   manifest: ConnectorManifest,
   operationId: string,
 ): OperationCapability | undefined {
-  return manifest.operations.find((op) => op.operationId === operationId);
+  return Object.entries(manifest.operations).find(([id]) => id === operationId)?.[1];
 }
 
 export function requireOperation(
@@ -147,7 +140,7 @@ export function operationsWithStatus(
   manifest: ConnectorManifest,
   status: CapabilityStatus,
 ): OperationCapability[] {
-  return manifest.operations.filter((op) => op.status === status);
+  return Object.values(manifest.operations).filter((op) => op.status === status);
 }
 
 /** Registry seeded with the official-surface manifests this package ships. */

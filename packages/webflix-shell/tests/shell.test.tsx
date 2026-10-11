@@ -1,9 +1,15 @@
 // @vitest-environment jsdom
 //
 // D1 shell component tests (webflix-shell).
-// The jsdom docblock above is mandatory: the shared repo-root vitest.config.ts
+// The jsdom docblock above is mandatory: the package-local vitest.config.ts
 // defaults to the node environment, and these tests need a DOM.
-// Run from the repo root: ./node_modules/.bin/vitest run --config vitest.config.ts
+// Run from the package: pnpm --filter webflix-shell test:components
+//
+// MIRROR-RECON (2026-10-11): fixtures rewritten against the FROZEN §2 shapes
+// (canonical ProviderAccountRecord with internalAccountId/status/grantedScopes,
+// canonical CatalogItem with mediaKind, canonical Collection with entryIds,
+// canonical PlaybackPlan union, canonical OperationCapability) with every
+// behavioral intent preserved.
 
 import React from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -23,9 +29,9 @@ import {
   toHonestState,
 } from "../src/index";
 import type {
-  CapabilityStatus,
   CatalogItem,
-  LibraryCollection,
+  CapabilityStatus,
+  Collection,
   PlaybackPlan,
   ProviderAccountRecord,
 } from "../src/index";
@@ -35,51 +41,62 @@ afterEach(cleanup);
 
 // ---------- fixtures ----------
 
+const ISO = "2026-01-01T00:00:00Z";
+
 function catalogItem(overrides: Partial<CatalogItem> = {}): CatalogItem {
   return {
     id: "yt-donut",
     title: "Blender donut tutorial",
     providerId: "youtube",
-    kind: "stream",
+    mediaKind: "video",
+    assets: [],
+    metadata: {},
     ...overrides,
   };
 }
 
 const connectedAccount: ProviderAccountRecord = {
-  accountId: "acc-1",
   providerId: "youtube",
+  internalAccountId: "acc-1",
   displayName: "me@example.com",
-  state: "connected",
-  scopes: ["youtube.readonly"],
-  tokenExpiresAt: "2026-01-01T00:00:00Z",
+  grantedScopes: ["youtube.readonly"],
+  status: "connected",
+  connectedAt: ISO,
+  expiresAt: "2027-01-01T00:00:00Z",
 };
 
 const expiredAccount: ProviderAccountRecord = {
-  accountId: "acc-2",
   providerId: "youtube",
+  internalAccountId: "acc-2",
   displayName: "stale@example.com",
-  state: "expired",
+  grantedScopes: [],
+  status: "expired",
+  connectedAt: ISO,
 };
 
 const revokedAccount: ProviderAccountRecord = {
-  accountId: "acc-3",
   providerId: "youtube",
+  internalAccountId: "acc-3",
   displayName: "revoked@example.com",
-  state: "revoked",
+  grantedScopes: [],
+  status: "revoked",
+  connectedAt: ISO,
 };
 
-const sampleCollection: LibraryCollection = {
+const sampleCollection: Collection = {
   id: "col-1",
   name: "Weekend watch",
-  description: "Saved for later.",
-  itemIds: ["yt-donut", "yt-spline"],
+  kind: "manual",
+  entryIds: ["yt-donut", "yt-spline"],
+  createdAt: ISO,
+  updatedAt: ISO,
 };
 
 const localEntry: CatalogItem = catalogItem({
   id: "loc-holiday",
   title: "holiday.mp4",
   providerId: "local",
-  kind: "local-file",
+  mediaKind: "local-file",
 });
 
 // ---------- AppShell ----------
@@ -176,7 +193,7 @@ describe("SearchScreen", () => {
     expect(onSubmit).toHaveBeenCalledWith("donut");
   });
 
-  it("lists results and plays a selected item", () => {
+  it("lists results with the canonical mediaKind and plays a selected item", () => {
     const onSelectItem = vi.fn();
     render(
       <SearchScreen
@@ -185,6 +202,7 @@ describe("SearchScreen", () => {
       />,
     );
     expect(screen.getByTestId("search-results").textContent).toContain("Blender donut tutorial");
+    expect(screen.getByTestId("search-results").textContent).toContain("video");
     fireEvent.click(screen.getByRole("button", { name: "Play Blender donut tutorial" }));
     expect(onSelectItem).toHaveBeenCalledWith(catalogItem());
   });
@@ -208,11 +226,16 @@ describe("SearchScreen", () => {
     expect(onConnect).toHaveBeenCalledWith("youtube");
   });
 
-  it("rate-limited says so and offers retry — never fake results", () => {
+  it("rate-limited says so, surfaces the reset detail and offers retry — never fake results", () => {
     const onRetry = vi.fn();
     render(
       <SearchScreen
-        state={{ phase: "rate-limited", query: "donut", retryAfterSeconds: 90 }}
+        state={{
+          phase: "rate-limited",
+          query: "donut",
+          // §2.3: the reset hint arrives as OperationCapability.detail text.
+          detail: "Quota should reset in about 90s.",
+        }}
         onRetry={onRetry}
       />,
     );
@@ -224,13 +247,13 @@ describe("SearchScreen", () => {
     expect(screen.queryByTestId("search-results")).toBeNull();
   });
 
-  it("unsupported renders the unsupported panel with the reason and no dead play control", () => {
+  it("unsupported renders the unsupported panel with the detail and no dead play control", () => {
     render(
       <SearchScreen
         state={{
           phase: "unsupported",
           query: "donut",
-          reason: "This provider has no search API in M1.",
+          detail: "This provider has no search API in M1.",
         }}
       />,
     );
@@ -239,6 +262,15 @@ describe("SearchScreen", () => {
     expect(panel.textContent).toContain("This provider has no search API in M1.");
     // Honest by design: 'unsupported' must NOT render a playable/dead control.
     expect(screen.queryByRole("button", { name: /play/i })).toBeNull();
+  });
+
+  it("degraded shows partial results flagged as degraded — never dressed up as ready", () => {
+    render(<SearchScreen state={{ phase: "degraded", query: "donut", items: [catalogItem()] }} />);
+    const panel = screen.getByTestId("search-degraded");
+    expect(panel.textContent).toMatch(/degraded/i);
+    expect(panel.textContent).toContain("Blender donut tutorial");
+    // Partial results are still playable — the flag is honest, not a dead end.
+    expect(screen.getByRole("button", { name: "Play Blender donut tutorial" })).toBeTruthy();
   });
 
   it('status-unknown renders "Status unknown" (freeze §2.3) rather than guessing', () => {
@@ -250,49 +282,49 @@ describe("SearchScreen", () => {
 // ---------- WatchScreen ----------
 
 describe("WatchScreen", () => {
-  it("renders the official embed for an official-embed plan", () => {
+  it("renders the official embed for an official-embed plan (§2.2 canonical)", () => {
     const plan: PlaybackPlan = {
-      strategy: "official-embed",
-      itemId: "yt-donut",
-      title: "Blender donut tutorial",
-      embedUrl: "https://www.youtube.com/embed/abc123",
+      kind: "official-embed",
+      providerId: "youtube",
+      embedSpec: {
+        videoId: "abc123",
+        embedUrl: "https://www.youtube.com/embed/abc123",
+      },
     };
-    render(<WatchScreen plan={plan} />);
+    render(<WatchScreen title="Blender donut tutorial" plan={plan} />);
     const frame = screen.getByTestId("watch-embed") as HTMLIFrameElement;
     expect(frame.tagName).toBe("IFRAME");
     expect(frame.getAttribute("src")).toBe("https://www.youtube.com/embed/abc123");
+    expect(screen.getByText("Blender donut tutorial")).toBeTruthy();
     expect(screen.queryByTestId("watch-unavailable")).toBeNull();
   });
 
-  it("renders a local file player for a local-file plan", () => {
+  it("renders a local file player for a local-file plan (§2.2 canonical)", () => {
     const plan: PlaybackPlan = {
-      strategy: "local-file",
-      itemId: "loc-holiday",
-      title: "holiday.mp4",
-      filePath: "file:///home/z/Videos/holiday.mp4",
+      kind: "local-file",
+      path: "file:///home/z/Videos/holiday.mp4",
       mimeType: "video/mp4",
     };
-    render(<WatchScreen plan={plan} />);
+    render(<WatchScreen title="holiday.mp4" plan={plan} />);
     const player = screen.getByTestId("watch-local-player") as HTMLVideoElement;
     expect(player.tagName).toBe("VIDEO");
     expect(player.getAttribute("src")).toBe("file:///home/z/Videos/holiday.mp4");
     expect(screen.queryByTestId("watch-embed")).toBeNull();
   });
 
-  it("renders the unavailable panel with reason + recovery — no player, no dead button", () => {
+  it("renders the unavailable panel with the frozen reason + recovery hint — no player, no dead button", () => {
     const plan: PlaybackPlan = {
-      strategy: "unavailable",
-      itemId: "yt-donut",
-      title: "Blender donut tutorial",
-      reason: "The uploader disabled embedding.",
-      recovery: "Open the video on the provider site, or pick another item.",
+      kind: "unavailable",
+      reason: "unsupported",
+      recovery: {
+        action: "open-provider-app",
+        message: "The uploader disabled embedding for this title.",
+      },
     };
-    render(<WatchScreen plan={plan} />);
+    render(<WatchScreen title="Blender donut tutorial" plan={plan} />);
     const panel = screen.getByTestId("watch-unavailable");
-    expect(panel.textContent).toContain("The uploader disabled embedding.");
-    expect(panel.textContent).toContain(
-      "Open the video on the provider site, or pick another item.",
-    );
+    expect(panel.textContent).toContain("unsupported");
+    expect(panel.textContent).toContain("The uploader disabled embedding for this title.");
     expect(screen.queryByTestId("watch-embed")).toBeNull();
     expect(screen.queryByTestId("watch-local-player")).toBeNull();
     // No onClose wired → no Back control; nothing on screen is dead.
@@ -301,17 +333,15 @@ describe("WatchScreen", () => {
 
   it("offers a Back control only when a close handler is provided", () => {
     const plan: PlaybackPlan = {
-      strategy: "unavailable",
-      itemId: "x",
-      title: "T",
-      reason: "r",
-      recovery: "do this",
+      kind: "unavailable",
+      reason: "region",
+      recovery: { action: "change-region", message: "do this" },
     };
     const onClose = vi.fn();
-    const { rerender } = render(<WatchScreen plan={plan} onClose={onClose} />);
+    const { rerender } = render(<WatchScreen title="T" plan={plan} onClose={onClose} />);
     fireEvent.click(screen.getByRole("button", { name: "Back" }));
     expect(onClose).toHaveBeenCalledTimes(1);
-    rerender(<WatchScreen plan={plan} />);
+    rerender(<WatchScreen title="T" plan={plan} />);
     expect(screen.queryByRole("button", { name: "Back" })).toBeNull();
   });
 });
@@ -330,6 +360,7 @@ describe("LibraryScreen", () => {
     );
     expect(screen.getByText("Weekend watch")).toBeTruthy();
     expect(screen.getByText("holiday.mp4")).toBeTruthy();
+    expect(screen.getByText("2 items")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Play holiday.mp4" }));
     expect(onPlay).toHaveBeenCalledWith(localEntry);
   });
@@ -372,6 +403,13 @@ describe("AccountsScreen", () => {
     expect(onConnect).toHaveBeenCalledWith("youtube");
   });
 
+  it("shows the granted scopes and grant expiry from the canonical record", () => {
+    render(<AccountsScreen accounts={[connectedAccount]} />);
+    const card = screen.getByTestId("account-card-connected");
+    expect(card.textContent).toContain("youtube.readonly");
+    expect(card.textContent).toContain("2027-01-01T00:00:00Z");
+  });
+
   it("offers a truthful not-connected card with a Connect action", () => {
     const onConnect = vi.fn();
     render(<AccountsScreen accounts={[]} onConnect={onConnect} />);
@@ -386,14 +424,15 @@ describe("AccountsScreen", () => {
 // ---------- honest-state vocabulary + theme ----------
 
 describe("honest-state vocabulary (freeze §2.3)", () => {
-  it("maps every CapabilityStatus onto the vocabulary — unknown → status-unknown", () => {
+  it("maps every frozen CapabilityStatus onto the vocabulary — unknown → status-unknown, degraded stays distinct", () => {
     const statuses: CapabilityStatus[] = [
-      { kind: "available" },
-      { kind: "requires-auth", providerId: "youtube" },
-      { kind: "rate-limited", providerId: "youtube", retryAfterSeconds: 30 },
-      { kind: "unsupported", providerId: "youtube", reason: "no search API in M1" },
-      { kind: "unavailable", reason: "upstream 500" },
-      { kind: "unknown", detail: "capability probe timed out" },
+      "supported",
+      "requires-auth",
+      "rate-limited",
+      "unsupported",
+      "unavailable",
+      "degraded",
+      "unknown",
     ];
     expect(statuses.map(toHonestState)).toEqual([
       "ready",
@@ -401,6 +440,7 @@ describe("honest-state vocabulary (freeze §2.3)", () => {
       "rate-limited",
       "unsupported",
       "unavailable",
+      "degraded",
       "status-unknown",
     ]);
   });
@@ -410,24 +450,33 @@ describe("honest-state vocabulary (freeze §2.3)", () => {
     expect(HONEST_COPY["status-unknown"].actionLabel).toBe("Check again");
   });
 
-  it("describeCapability surfaces the provider reason verbatim", () => {
+  it("describeCapability surfaces the operation detail verbatim", () => {
     const described = describeCapability({
-      kind: "unsupported",
-      providerId: "youtube",
-      reason: "no search API in M1",
+      status: "unsupported",
+      detail: "no search API in M1",
     });
     expect(described.state).toBe("unsupported");
     expect(described.detail).toBe("no search API in M1");
   });
 
-  it("searchStateFromCapability keeps search honest for available-but-empty probes", () => {
-    expect(searchStateFromCapability("donut", { kind: "available" }, []).phase).toBe("empty");
-    expect(searchStateFromCapability("donut", { kind: "available" }, [catalogItem()]).phase).toBe(
-      "results",
+  it("searchStateFromCapability keeps search honest for supported-but-empty probes", () => {
+    expect(searchStateFromCapability("donut", "youtube", { status: "supported" }, []).phase).toBe(
+      "empty",
     );
-    expect(searchStateFromCapability("donut", { kind: "unknown", detail: "x" }).phase).toBe(
-      "status-unknown",
-    );
+    expect(
+      searchStateFromCapability("donut", "youtube", { status: "supported" }, [catalogItem()]).phase,
+    ).toBe("results");
+    expect(
+      searchStateFromCapability("donut", "youtube", { status: "unknown", detail: "x" }).phase,
+    ).toBe("status-unknown");
+  });
+
+  it("searchStateFromCapability wires the requires-auth connect action to the searched provider", () => {
+    const state = searchStateFromCapability("donut", "youtube", { status: "requires-auth" });
+    expect(state.phase).toBe("requires-auth");
+    if (state.phase === "requires-auth") {
+      expect(state.providerId).toBe("youtube");
+    }
   });
 });
 

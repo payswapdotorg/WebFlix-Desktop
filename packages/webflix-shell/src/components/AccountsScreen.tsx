@@ -1,9 +1,9 @@
 import React from "react";
 import { theme } from "../theme";
-import type { AccountState, ProviderAccountRecord, ProviderId } from "webflix-contracts";
+import type { ProviderAccountRecord, ProviderAccountStatus } from "webflix-contracts";
 
 interface ProviderDescriptor {
-  readonly id: ProviderId;
+  readonly id: string;
   readonly name: string;
   readonly blurb: string;
 }
@@ -18,7 +18,7 @@ const KNOWN_PROVIDERS: readonly ProviderDescriptor[] = [
 ];
 
 const ACCOUNT_STATE_COPY: Record<
-  AccountState,
+  ProviderAccountStatus,
   { badge: string; note: string; action: "disconnect" | "connect"; actionLabel: string }
 > = {
   connected: {
@@ -43,8 +43,8 @@ const ACCOUNT_STATE_COPY: Record<
 
 export interface AccountsScreenProps {
   readonly accounts?: readonly ProviderAccountRecord[];
-  readonly onConnect?: (providerId: ProviderId) => void;
-  readonly onDisconnect?: (accountId: string) => void;
+  readonly onConnect?: (providerId: string) => void;
+  readonly onDisconnect?: (internalAccountId: string) => void;
 }
 
 const styles: Record<string, React.CSSProperties> = {
@@ -166,11 +166,11 @@ export function AccountsScreen(props: AccountsScreenProps) {
             )}
 
             {providerAccounts.map((account) => {
-              const copy = ACCOUNT_STATE_COPY[account.state];
+              const copy = ACCOUNT_STATE_COPY[account.status];
               return (
                 <div
-                  key={account.accountId}
-                  data-testid={`account-card-${account.state}`}
+                  key={account.internalAccountId}
+                  data-testid={`account-card-${account.status}`}
                   style={styles.accountCard}
                 >
                   <div style={styles.row}>
@@ -178,9 +178,9 @@ export function AccountsScreen(props: AccountsScreenProps) {
                     <span
                       style={{
                         ...styles.badge,
-                        ...(account.state === "connected"
+                        ...(account.status === "connected"
                           ? styles.badgeOk
-                          : account.state === "expired"
+                          : account.status === "expired"
                             ? styles.badgeWarn
                             : styles.badgeDanger),
                       }}
@@ -189,18 +189,18 @@ export function AccountsScreen(props: AccountsScreenProps) {
                     </span>
                   </div>
                   <p style={styles.muted}>{copy.note}</p>
-                  {account.tokenExpiresAt && (
-                    <p style={styles.muted}>Token expires: {account.tokenExpiresAt}</p>
+                  {account.expiresAt && (
+                    <p style={styles.muted}>Grant expires: {account.expiresAt}</p>
                   )}
-                  {account.scopes && account.scopes.length > 0 && (
-                    <p style={styles.muted}>Scopes: {account.scopes.join(", ")}</p>
+                  {account.grantedScopes.length > 0 && (
+                    <p style={styles.muted}>Scopes: {account.grantedScopes.join(", ")}</p>
                   )}
                   <button
                     type="button"
                     style={copy.action === "disconnect" ? styles.ghostButton : styles.button}
                     onClick={() =>
                       copy.action === "disconnect"
-                        ? onDisconnect?.(account.accountId)
+                        ? onDisconnect?.(account.internalAccountId)
                         : onConnect?.(provider.id)
                     }
                   >

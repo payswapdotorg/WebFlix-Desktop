@@ -1,95 +1,113 @@
 // Hermetic unit tests for the catalog merge domain (no network, no fs, no clock).
+//
+// MIRROR-RECON (2026-10-11): fixtures rewritten against the FROZEN §2.1
+// shapes — the incoming unit is a provider-attributed CatalogItem (external
+// ids and year live in item.metadata, availability is a single fact) and
+// MatchEvidence carries {confidence, evidence: string[]}. Every merge-policy
+// intent from the mirror suite is preserved: thresholds, ambiguity band,
+// dedup, evidence ladder, no-mutation, counter sums.
 
 import { describe, expect, it } from "vitest";
 
 import type { CatalogItem, ProviderAsset } from "webflix-contracts";
 import { CONFIDENCE, DEFAULT_THRESHOLDS, mergeCatalogInto, scoreMatch } from "../merge";
 
+const ISO = "2026-10-11T00:00:00Z";
+
 function asset(partial: Partial<ProviderAsset> & Pick<ProviderAsset, "assetId">): ProviderAsset {
   return {
-    providerId: "youtube",
-    title: "Untitled",
-    kind: "movie",
+    kind: "embed",
+    reference: `https://example.invalid/watch/${partial.assetId ?? "x"}`,
     ...partial,
   };
 }
 
 function item(partial: Partial<CatalogItem> & Pick<CatalogItem, "id" | "title">): CatalogItem {
   return {
-    kind: "movie",
+    providerId: "youtube",
+    mediaKind: "video",
     assets: [],
-    availability: [],
+    metadata: {},
     ...partial,
   };
 }
 
 const matrixItem = (): CatalogItem =>
   item({
-    id: "cat:movie:tmdb:603",
+    id: "cat:video:tmdb:603",
+    providerId: "tmdb",
     title: "The Matrix",
-    year: 1999,
+    metadata: { year: 1999, externalIds: { tmdb: "603" } },
     assets: [
-      {
-        assetId: "603",
-        providerId: "tmdb",
-        title: "The Matrix",
-        kind: "movie",
-        year: 1999,
-        externalIds: { tmdb: "603" },
-      },
+      asset({ assetId: "603", kind: "stream", reference: "https://tmdb.invalid/603/stream" }),
     ],
-    availability: [{ providerId: "tmdb", available: true }],
+    availability: {
+      providerId: "tmdb",
+      region: "US",
+      available: true,
+      observedAt: "2026-10-10T00:00:00Z",
+    },
   });
+
+/** Incoming connector candidates keep the mirror id convention. */
+function incoming(partial: Partial<CatalogItem> & { assetId: string; title: string }): CatalogItem {
+  const { assetId, ...rest } = partial;
+  return item({
+    id: `cat:video:youtube:${assetId}`,
+    assets: [asset({ assetId })],
+    ...rest,
+    title: partial.title,
+  });
+}
 
 describe("scoreMatch", () => {
   it("never matches across media kinds", () => {
-    const a = asset({ assetId: "yt-1", title: "The Matrix", kind: "series" });
+    const a = incoming({ assetId: "yt-1", title: "The Matrix", mediaKind: "live" });
     expect(scoreMatch(a, matrixItem())).toBeNull();
   });
 
-  it("scores provider-native identity at 1.0", () => {
-    const a = asset({ assetId: "603", providerId: "tmdb", title: "whatever" });
+  it("scores provider-native identity at 1.0 (same provider + assetId)", () => {
+    const a = incoming({ assetId: "603", title: "whatever", providerId: "tmdb" });
     const evidence = scoreMatch(a, matrixItem());
-    expect(evidence?.type).toBe("provider-native");
     expect(evidence?.confidence).toBe(CONFIDENCE.providerNative);
+    expect(evidence?.evidence[0]).toContain("provider-native");
   });
 
   it("scores a shared canonical external id at 1.0 across providers", () => {
-    const a = asset({
+    const a = incoming({
       assetId: "yt-7",
       title: "Some Upload Title",
-      externalIds: { tmdb: "603" },
+      metadata: { externalIds: { tmdb: "603" } },
     });
     const evidence = scoreMatch(a, matrixItem());
-    expect(evidence?.type).toBe("external-id");
     expect(evidence?.confidence).toBe(CONFIDENCE.externalId);
-    expect(evidence?.source).toBe("external-id:tmdb");
+    expect(evidence?.evidence[0]).toContain("external-id:tmdb");
   });
 
   it("scores exact title plus matching year as title-year", () => {
-    const a = asset({ assetId: "yt-8", title: "The Matrix", year: 1999 });
+    const a = incoming({ assetId: "yt-8", title: "The Matrix", metadata: { year: 1999 } });
     const evidence = scoreMatch(a, matrixItem());
-    expect(evidence?.type).toBe("title-year");
     expect(evidence?.confidence).toBe(CONFIDENCE.titleYear);
+    expect(evidence?.evidence[0]).toContain("title:exact + year 1999");
   });
 
   it("scores exact title with unknown year at the autoMerge boundary", () => {
-    const a = asset({ assetId: "yt-9", title: "  the   MATRIX " });
+    const a = incoming({ assetId: "yt-9", title: "  the   MATRIX " });
     const evidence = scoreMatch(a, matrixItem());
-    expect(evidence?.type).toBe("title-year");
     expect(evidence?.confidence).toBe(CONFIDENCE.titleExactNoYear);
     expect(evidence?.confidence).toBe(DEFAULT_THRESHOLDS.autoMerge);
+    expect(evidence?.evidence[0]).toContain("title:exact");
   });
 
   it("demotes exact titles with conflicting years", () => {
-    const a = asset({ assetId: "yt-10", title: "The Matrix", year: 2009 });
+    const a = incoming({ assetId: "yt-10", title: "The Matrix", metadata: { year: 2009 } });
     const evidence = scoreMatch(a, matrixItem());
-    expect(evidence?.type).toBe("title-fuzzy");
     expect(evidence?.confidence).toBe(CONFIDENCE.titleExactYearConflict);
+    expect(evidence?.evidence[0]).toContain("years conflict");
   });
 
   it("emits no evidence for unrelated titles", () => {
-    const a = asset({
+    const a = incoming({
       assetId: "yt-11",
       title: "Surface Washers of the Caribbean",
     });
@@ -98,29 +116,35 @@ describe("scoreMatch", () => {
 });
 
 describe("mergeCatalogInto", () => {
-  it("merges an incoming asset when evidence clears autoMerge", () => {
+  it("merges an incoming item when evidence clears autoMerge", () => {
     const base = [matrixItem()];
-    const incoming = asset({
+    const yt = incoming({
       assetId: "yt-999",
       title: "The Matrix",
-      year: 1999,
-      url: "https://youtube.com/watch?v=999",
+      metadata: { year: 1999 },
+      availability: {
+        providerId: "youtube",
+        region: "US",
+        available: true,
+        observedAt: ISO,
+      },
     });
 
-    const result = mergeCatalogInto(base, [incoming]);
+    const result = mergeCatalogInto(base, [yt]);
 
     expect(result.items).toHaveLength(1);
     const merged = result.items[0];
-    expect(merged?.id).toBe("cat:movie:tmdb:603");
+    expect(merged?.id).toBe("cat:video:tmdb:603");
     expect(merged?.assets).toHaveLength(2);
-    expect(merged?.assets[1]?.providerId).toBe("youtube");
-    expect(merged?.availability).toHaveLength(2);
-    expect(merged?.matchEvidence?.type).toBe("title-year");
+    expect(merged?.assets[1]?.assetId).toBe("yt-999");
+    // §2.1: single availability fact — the later observation wins (MR-FD5).
+    expect(merged?.availability?.providerId).toBe("youtube");
     expect(merged?.matchEvidence?.confidence).toBe(CONFIDENCE.titleYear);
+    expect(merged?.matchEvidence?.evidence[0]).toContain("title:exact + year 1999");
 
     expect(result.report.merged).toBe(1);
     expect(result.report.records[0]?.outcome).toBe("merged");
-    expect(result.report.records[0]?.targetItemId).toBe("cat:movie:tmdb:603");
+    expect(result.report.records[0]?.targetItemId).toBe("cat:video:tmdb:603");
 
     // inputs untouched
     expect(base[0]?.assets).toHaveLength(1);
@@ -130,17 +154,17 @@ describe("mergeCatalogInto", () => {
 
   it("keeps ambiguous matches as separate items", () => {
     const base = [
-      item({ id: "cat:movie:dvd:ring-2002", title: "The Ring", year: 2002 }),
-      item({ id: "cat:movie:dvd:ring-2005", title: "The Ring", year: 2005 }),
+      item({ id: "cat:video:dvd:ring-2002", title: "The Ring", metadata: { year: 2002 } }),
+      item({ id: "cat:video:dvd:ring-2005", title: "The Ring", metadata: { year: 2005 } }),
     ];
-    const incoming = asset({ assetId: "yt-ring", title: "the ring" });
+    const tie = incoming({ assetId: "yt-ring", title: "the ring" });
 
-    const result = mergeCatalogInto(base, [incoming]);
+    const result = mergeCatalogInto(base, [tie]);
 
     // both candidates are exact-title-no-year (0.9) -> tied -> ambiguous
     expect(result.items).toHaveLength(3);
-    expect(result.items[2]?.id).toBe("cat:movie:youtube:yt-ring");
-    expect(result.items[2]?.assets).toEqual([incoming]);
+    expect(result.items[2]?.id).toBe("cat:video:youtube:yt-ring");
+    expect(result.items[2]?.assets.map((a) => a.assetId)).toEqual(["yt-ring"]);
     expect(result.items[2]?.matchEvidence).toBeUndefined();
 
     expect(result.report.ambiguous).toBe(1);
@@ -153,7 +177,7 @@ describe("mergeCatalogInto", () => {
     expect(record?.runnerUpEvidence?.confidence).toBe(CONFIDENCE.titleExactNoYear);
     expect(record?.reason).toContain("ambiguityDelta");
 
-    // neither existing item absorbed the asset
+    // neither existing item absorbed the candidate's assets
     expect(result.items[0]?.assets).toHaveLength(0);
     expect(result.items[1]?.assets).toHaveLength(0);
   });
@@ -163,114 +187,100 @@ describe("mergeCatalogInto", () => {
     const base = [
       item({
         id: "a",
+        providerId: "plex",
         title: "Variant A",
-        assets: [
-          asset({
-            assetId: "p1",
-            providerId: "plex",
-            title: "Variant A",
-            externalIds: shared,
-          }),
-        ],
+        metadata: { externalIds: shared },
+        assets: [asset({ assetId: "p1" })],
       }),
       item({
         id: "b",
+        providerId: "plex",
         title: "Variant B",
-        assets: [
-          asset({
-            assetId: "p2",
-            providerId: "plex",
-            title: "Variant B",
-            externalIds: shared,
-          }),
-        ],
+        metadata: { externalIds: shared },
+        assets: [asset({ assetId: "p2" })],
       }),
     ];
-    const incoming = asset({
+    const candidate = incoming({
       assetId: "yt-1",
       title: "Unknown Upload",
-      externalIds: { imdb: "tt0133093" },
+      metadata: { externalIds: shared },
     });
 
-    const result = mergeCatalogInto(base, [incoming]);
+    const result = mergeCatalogInto(base, [candidate]);
 
     expect(result.items).toHaveLength(3);
     expect(result.report.ambiguous).toBe(1);
-    expect(result.report.records[0]?.outcome).toBe("ambiguous-separate");
     expect(result.report.records[0]?.evidence?.confidence).toBe(1);
     expect(result.report.records[0]?.runnerUpEvidence?.confidence).toBe(1);
   });
 
   it("keeps low-confidence candidates separate", () => {
-    const base = [item({ id: "cat:movie:plex:alien", title: "Alien", year: 1979 })];
-    const incoming = asset({ assetId: "yt-alien", title: "Aliens" });
+    const base = [item({ id: "cat:video:plex:alien", title: "Alien", metadata: { year: 1979 } })];
+    const candidate = incoming({ assetId: "yt-alien", title: "Aliens" });
 
-    const result = mergeCatalogInto(base, [incoming]);
+    const result = mergeCatalogInto(base, [candidate]);
 
     expect(result.items).toHaveLength(2);
     expect(result.items[0]?.assets).toHaveLength(0);
-    expect(result.items[1]?.id).toBe("cat:movie:youtube:yt-alien");
+    expect(result.items[1]?.id).toBe("cat:video:youtube:yt-alien");
     expect(result.report.lowConfidence).toBe(1);
 
     const record = result.report.records[0];
     expect(record?.outcome).toBe("low-confidence-separate");
-    expect(record?.evidence?.type).toBe("title-fuzzy");
+    expect(record?.evidence?.evidence[0]).toContain("title:fuzzy");
     expect(record?.evidence?.confidence).toBeCloseTo(0.708, 2);
   });
 
   it("merges when the best candidate clears autoMerge even with a weaker runner-up", () => {
     const base = [
-      item({ id: "cat:movie:plex:alien", title: "Alien", year: 1979 }),
-      item({ id: "cat:movie:plex:aliens", title: "Aliens", year: 1986 }),
+      item({ id: "cat:video:plex:alien", title: "Alien", metadata: { year: 1979 } }),
+      item({ id: "cat:video:plex:aliens", title: "Aliens", metadata: { year: 1986 } }),
     ];
-    const incoming = asset({ assetId: "yt-aliens", title: "Aliens" });
+    const candidate = incoming({ assetId: "yt-aliens", title: "Aliens" });
 
-    const result = mergeCatalogInto(base, [incoming]);
+    const result = mergeCatalogInto(base, [candidate]);
 
     // exact 'Aliens' (0.9) beats fuzzy 'Alien' (~0.708); gap >> ambiguityDelta
     expect(result.items).toHaveLength(2);
-    expect(result.items[1]?.id).toBe("cat:movie:plex:aliens");
+    expect(result.items[1]?.id).toBe("cat:video:plex:aliens");
     expect(result.items[1]?.assets).toHaveLength(1);
     expect(result.report.merged).toBe(1);
     expect(result.report.ambiguous).toBe(0);
-    expect(result.report.records[0]?.targetItemId).toBe("cat:movie:plex:aliens");
+    expect(result.report.records[0]?.targetItemId).toBe("cat:video:plex:aliens");
   });
 
   it("creates a new item when nothing matches", () => {
     const base = [matrixItem()];
-    const incoming = asset({
+    const candidate = incoming({
       assetId: "yt-new",
       title: "Surface Washers of the Caribbean",
-      year: 2024,
+      metadata: { year: 2024 },
     });
 
-    const result = mergeCatalogInto(base, [incoming]);
+    const result = mergeCatalogInto(base, [candidate]);
 
     expect(result.items).toHaveLength(2);
     const created = result.items[1];
-    expect(created?.id).toBe("cat:movie:youtube:yt-new");
+    expect(created?.id).toBe("cat:video:youtube:yt-new");
     expect(created?.title).toBe("Surface Washers of the Caribbean");
-    expect(created?.year).toBe(2024);
-    expect(created?.kind).toBe("movie");
-    expect(created?.assets).toEqual([incoming]);
-    expect(created?.availability).toEqual([{ providerId: "youtube", available: true }]);
+    expect(created?.metadata.year).toBe(2024);
+    expect(created?.mediaKind).toBe("video");
+    expect(created?.assets.map((a) => a.assetId)).toEqual(["yt-new"]);
     expect(created?.matchEvidence).toBeUndefined();
     expect(result.report.created).toBe(1);
     expect(result.report.records[0]?.outcome).toBe("created");
   });
 
-  it("dedupes an asset that is already present on the matched item", () => {
+  it("dedupes a candidate whose assets are already present on the matched item", () => {
     const base = [matrixItem()];
-    const incoming: ProviderAsset = {
+    const candidate = incoming({
       assetId: "603",
-      providerId: "tmdb",
       title: "The Matrix",
-      kind: "movie",
-      year: 1999,
-      externalIds: { tmdb: "603" },
-    };
+      providerId: "tmdb",
+      metadata: { year: 1999, externalIds: { tmdb: "603" } },
+    });
 
-    const result = mergeCatalogInto(base, [incoming]);
+    const result = mergeCatalogInto(base, [candidate]);
 
     expect(result.items[0]?.assets).toHaveLength(1);
     expect(result.report.deduped).toBe(1);
@@ -278,34 +288,66 @@ describe("mergeCatalogInto", () => {
     expect(result.report.records[0]?.outcome).toBe("deduped");
   });
 
-  it("deduplicates availability facts per provider+url but keeps distinct urls", () => {
+  it("keeps the latest availability observation and never duplicates facts (§2.1 single fact)", () => {
     const base = item({
-      id: "cat:movie:yt:heat",
+      id: "cat:video:yt:heat",
       title: "Heat",
-      year: 1995,
-      availability: [{ providerId: "youtube", available: true, url: "https://example.com/old" }],
+      metadata: { year: 1995 },
+      availability: {
+        providerId: "youtube",
+        region: "US",
+        available: true,
+        observedAt: "2026-10-09T00:00:00Z",
+        note: "old observation",
+      },
     });
-    const incoming = asset({
+    const fresh = incoming({
       assetId: "heat-1",
       title: "Heat",
-      year: 1995,
-      url: "https://example.com/new",
+      metadata: { year: 1995 },
+      availability: {
+        providerId: "youtube",
+        region: "US",
+        available: true,
+        observedAt: "2026-10-11T00:00:00Z",
+        note: "new observation",
+      },
     });
 
-    const first = mergeCatalogInto([base], [incoming]);
-    expect(first.items[0]?.availability).toHaveLength(2);
+    const first = mergeCatalogInto([base], [fresh]);
     expect(first.report.merged).toBe(1);
+    expect(first.items[0]?.availability?.note).toBe("new observation");
 
-    const second = mergeCatalogInto(first.items, [incoming]);
+    // Re-merging the SAME observation is a dedup, and the fact stays single.
+    const second = mergeCatalogInto(first.items, [fresh]);
     expect(second.report.deduped).toBe(1);
-    expect(second.items[0]?.availability).toHaveLength(2);
+    expect(second.items[0]?.availability?.note).toBe("new observation");
+  });
+
+  it("fills missing metadata (year, externalIds) from the merged candidate without overwriting", () => {
+    const base = [item({ id: "cat:video:plex:imdb-less", title: "The Matrix" })];
+    const candidate = incoming({
+      assetId: "yt-m",
+      title: "The Matrix",
+      metadata: { year: 1999, externalIds: { imdb: "tt0133093" } },
+    });
+
+    const result = mergeCatalogInto(base, [candidate]);
+    expect(result.items[0]?.metadata.year).toBe(1999);
+    expect(
+      (result.items[0]?.metadata.externalIds as Record<string, string> | undefined)?.imdb,
+    ).toBe("tt0133093");
   });
 
   it("honours overridden thresholds", () => {
     const base = [matrixItem()];
-    const incoming = asset({ assetId: "yt-999", title: "The Matrix", year: 1999 });
+    const candidate = incoming({
+      assetId: "yt-999",
+      title: "The Matrix",
+      metadata: { year: 1999 },
+    });
 
-    const strict = mergeCatalogInto(base, [incoming], {
+    const strict = mergeCatalogInto(base, [candidate], {
       ...DEFAULT_THRESHOLDS,
       autoMerge: 0.99,
     });
@@ -313,7 +355,7 @@ describe("mergeCatalogInto", () => {
     expect(strict.report.lowConfidence).toBe(1);
     expect(strict.report.merged).toBe(0);
 
-    const lenient = mergeCatalogInto(base, [incoming], {
+    const lenient = mergeCatalogInto(base, [candidate], {
       ...DEFAULT_THRESHOLDS,
       autoMerge: 0.5,
     });
@@ -326,29 +368,29 @@ describe("mergeCatalogInto", () => {
     const snapshot = JSON.parse(JSON.stringify(base)) as CatalogItem[];
 
     mergeCatalogInto(base, [
-      asset({ assetId: "yt-999", title: "The Matrix", year: 1999 }),
-      asset({ assetId: "yt-other", title: "Totally Different Thing" }),
+      incoming({ assetId: "yt-999", title: "The Matrix", metadata: { year: 1999 } }),
+      incoming({ assetId: "yt-other", title: "Totally Different Thing" }),
     ]);
 
     expect(base).toEqual(snapshot);
   });
 
-  it("report counters always sum to the number of processed assets", () => {
+  it("report counters always sum to the number of processed candidates", () => {
     const base = [matrixItem()];
-    const incoming = [
-      asset({ assetId: "yt-999", title: "The Matrix", year: 1999 }), // merged
-      asset({ assetId: "603", providerId: "tmdb", title: "The Matrix" }), // deduped
-      asset({ assetId: "yt-new", title: "Something Else Entirely" }), // created
+    const candidates = [
+      incoming({ assetId: "yt-999", title: "The Matrix", metadata: { year: 1999 } }), // merged
+      incoming({ assetId: "603", title: "The Matrix", providerId: "tmdb" }), // deduped
+      incoming({ assetId: "yt-new", title: "Something Else Entirely" }), // created
     ];
 
-    const { report } = mergeCatalogInto(base, incoming);
+    const { report } = mergeCatalogInto(base, candidates);
 
     expect(report.merged).toBe(1);
     expect(report.deduped).toBe(1);
     expect(report.created).toBe(1);
-    expect(report.records).toHaveLength(incoming.length);
+    expect(report.records).toHaveLength(candidates.length);
     expect(
       report.merged + report.deduped + report.created + report.ambiguous + report.lowConfidence,
-    ).toBe(incoming.length);
+    ).toBe(candidates.length);
   });
 });

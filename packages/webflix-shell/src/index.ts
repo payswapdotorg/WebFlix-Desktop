@@ -1,8 +1,9 @@
 // Public entrypoint for webflix-shell (D1 lane).
 //
 // Screens + shell chrome, the honest-state vocabulary (freeze §2.3), the
-// WebFlix theme, and the contract-type mirror (swap-at-integration: re-point
-// these to packages/webflix-contracts when it lands).
+// WebFlix theme, and the canonical contract types re-exported from
+// webflix-contracts (the lane-local mirror was removed at integration;
+// MIRROR-RECON re-pointed every component and fixture at the frozen shapes).
 
 export * from "webflix-contracts";
 export * from "./states";

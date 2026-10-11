@@ -154,7 +154,7 @@ function ResultsArea(props: {
                   {item.title}
                   <span style={styles.muted}>
                     {" "}
-                    · {item.providerId} · {item.kind}
+                    · {item.providerId} · {item.mediaKind}
                   </span>
                 </span>
                 <button
@@ -195,9 +195,10 @@ function ResultsArea(props: {
         <div data-testid="search-rate-limited" role="status" style={styles.panel}>
           <p style={styles.panelTitle}>{HONEST_COPY["rate-limited"].title}</p>
           <p style={styles.muted}>{HONEST_COPY["rate-limited"].message}</p>
-          {state.retryAfterSeconds !== undefined && (
-            <p style={styles.muted}>Quota should reset in about {state.retryAfterSeconds}s.</p>
-          )}
+          {/* §2.3: the reset hint arrives as OperationCapability.detail text
+              (the frozen shapes carry no structured retryAfterSeconds —
+              freeze-deviation MR-FD1). */}
+          {state.detail && <p style={styles.muted}>{state.detail}</p>}
           {onRetry && (
             <button type="button" style={styles.ghostButton} onClick={onRetry}>
               Retry
@@ -211,7 +212,7 @@ function ResultsArea(props: {
         <div data-testid="search-unsupported" role="status" style={styles.panel}>
           <p style={styles.panelTitle}>{HONEST_COPY.unsupported.title}</p>
           <p style={styles.muted}>{HONEST_COPY.unsupported.message}</p>
-          <p style={styles.muted}>Reason: {state.reason}</p>
+          {state.detail && <p style={styles.muted}>Reason: {state.detail}</p>}
           {/* Honest by design: 'unsupported' renders no play control. A button
               here would be dead — the state explains itself instead. */}
         </div>
@@ -222,11 +223,43 @@ function ResultsArea(props: {
         <div data-testid="search-unavailable" role="status" style={styles.panel}>
           <p style={styles.panelTitle}>{HONEST_COPY.unavailable.title}</p>
           <p style={styles.muted}>{HONEST_COPY.unavailable.message}</p>
-          <p style={styles.muted}>Reason: {state.reason}</p>
+          {state.detail && <p style={styles.muted}>Reason: {state.detail}</p>}
           {onRetry && (
             <button type="button" style={styles.ghostButton} onClick={onRetry}>
               {HONEST_COPY.unavailable.actionLabel}
             </button>
+          )}
+        </div>
+      );
+
+    case "degraded":
+      return (
+        <div data-testid="search-degraded" role="status" style={styles.panel}>
+          <p style={styles.panelTitle}>{HONEST_COPY.degraded.title}</p>
+          <p style={styles.muted}>{HONEST_COPY.degraded.message}</p>
+          {state.detail && <p style={styles.muted}>{state.detail}</p>}
+          {state.items.length > 0 && (
+            <ul style={styles.list}>
+              {state.items.map((item) => (
+                <li key={item.id} style={styles.row}>
+                  <span>
+                    {item.title}
+                    <span style={styles.muted}>
+                      {" "}
+                      · {item.providerId} · {item.mediaKind}
+                    </span>
+                  </span>
+                  <button
+                    type="button"
+                    style={styles.ghostButton}
+                    aria-label={`Play ${item.title}`}
+                    onClick={() => onSelectItem?.(item)}
+                  >
+                    Play
+                  </button>
+                </li>
+              ))}
+            </ul>
           )}
         </div>
       );

@@ -1,7 +1,34 @@
-// Catalog merge over the frozen §2.1/§2.2 shapes.
+// Catalog merge over the frozen §2.1 shapes.
 //
-// Policy:
-//   - every incoming ProviderAsset is scored against every existing item,
+// §2.1 reconciliation (MIRROR-RECON, 2026-10-11): this module originally
+// scored lane-local "rich" ProviderAssets (providerId/title/year/url/
+// externalIds on the asset itself — a mirror vocabulary) against mirror
+// CatalogItems (asset-style `kind`, per-asset `title`/`year`, an
+// `availability` ARRAY). The FROZEN §2.1 shapes attribute the provider at the
+// ITEM level (CatalogItem.providerId), carry match context in item.title and
+// the item.metadata bag (externalIds/year — the metadata bag is the canonical
+// home for external descriptors), and hold ONE optional AvailabilityFact per
+// item. The merge unit is therefore the incoming CatalogItem (a connector's
+// provider-attributed candidate); its assets attach to the matched item, and
+// the provider attribution of the target item is preserved (structural, per
+// the frozen shape).
+//
+// Field map (mirror → frozen §2.1):
+//   asset.providerId      → item.providerId (item-level attribution)
+//   asset.title/year      → item.title / item.metadata.year
+//   asset.externalIds     → item.metadata.externalIds (canonical metadata bag)
+//   asset.url             → asset.reference (secret-free provider reference)
+//   item.kind ("movie"…)  → item.mediaKind (video|short|live|podcast|audio|local-file)
+//   item.availability[]   → item.availability (single fact; latest observedAt wins —
+//                            the mirror's per-provider fact accumulation is not
+//                            expressible in the frozen shape; freeze-deviation MR-FD5)
+//   MatchEvidence{type,   → MatchEvidence{confidence, evidence: string[]} — the
+//    source, detail}         match kind and human detail live in the evidence
+//                            strings ("provider-native: …", "external-id: …",
+//                            "title:exact+year …"), strongest-first
+//
+// Policy (unchanged from the mirror — every threshold and outcome preserved):
+//   - every incoming item is scored against every existing item,
 //     producing a MatchEvidence with a 0..1 confidence
 //   - candidates below the `candidate` threshold are ignored
 //   - a best candidate at or above `autoMerge` with a clear margin
@@ -12,12 +39,11 @@
 import type {
   AvailabilityFact,
   CatalogItem,
-  CatalogItemId,
   MatchEvidence,
   ProviderAsset,
 } from "webflix-contracts";
 
-/** Merge policy thresholds (MatchEvidence semantics, contract-freeze §2.2). */
+/** Merge policy thresholds (MatchEvidence semantics, contract-freeze §2.1). */
 export interface MergeThresholds {
   /** Confidence at or above which a clear best candidate is merged into. */
   readonly autoMerge: number;
@@ -35,7 +61,7 @@ export const DEFAULT_THRESHOLDS: MergeThresholds = {
 
 /** Fixed confidence values emitted by the built-in evidence scorer. */
 export const CONFIDENCE = {
-  /** Same providerId + assetId. */
+  /** Same provider + same assetId. */
   providerNative: 1,
   /** Shared canonical external id (e.g. tmdb). */
   externalId: 1,
@@ -53,7 +79,7 @@ export const CONFIDENCE = {
   fuzzyMinSimilarity: 0.6,
 } as const;
 
-/** How an incoming asset was resolved against the catalog. */
+/** How an incoming item was resolved against the catalog. */
 export type MergeOutcome =
   | "merged"
   | "deduped"
@@ -61,11 +87,11 @@ export type MergeOutcome =
   | "ambiguous-separate"
   | "low-confidence-separate";
 
-/** Per-asset audit record. */
+/** Per-item audit record. */
 export interface MergeRecord {
-  readonly asset: ProviderAsset;
+  readonly item: CatalogItem;
   readonly outcome: MergeOutcome;
-  readonly targetItemId?: CatalogItemId;
+  readonly targetItemId?: string;
   readonly evidence?: MatchEvidence;
   readonly runnerUpEvidence?: MatchEvidence;
   readonly reason?: string;
@@ -96,71 +122,97 @@ interface Candidate {
   evidence: MatchEvidence;
 }
 
-/**
- * Score one incoming asset against one existing catalog item.
- * Returns null when there is no plausible evidence (including kind mismatch).
- */
-export function scoreMatch(asset: ProviderAsset, item: CatalogItem): MatchEvidence | null {
-  if (asset.kind !== item.kind) return null;
+/** External-id bag on a catalog item's metadata (canonical: metadata.externalIds). */
+function externalIdsOf(item: CatalogItem): Record<string, string> {
+  const bag = item.metadata.externalIds;
+  if (bag === undefined || bag === null || typeof bag !== "object" || Array.isArray(bag)) {
+    return {};
+  }
+  const ids: Record<string, string> = {};
+  for (const [key, value] of Object.entries(bag as Record<string, unknown>)) {
+    if (typeof value === "string" && value !== "") ids[key] = value;
+  }
+  return ids;
+}
 
-  if (item.assets.some((a) => a.providerId === asset.providerId && a.assetId === asset.assetId)) {
-    return {
-      type: "provider-native",
-      confidence: CONFIDENCE.providerNative,
-      source: `provider:${asset.providerId}`,
-      detail: `same provider asset ${asset.providerId}/${asset.assetId}`,
-    };
+/** Release year on a catalog item's metadata (canonical: metadata.year). */
+function yearOf(item: CatalogItem): number | undefined {
+  const year = item.metadata.year;
+  return typeof year === "number" && Number.isFinite(year) ? year : undefined;
+}
+
+/**
+ * Score one incoming item against one existing catalog item.
+ * Returns null when there is no plausible evidence (including mediaKind mismatch).
+ */
+export function scoreMatch(incoming: CatalogItem, existing: CatalogItem): MatchEvidence | null {
+  if (incoming.mediaKind !== existing.mediaKind) return null;
+
+  if (incoming.providerId === existing.providerId) {
+    const nativeAsset = incoming.assets.find((asset) =>
+      existing.assets.some((other) => other.assetId === asset.assetId),
+    );
+    if (nativeAsset !== undefined) {
+      return {
+        confidence: CONFIDENCE.providerNative,
+        evidence: [
+          `provider-native: same provider asset ${incoming.providerId}/${nativeAsset.assetId}`,
+        ],
+      };
+    }
   }
 
-  if (asset.externalIds) {
-    for (const existing of item.assets) {
-      if (!existing.externalIds) continue;
-      for (const [key, value] of Object.entries(asset.externalIds)) {
-        if (value !== "" && existing.externalIds[key] === value) {
-          return {
-            type: "external-id",
-            confidence: CONFIDENCE.externalId,
-            source: `external-id:${key}`,
-            detail: `${key}=${value} shared with ${existing.providerId}/${existing.assetId}`,
-          };
-        }
+  const incomingIds = externalIdsOf(incoming);
+  if (Object.keys(incomingIds).length > 0) {
+    const existingIds = externalIdsOf(existing);
+    for (const [key, value] of Object.entries(incomingIds)) {
+      if (existingIds[key] === value) {
+        return {
+          confidence: CONFIDENCE.externalId,
+          evidence: [
+            `external-id:${key}=${value} shared with item ${existing.id}`,
+            `provider attribution ${incoming.providerId} vs ${existing.providerId}`,
+          ],
+        };
       }
     }
   }
 
-  return titleEvidence(asset, item);
+  return titleEvidence(incoming, existing);
 }
 
-function titleEvidence(asset: ProviderAsset, item: CatalogItem): MatchEvidence | null {
-  const a = normalizeTitle(asset.title);
-  const b = normalizeTitle(item.title);
+function titleEvidence(incoming: CatalogItem, existing: CatalogItem): MatchEvidence | null {
+  const a = normalizeTitle(incoming.title);
+  const b = normalizeTitle(existing.title);
   if (a.length === 0 || b.length === 0) return null;
 
   const sim = similarity(a, b);
-  const years = compareYears(asset.year, item.year);
+  const incomingYear = yearOf(incoming);
+  const existingYear = yearOf(existing);
+  const years = compareYears(incomingYear, existingYear);
 
   if (sim === 1) {
     if (years === "conflict") {
       return {
-        type: "title-fuzzy",
         confidence: CONFIDENCE.titleExactYearConflict,
-        source: "title:exact+year-conflict",
-        detail: `identical titles but years ${asset.year} vs ${item.year}`,
+        evidence: [
+          `title:exact but years conflict (${incomingYear} vs ${existingYear})`,
+          `providers ${incoming.providerId} vs ${existing.providerId}`,
+        ],
       };
     }
     if (years === "match") {
       return {
-        type: "title-year",
         confidence: CONFIDENCE.titleYear,
-        source: "title+year",
-        detail: `exact title, year ${asset.year}`,
+        evidence: [
+          `title:exact + year ${incomingYear}`,
+          `providers ${incoming.providerId} vs ${existing.providerId}`,
+        ],
       };
     }
     return {
-      type: "title-year",
       confidence: CONFIDENCE.titleExactNoYear,
-      source: "title:exact",
-      detail: "exact title, year incomplete on at least one side",
+      evidence: ["title:exact, year incomplete on at least one side"],
     };
   }
 
@@ -169,30 +221,29 @@ function titleEvidence(asset: ProviderAsset, item: CatalogItem): MatchEvidence |
   let confidence = sim * CONFIDENCE.fuzzyFactor;
   if (years === "conflict") confidence *= CONFIDENCE.fuzzyYearConflictFactor;
 
-  return {
-    type: "title-fuzzy",
-    confidence: round3(confidence),
-    source: "title:fuzzy",
-    detail: `similarity ${sim.toFixed(3)}`,
-  };
+  const evidence = [`title:fuzzy similarity ${sim.toFixed(3)}`];
+  if (years === "conflict") {
+    evidence.push(`years conflict (${incomingYear} vs ${existingYear})`);
+  }
+  return { confidence: round3(confidence), evidence };
 }
 
 /**
- * Merge incoming provider assets into a catalog.
+ * Merge incoming provider-attributed items into a catalog.
  *
  * Never mutates `base` or its items; the returned `items` array contains
- * copied items whose `assets`/`availability` arrays are copies.
+ * copied items whose `assets` arrays and `metadata` bags are copies.
  * Ambiguous or below-threshold matches are kept as separate new items.
  */
 export function mergeCatalogInto(
   base: readonly CatalogItem[],
-  incoming: readonly ProviderAsset[],
+  incoming: readonly CatalogItem[],
   thresholds: MergeThresholds = DEFAULT_THRESHOLDS,
 ): MergeResult {
   const items: CatalogItem[] = base.map((item) => ({
     ...item,
     assets: [...item.assets],
-    availability: [...item.availability],
+    metadata: { ...item.metadata },
   }));
 
   const records: MergeRecord[] = [];
@@ -205,33 +256,31 @@ export function mergeCatalogInto(
     lowConfidence: 0,
   };
 
-  for (const asset of incoming) {
-    const candidates = items
-      .map((item) => ({ item, evidence: scoreMatch(asset, item) }))
+  for (const candidate of incoming) {
+    const scored = items
+      .map((item) => ({ item, evidence: scoreMatch(candidate, item) }))
       .filter(
         (c): c is Candidate => c.evidence !== null && c.evidence.confidence >= thresholds.candidate,
       )
       .sort((x, y) => y.evidence.confidence - x.evidence.confidence);
 
-    if (candidates.length === 0) {
-      const created = createItem(asset);
-      items.push(created);
+    if (scored.length === 0) {
+      items.push(copyItem(candidate));
       report.created += 1;
-      records.push({ asset, outcome: "created", targetItemId: created.id });
+      records.push({ item: candidate, outcome: "created", targetItemId: candidate.id });
       continue;
     }
 
-    const best = candidates[0];
-    const runnerUp = candidates.length > 1 ? candidates[1] : undefined;
+    const best = scored[0];
+    const runnerUp = scored.length > 1 ? scored[1] : undefined;
 
     if (best.evidence.confidence < thresholds.autoMerge) {
-      const created = createItem(asset);
-      items.push(created);
+      items.push(copyItem(candidate));
       report.lowConfidence += 1;
       records.push({
-        asset,
+        item: candidate,
         outcome: "low-confidence-separate",
-        targetItemId: created.id,
+        targetItemId: candidate.id,
         evidence: best.evidence,
         reason: `best candidate confidence ${pct(best.evidence.confidence)} is below autoMerge ${pct(thresholds.autoMerge)}`,
       });
@@ -242,13 +291,12 @@ export function mergeCatalogInto(
       runnerUp !== undefined &&
       best.evidence.confidence - runnerUp.evidence.confidence < thresholds.ambiguityDelta
     ) {
-      const created = createItem(asset);
-      items.push(created);
+      items.push(copyItem(candidate));
       report.ambiguous += 1;
       records.push({
-        asset,
+        item: candidate,
         outcome: "ambiguous-separate",
-        targetItemId: created.id,
+        targetItemId: candidate.id,
         evidence: best.evidence,
         runnerUpEvidence: runnerUp.evidence,
         reason: `top candidates ${pct(best.evidence.confidence)} and ${pct(runnerUp.evidence.confidence)} are within ambiguityDelta ${pct(thresholds.ambiguityDelta)}`,
@@ -257,23 +305,22 @@ export function mergeCatalogInto(
     }
 
     const target = best.item;
-    const alreadyPresent = target.assets.some(
-      (a) => a.providerId === asset.providerId && a.assetId === asset.assetId,
+    const newAssets = candidate.assets.filter(
+      (asset) => !target.assets.some((other) => other.assetId === asset.assetId),
     );
+    const alreadyPresent = newAssets.length === 0;
 
     if (!alreadyPresent) {
-      target.assets.push(asset);
-      applyAvailability(target, availabilityFromAsset(asset));
-      if (target.year === undefined && asset.year !== undefined) {
-        target.year = asset.year;
-      }
+      target.assets.push(...newAssets);
     }
+    mergeMetadata(target, candidate);
+    target.availability = latestAvailability(target.availability, candidate.availability);
     applyEvidence(target, best.evidence);
 
     if (alreadyPresent) {
       report.deduped += 1;
       records.push({
-        asset,
+        item: candidate,
         outcome: "deduped",
         targetItemId: target.id,
         evidence: best.evidence,
@@ -281,7 +328,7 @@ export function mergeCatalogInto(
     } else {
       report.merged += 1;
       records.push({
-        asset,
+        item: candidate,
         outcome: "merged",
         targetItemId: target.id,
         evidence: best.evidence,
@@ -292,35 +339,37 @@ export function mergeCatalogInto(
   return { items, report };
 }
 
-/** Derive the availability fact a provider asset asserts by existing. */
-export function availabilityFromAsset(asset: ProviderAsset): AvailabilityFact {
-  return {
-    providerId: asset.providerId,
-    available: true,
-    url: asset.url,
-  };
+/** Copy an incoming item so the caller's array is never aliased into the result. */
+function copyItem(item: CatalogItem): CatalogItem {
+  return { ...item, assets: [...item.assets], metadata: { ...item.metadata } };
 }
 
-function createItem(asset: ProviderAsset): CatalogItem {
-  return {
-    id: makeItemId(asset),
-    kind: asset.kind,
-    title: asset.title,
-    year: asset.year,
-    assets: [asset],
-    availability: [availabilityFromAsset(asset)],
-  };
+/**
+ * Keep the LATER observation (§2.1: availability is one point-in-time fact —
+ * the mirror's per-provider fact list is not expressible; freeze-deviation
+ * MR-FD5). Returns undefined when neither side carries a fact.
+ */
+function latestAvailability(
+  current: AvailabilityFact | undefined,
+  incoming: AvailabilityFact | undefined,
+): AvailabilityFact | undefined {
+  if (current === undefined) return incoming;
+  if (incoming === undefined) return current;
+  return Date.parse(incoming.observedAt) > Date.parse(current.observedAt) ? incoming : current;
 }
 
-function makeItemId(asset: ProviderAsset): CatalogItemId {
-  return `cat:${asset.kind}:${asset.providerId}:${asset.assetId}`;
-}
-
-function applyAvailability(item: CatalogItem, fact: AvailabilityFact): void {
-  const exists = item.availability.some(
-    (f) => f.providerId === fact.providerId && (f.url ?? undefined) === (fact.url ?? undefined),
-  );
-  if (!exists) item.availability.push(fact);
+/** Fill missing metadata keys (year, externalIds) from the incoming item; never overwrites. */
+function mergeMetadata(target: CatalogItem, incoming: CatalogItem): void {
+  if (yearOf(target) === undefined && yearOf(incoming) !== undefined) {
+    target.metadata.year = yearOf(incoming);
+  }
+  const targetIds = externalIdsOf(target);
+  for (const [key, value] of Object.entries(externalIdsOf(incoming))) {
+    if (targetIds[key] === undefined) {
+      const bag = { ...externalIdsOf(target), [key]: value };
+      target.metadata.externalIds = bag;
+    }
+  }
 }
 
 function applyEvidence(item: CatalogItem, evidence: MatchEvidence): void {
@@ -385,3 +434,7 @@ function round3(n: number): number {
 function pct(n: number): string {
   return n.toFixed(2);
 }
+
+// Re-exported so consumers of this module can speak the frozen asset shape
+// without importing the contracts package separately.
+export type { ProviderAsset };

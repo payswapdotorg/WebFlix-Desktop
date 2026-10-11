@@ -6,10 +6,15 @@
   "main": "src/index.ts",
   "types": "src/index.ts",
   "scripts": {
-    "test": "vitest run --config ../../vitest.config.ts"
+    "test": "vitest run --config ../../vitest.config.ts",
+    "test:components": "vitest run --config ./vitest.config.ts"
   },
   "dependencies": {
     "webflix-application": "workspace:*",
     "webflix-contracts": "workspace:*"
+  },
+  "devDependencies": {
+    "@testing-library/react": "^16.3.3",
+    "jsdom": "^27.4.0"
   }
 }

@@ -2,6 +2,14 @@
  * Fixture-only test-suite for packages/connectors.
  * No live calls, no real credentials — the network boundary is an injected
  * fetch implementation backed by packages/connectors/fixtures (fixture-only).
+ *
+ * MIRROR-RECON (2026-10-11): rewritten against the FROZEN §2 shapes —
+ * canonical ConnectorManifest (operations Record, quotas envelope, artifact
+ * provenance), canonical OperationCapability (status + detail), canonical
+ * ProviderAccountRecord (renderer-safe, NO credentials), the canonical
+ * CredentialPort seam (getToken → CredentialRef HANDLE, never a token), and
+ * the canonical PlaybackPlan (official-embed embedSpec record). Every honesty
+ * and lifecycle intent from the mirror suite is preserved.
  */
 import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
@@ -30,19 +38,26 @@ import {
   YOUTUBE_API_BASE,
   YouTubeDataApiClient,
   YOUTUBE_DEFAULT_DAILY_QUOTA_UNITS,
+  YOUTUBE_DISPLAY_NAME,
+  YOUTUBE_OFFICIAL_SURFACES,
   YOUTUBE_OAUTH_LOOPBACK_CONFIG,
+  YOUTUBE_OPERATION_COSTS,
+  YOUTUBE_OPERATION_PROVENANCE,
   YOUTUBE_PROVIDER_ID,
+  YOUTUBE_SEARCH_CALLS_PER_DAY,
   YOUTUBE_SEARCH_LIST_COST,
   youtubeManifest,
   YouTubeOAuthSession,
   RequiresAuthError,
   RefreshFailedError,
   type ConnectorManifest,
-  type CredentialPort,
+  type CredentialRef,
   type FetchLike,
   type FetchResponseLike,
+  type OAuthAccountStore,
   type OAuthTokenFetcher,
   type ProviderAccountRecord,
+  type StoredOAuthTokens,
 } from "../src";
 
 import searchFixture from "../fixtures/youtube/search.list.q-cats.json";
@@ -97,19 +112,37 @@ function fixtureFetch(routes: FixtureRoute[]): FetchLike & { calls: string[] } {
   return fetchFn;
 }
 
-function memoryCredentialPort(): CredentialPort & { records: Map<string, ProviderAccountRecord> } {
-  const records = new Map<string, ProviderAccountRecord>();
-  const key = (providerId: string, userId: string) => `${providerId}::${userId}`;
+/**
+ * In-memory fake of the connector-local OAuthAccountStore seam: renderer-safe
+ * account records on one side, raw vault tokens on the other (MR-FD6). The
+ * canonical CredentialPort view is exercised through session.credentialPort().
+ */
+function memoryOAuthStore(): OAuthAccountStore & {
+  accounts: Map<string, ProviderAccountRecord>;
+  vault: Map<string, StoredOAuthTokens>;
+} {
+  const accounts = new Map<string, ProviderAccountRecord>();
+  const vault = new Map<string, StoredOAuthTokens>();
   return {
-    records,
-    async get(providerId, userId) {
-      return records.get(key(providerId, userId)) ?? null;
+    accounts,
+    vault,
+    async loadAccount(id) {
+      return accounts.get(id) ?? null;
     },
-    async put(record) {
-      records.set(key(record.providerId, record.userId), record);
+    async saveAccount(record) {
+      accounts.set(record.internalAccountId, record);
     },
-    async remove(providerId, userId) {
-      records.delete(key(providerId, userId));
+    async removeAccount(id) {
+      accounts.delete(id);
+    },
+    async loadTokens(id) {
+      return vault.get(id) ?? null;
+    },
+    async saveTokens(id, tokens) {
+      vault.set(id, tokens);
+    },
+    async removeTokens(id) {
+      vault.delete(id);
     },
   };
 }
@@ -139,54 +172,32 @@ function fixtureTokenFetcher(options: { refreshFailsWithInvalidGrant?: boolean }
   return { fetcher, counts };
 }
 
-function authorizedRecordFixture(): ProviderAccountRecord {
+function connectedRecordFixture(): ProviderAccountRecord {
   return {
     providerId: "youtube",
-    userId: "local-user-1",
-    providerAccountId: "UCFIXCH0000000000000001",
+    internalAccountId: "local-user-1",
     displayName: "Fixture Channel",
-    status: "authorized",
-    linkedAt: NOW,
-    updatedAt: NOW,
-    credentials: {
-      accessToken: "FIXTURE-ACCESS-TOKEN-1",
-      refreshToken: "FIXTURE-REFRESH-TOKEN-1",
-      expiresAt: NOW + HOUR_MS,
-      scope: "https://www.googleapis.com/auth/youtube.readonly",
-      tokenType: "Bearer",
-    },
+    grantedScopes: ["https://www.googleapis.com/auth/youtube.readonly"],
+    status: "connected",
+    connectedAt: new Date(NOW).toISOString(),
+    expiresAt: new Date(NOW + HOUR_MS).toISOString(),
   };
 }
 
 function minimalManifest(providerId: string): ConnectorManifest {
   return {
     providerId,
-    displayName: providerId,
-    manifestVersion: "0.0.1",
-    policy: { officialSurfacesOnly: true, adr: "ADR-0003" },
-    officialSurfaces: ["https://example.invalid/api"],
-    requiresOAuth: false,
-    scopes: [],
-    quota: {
-      currency: "units",
-      defaultDailyLimit: 1000,
-      referenceCosts: { read: 1, write: 50 },
-      notes: [],
+    operations: {
+      "example.list": { status: "supported", detail: "official example.list" },
     },
-    operations: [
-      {
-        operationId: "example.list",
-        category: "metadata",
-        summary: "minimal valid row for registry tests",
-        status: "supported-official",
-        mechanism: "official example.list",
-        quotaCost: 1,
-        reasonUnsupported: null,
-        provenance: [{ label: "official docs", url: "https://example.invalid/docs" }],
-      },
-    ],
-    sources: { auditDoc: "docs/plans/audits/AUDIT-SOURCES.md", sections: ["§2"] },
-    notes: [],
+    regions: [],
+    quotas: { requestsPerWindow: 1000, windowMs: 86_400_000 },
+    provenance: {
+      connectorId: providerId,
+      connectorVersion: "0.0.1",
+      generatedAt: "2026-10-09T00:00:00Z",
+    },
+    failureModes: [],
   };
 }
 
@@ -203,8 +214,7 @@ describe("connector manifest registry", () => {
     expect(registry.size).toBe(1);
     expect(registry.has("youtube")).toBe(true);
     expect(registry.get("youtube")).toBe(youtubeManifest);
-    expect(registry.require("youtube").displayName).toBe("YouTube");
-    expect(registry.require("youtube").operations).toHaveLength(14);
+    expect(Object.keys(registry.require("youtube").operations)).toHaveLength(14);
 
     expect(registry.list().map((m) => m.providerId)).toEqual(["youtube"]);
     registry.register(minimalManifest("aardvark-official"));
@@ -222,27 +232,20 @@ describe("connector manifest registry", () => {
   });
 
   it("validateManifest refuses dishonest rows", () => {
-    const unsupportedWithCost = minimalManifest("dishonest-1");
-    unsupportedWithCost.operations[0] = {
-      operationId: "home-feed",
-      category: "home-feed",
-      summary: "dishonest row",
-      status: "unsupported",
-      mechanism: null,
-      quotaCost: 40,
-      reasonUnsupported: null,
-      provenance: [{ label: "audit", url: "docs/plans/audits/AUDIT-SOURCES.md" }],
-    };
-    expect(() => validateManifest(unsupportedWithCost)).toThrowError(/quotaCost/);
+    const unsupportedWithoutReason = minimalManifest("dishonest-1");
+    unsupportedWithoutReason.operations["home-feed"] = { status: "unsupported" };
+    expect(() => validateManifest(unsupportedWithoutReason)).toThrowError(/must explain/);
 
-    const supportedWithoutMechanism = minimalManifest("dishonest-2");
-    supportedWithoutMechanism.operations[0] = {
-      ...supportedWithoutMechanism.operations[0],
-      status: "supported-official",
-      mechanism: null,
-      quotaCost: 1,
+    const illegalStatus = minimalManifest("dishonest-2");
+    illegalStatus.operations["example.list"] = {
+      status: "definitely-supported" as never,
+      detail: "not a frozen CapabilityStatus",
     };
-    expect(() => validateManifest(supportedWithoutMechanism)).toThrowError(/mechanism/);
+    expect(() => validateManifest(illegalStatus)).toThrowError(/unknown CapabilityStatus/);
+
+    const noOperations = minimalManifest("dishonest-3");
+    noOperations.operations = {};
+    expect(() => validateManifest(noOperations)).toThrowError(/non-empty record/);
   });
 });
 
@@ -264,72 +267,64 @@ describe("youtube manifest honesty (AUDIT-SOURCES §2/§8)", () => {
   ];
 
   it("declares exactly the honest-unsupported list from the audit", () => {
-    const unsupported = youtubeManifest.operations.filter((op) => op.status === "unsupported");
-    expect(unsupported.map((op) => op.operationId).sort()).toEqual(
-      [...HONEST_UNSUPPORTED_IDS].sort(),
+    const unsupported = Object.entries(youtubeManifest.operations).filter(
+      ([, op]) => op.status === "unsupported",
     );
-    for (const op of unsupported) {
-      expect(op.mechanism).toBeNull();
-      expect(op.quotaCost).toBe(0);
-      expect(op.reasonUnsupported).toBeTruthy();
+    expect(unsupported.map(([id]) => id).sort()).toEqual([...HONEST_UNSUPPORTED_IDS].sort());
+    for (const [, op] of unsupported) {
+      expect(op.detail).toBeTruthy();
     }
   });
 
-  it("marks browse/search/metadata as supported-official with real mechanisms", () => {
-    const supportedFamilies = ["browse", "search", "metadata"];
-    const supported = youtubeManifest.operations.filter((op) =>
-      supportedFamilies.includes(op.category),
+  it("marks browse/search/metadata as supported with real official mechanisms in detail", () => {
+    const supported = Object.entries(youtubeManifest.operations).filter(
+      ([, op]) => op.status === "supported",
     );
     expect(supported).toHaveLength(5);
-    expect(
-      youtubeManifest.operations.filter((op) => op.status === "supported-official"),
-    ).toHaveLength(5);
-    for (const op of supported) {
-      expect(op.status).toBe("supported-official");
-      expect(op.mechanism).toContain("YouTube Data API v3");
-      expect(op.quotaCost).toBeGreaterThan(0);
-      expect(op.reasonUnsupported).toBeNull();
+    for (const [id, op] of supported) {
+      expect(op.detail).toContain("YouTube Data API v3");
+      expect(id).toMatch(/^(search|videos|channels|playlists|playlistItems)\.list$/);
     }
   });
 
-  it("charges search.list 100 units and list reads 1 unit against the 10,000/day default", () => {
-    expect(youtubeManifest.quota.defaultDailyLimit).toBe(YOUTUBE_DEFAULT_DAILY_QUOTA_UNITS);
-    expect(youtubeManifest.quota.defaultDailyLimit).toBe(10_000);
-    expect(youtubeManifest.quota.referenceCosts.read).toBe(1);
-    expect(youtubeManifest.quota.referenceCosts.write).toBe(50);
-    expect(youtubeManifest.quota.referenceCosts.searchList).toBe(100);
+  it("carries the official quota model: 10,000 units/day, search 100, reads 1", () => {
+    // Frozen quotas envelope (request-based): 100 search-class calls per day.
+    expect(youtubeManifest.quotas.requestsPerWindow).toBe(YOUTUBE_SEARCH_CALLS_PER_DAY);
+    expect(youtubeManifest.quotas.requestsPerWindow).toBe(100);
+    expect(youtubeManifest.quotas.windowMs).toBe(86_400_000);
 
-    const searchRow = youtubeManifest.operations.find((op) => op.operationId === "search.list");
-    expect(searchRow?.quotaCost).toBe(YOUTUBE_SEARCH_LIST_COST);
-    expect(searchRow?.quotaCost).toBe(100);
-    const videosRow = youtubeManifest.operations.find((op) => op.operationId === "videos.list");
-    expect(videosRow?.quotaCost).toBe(1);
+    // Connector-local unit-cost table (MR-FD2): the precise official model.
+    expect(YOUTUBE_DEFAULT_DAILY_QUOTA_UNITS).toBe(10_000);
+    expect(YOUTUBE_OPERATION_COSTS["search.list"]).toBe(YOUTUBE_SEARCH_LIST_COST);
+    expect(YOUTUBE_OPERATION_COSTS["search.list"]).toBe(100);
+    expect(YOUTUBE_OPERATION_COSTS["videos.list"]).toBe(1);
   });
 
   it("cites provenance on every row (official docs for supported, audit for unsupported)", () => {
-    for (const op of youtubeManifest.operations) {
-      expect(op.provenance.length).toBeGreaterThan(0);
-      for (const citation of op.provenance) {
+    for (const [id] of Object.entries(youtubeManifest.operations)) {
+      const citations = YOUTUBE_OPERATION_PROVENANCE[id];
+      expect(citations?.length ?? 0).toBeGreaterThan(0);
+      for (const citation of citations ?? []) {
         expect(citation.url.length).toBeGreaterThan(0);
       }
-      if (op.status === "supported-official") {
+      if (youtubeManifest.operations[id]?.status === "supported") {
         expect(
-          op.provenance.some((c) => c.url.startsWith("https://developers.google.com/youtube/")),
+          (citations ?? []).some((c) => c.url.startsWith("https://developers.google.com/youtube/")),
         ).toBe(true);
       } else {
-        expect(op.provenance.some((c) => c.url.includes("AUDIT-SOURCES.md"))).toBe(true);
+        expect((citations ?? []).some((c) => c.url.includes("AUDIT-SOURCES.md"))).toBe(true);
       }
     }
   });
 
-  it("pins the ADR-0003 official-surfaces-only policy and the readonly scope", () => {
-    expect(youtubeManifest.policy).toEqual({ officialSurfacesOnly: true, adr: "ADR-0003" });
-    for (const surface of youtubeManifest.officialSurfaces) {
+  it("pins the ADR-0003 official-surfaces-only policy data and the readonly scope", () => {
+    for (const surface of YOUTUBE_OFFICIAL_SURFACES) {
       expect(surface.startsWith("https://")).toBe(true);
     }
-    expect(youtubeManifest.officialSurfaces).toContain("https://www.googleapis.com/youtube/v3");
-    expect(youtubeManifest.officialSurfaces).toContain("https://www.youtube-nocookie.com/embed/");
-    expect(youtubeManifest.scopes).toEqual(["https://www.googleapis.com/auth/youtube.readonly"]);
+    expect(YOUTUBE_OFFICIAL_SURFACES).toContain("https://www.googleapis.com/youtube/v3");
+    expect(YOUTUBE_OFFICIAL_SURFACES).toContain("https://www.youtube-nocookie.com/embed/");
+    expect(youtubeManifest.provenance.connectorVersion).toBe("1.0.0");
+    expect(youtubeManifest.provenance.connectorId).toBe("youtube");
   });
 });
 
@@ -603,46 +598,44 @@ describe("data api client: quota ledger & search budget", () => {
 });
 
 // ---------------------------------------------------------------------------
-// OAuth loopback + PKCE state machine
+// OAuth loopback + PKCE state machine (frozen §2.5 vocabulary)
 // ---------------------------------------------------------------------------
 
 describe("oauth loopback + PKCE state machine", () => {
   it("allows exactly the honest transitions and refuses skips", () => {
-    expect(OAUTH_TRANSITIONS.authorized).toEqual(["expired", "revoked"]);
-    expect(canTransition("authorized", "expired")).toBe(true);
+    expect(OAUTH_TRANSITIONS.connected).toEqual(["expired", "revoked"]);
+    expect(canTransition("connected", "expired")).toBe(true);
     expect(canTransition("expired", "revoked")).toBe(true);
-    expect(canTransition("revoked", "requires-auth")).toBe(true);
-    expect(canTransition("authorized", "authorized")).toBe(false);
-    expect(canTransition("requires-auth", "expired")).toBe(false);
-    expect(canTransition("revoked", "authorized")).toBe(false);
+    expect(canTransition("revoked", "connected")).toBe(true); // fresh consent after acknowledge
+    expect(canTransition("connected", "connected")).toBe(false);
+    expect(canTransition("revoked", "expired")).toBe(false);
     expect(() => {
-      if (canTransition("requires-auth", "revoked")) return;
-      throw new InvalidTransitionError("illegal oauth account transition: requires-auth → revoked");
+      if (canTransition("connected", "connected")) return;
+      throw new InvalidTransitionError("illegal oauth account transition: connected → connected");
     }).toThrowError(InvalidTransitionError);
   });
 
   it("transitionAccount stamps status changes and enforces the map", () => {
-    const record = authorizedRecordFixture();
-    const expired = transitionAccount(record, "expired", NOW + 1);
+    const record = connectedRecordFixture();
+    const expired = transitionAccount(record, "expired");
     expect(expired.status).toBe("expired");
-    expect(expired.credentials).toEqual(record.credentials);
+    // Renderer-safe: the canonical record never carries credentials.
+    expect(Object.hasOwn(expired, "credentials")).toBe(false);
 
-    const revoked = transitionAccount(expired, "revoked", NOW + 2);
+    const revoked = transitionAccount(expired, "revoked");
     expect(revoked.status).toBe("revoked");
-    expect(revoked.credentials).toBeNull();
 
-    const reset = transitionAccount(revoked, "requires-auth", NOW + 3);
-    expect(reset.status).toBe("requires-auth");
-    expect(() => transitionAccount(reset, "expired", NOW + 4)).toThrowError(InvalidTransitionError);
+    expect(() => transitionAccount(revoked, "expired")).toThrowError(InvalidTransitionError);
   });
 
-  it("derives status from the stored record and the clock", () => {
-    expect(deriveAccountStatus(null, NOW)).toBe("requires-auth");
-    const base = authorizedRecordFixture();
-    expect(deriveAccountStatus(base, NOW)).toBe("authorized");
-    expect(deriveAccountStatus(base, (base.credentials?.expiresAt ?? NOW) + 1)).toBe("expired");
+  it("derives status from the stored record and the clock (null = not linked)", () => {
+    expect(deriveAccountStatus(null, NOW)).toBeNull();
+    const base = connectedRecordFixture();
+    expect(deriveAccountStatus(base, NOW)).toBe("connected");
+    // Grant expiry (renderer-safe record.expiresAt) honestly derives 'expired'.
+    expect(deriveAccountStatus(base, Date.parse(base.expiresAt ?? "") + 1)).toBe("expired");
     expect(deriveAccountStatus({ ...base, status: "revoked" }, NOW)).toBe("revoked");
-    expect(deriveAccountStatus({ ...base, credentials: null }, NOW)).toBe("requires-auth");
+    expect(deriveAccountStatus({ ...base, status: "expired" }, NOW)).toBe("expired");
   });
 
   it("builds a loopback+PKCE authorization request with no real client id", () => {
@@ -684,19 +677,19 @@ describe("oauth loopback + PKCE state machine", () => {
     expect(() => validateCallbackState("expected", "expected")).not.toThrow();
   });
 
-  it("walks requires-auth → authorized → expired → authorized → revoked → requires-auth honestly", async () => {
-    const port = memoryCredentialPort();
+  it("walks not-linked → connected → expired → connected → revoked → (acknowledged: removed) honestly", async () => {
+    const store = memoryOAuthStore();
     let now = NOW;
     const behavior = { refreshFailsWithInvalidGrant: false };
     const { fetcher, counts } = fixtureTokenFetcher(behavior);
     const session = new YouTubeOAuthSession({
-      credentialPort: port,
-      userId: "local-user-1",
+      store,
+      internalAccountId: "local-user-1",
       clock: () => now,
       tokenFetcher: fetcher,
     });
 
-    expect(await session.status()).toBe("requires-auth");
+    expect(await session.status()).toBeNull();
     await expect(session.getToken()).rejects.toThrowError(RequiresAuthError);
 
     const request = session.startAuthorization({ redirectPort: 41073 });
@@ -704,55 +697,69 @@ describe("oauth loopback + PKCE state machine", () => {
       session.completeAuthorization({ code: "FIXTURE-CODE", state: "wrong-state" }),
     ).rejects.toThrowError(StateMismatchError);
 
-    const authorized = await session.completeAuthorization({
+    const connected = await session.completeAuthorization({
       code: "FIXTURE-CODE",
       state: request.state,
-      providerAccountId: "UCFIXCH0000000000000001",
       displayName: "Fixture Channel",
     });
-    expect(authorized.status).toBe("authorized");
-    expect(authorized.credentials?.accessToken).toBe("FIXTURE-ACCESS-TOKEN-1");
-    expect(authorized.credentials?.expiresAt).toBe(NOW + HOUR_MS);
-    expect(await session.status()).toBe("authorized");
+    // Canonical connected record — renderer-safe, NO credentials on it.
+    expect(connected.status).toBe("connected");
+    expect(connected.providerId).toBe("youtube");
+    expect(connected.internalAccountId).toBe("local-user-1");
+    expect(connected.grantedScopes).toContain("https://www.googleapis.com/auth/youtube.readonly");
+    expect(connected.expiresAt).toBe(new Date(NOW + HOUR_MS).toISOString());
+    expect(Object.hasOwn(connected, "credentials")).toBe(false);
+    expect(store.vault.get("local-user-1")?.accessToken).toBe("FIXTURE-ACCESS-TOKEN-1");
+    expect(await session.status()).toBe("connected");
     await expect(session.getToken()).resolves.toBe("FIXTURE-ACCESS-TOKEN-1");
 
-    // authorized → expired (clock passes expiry)
+    // Canonical §2.6 seam: getToken → CredentialRef HANDLE (never a token).
+    const port = session.credentialPort();
+    const ref: CredentialRef = await port.getToken("youtube", "local-user-1");
+    expect(ref.handle).toBe("youtube:local-user-1");
+    expect(JSON.stringify(ref)).not.toContain("FIXTURE-ACCESS-TOKEN");
+
+    // connected → expired (clock passes grant expiry)
     now = NOW + 2 * HOUR_MS;
     expect(await session.status()).toBe("expired");
 
-    // expired → authorized via refresh
+    // expired → connected via refresh
     const refreshed = await session.refresh();
-    expect(refreshed.status).toBe("authorized");
-    expect(refreshed.credentials?.accessToken).toBe("FIXTURE-ACCESS-TOKEN-2");
-    expect(refreshed.credentials?.refreshToken).toBe("FIXTURE-REFRESH-TOKEN-1"); // refresh omitted it; kept
-    expect(refreshed.credentials?.expiresAt).toBe(now + HOUR_MS);
+    expect(refreshed.status).toBe("connected");
+    expect(store.vault.get("local-user-1")?.accessToken).toBe("FIXTURE-ACCESS-TOKEN-2");
+    expect(store.vault.get("local-user-1")?.refreshToken).toBe("FIXTURE-REFRESH-TOKEN-1"); // refresh omitted it; kept
+    expect(refreshed.expiresAt).toBe(new Date(now + HOUR_MS).toISOString());
     await expect(session.getToken()).resolves.toBe("FIXTURE-ACCESS-TOKEN-2");
 
-    // authorized → expired again; this time the refresh is rejected with invalid_grant → revoked
+    // connected → expired again; this time the refresh is rejected with invalid_grant → revoked
     now = now + 2 * HOUR_MS;
     behavior.refreshFailsWithInvalidGrant = true;
     await expect(session.getToken()).rejects.toThrowError(RefreshFailedError);
     expect((await session.loadAccount())?.status).toBe("revoked");
-    expect((await session.loadAccount())?.credentials).toBeNull();
+    expect(store.vault.get("local-user-1")).toBeUndefined();
     expect(await session.status()).toBe("revoked");
+    // The revoked account honestly has no usable credential.
+    await expect(session.credentialPort().getToken("youtube", "local-user-1")).rejects.toThrowError(
+      RequiresAuthError,
+    );
 
-    // revoked → requires-auth when the operator acknowledges
-    const acknowledged = await session.acknowledgeRevocation();
-    expect(acknowledged.status).toBe("requires-auth");
-    expect(await session.status()).toBe("requires-auth");
+    // revoked → (acknowledged) record removed — the fresh-consent starting state
+    await session.acknowledgeRevocation();
+    expect(await session.loadAccount()).toBeNull();
+    expect(await session.status()).toBeNull();
     await expect(session.getToken()).rejects.toThrowError(RequiresAuthError);
 
     expect(counts.exchange).toBe(1);
     expect(counts.refresh).toBe(2);
-    expect(port.records.size).toBe(1);
+    expect(store.accounts.size).toBe(0);
   });
 
-  it("revoke() walks authorized → revoked and destroys the credentials", async () => {
-    const port = memoryCredentialPort();
+  it("revoke() walks connected → revoked and clears the vault", async () => {
+    const store = memoryOAuthStore();
     const { fetcher, counts } = fixtureTokenFetcher();
     const session = new YouTubeOAuthSession({
-      credentialPort: port,
-      userId: "local-user-1",
+      store,
+      internalAccountId: "local-user-1",
       clock: () => NOW,
       tokenFetcher: fetcher,
     });
@@ -761,15 +768,33 @@ describe("oauth loopback + PKCE state machine", () => {
 
     const revoked = await session.revoke();
     expect(revoked.status).toBe("revoked");
-    expect(revoked.credentials).toBeNull();
+    expect(Object.hasOwn(revoked, "credentials")).toBe(false);
+    expect(store.vault.get("local-user-1")).toBeUndefined();
     expect(counts.revoke).toBe(1);
     await expect(session.getToken()).rejects.toThrowError(RequiresAuthError);
   });
 
+  it("falls back to a truthful display name when the callback carries none", async () => {
+    const store = memoryOAuthStore();
+    const { fetcher } = fixtureTokenFetcher();
+    const session = new YouTubeOAuthSession({
+      store,
+      internalAccountId: "local-user-2",
+      clock: () => NOW,
+      tokenFetcher: fetcher,
+    });
+    const request = session.startAuthorization({ redirectPort: 41073 });
+    const record = await session.completeAuthorization({
+      code: "FIXTURE-CODE",
+      state: request.state,
+    });
+    expect(record.displayName).toBe(`${YOUTUBE_DISPLAY_NAME} account`);
+  });
+
   it("the default token fetcher refuses live network honestly", async () => {
     const session = new YouTubeOAuthSession({
-      credentialPort: memoryCredentialPort(),
-      userId: "local-user-1",
+      store: memoryOAuthStore(),
+      internalAccountId: "local-user-1",
       clock: () => NOW,
     });
     const request = session.startAuthorization({ redirectPort: 41073 });
@@ -780,7 +805,7 @@ describe("oauth loopback + PKCE state machine", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Playback plans (official-embed)
+// Playback plans (official-embed, frozen §2.2)
 // ---------------------------------------------------------------------------
 
 describe("playback plans (official-embed)", () => {
@@ -791,27 +816,37 @@ describe("playback plans (official-embed)", () => {
       startSeconds: 90,
       title: "Fixture video",
     });
+    if (plan.kind !== "official-embed") throw new Error("expected an official-embed plan");
     expect(plan.kind).toBe("official-embed");
     expect(plan.providerId).toBe("youtube");
-    expect(plan.embedUrl.startsWith("https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?")).toBe(
+    const spec = plan.embedSpec as Record<string, unknown> & {
+      embedUrl: string;
+      videoId: string;
+      playerVars: Record<string, string | number>;
+      iframe: { title: string; allow: string; allowFullScreen: boolean };
+      provenance: { url: string }[];
+    };
+    expect(spec.embedUrl.startsWith("https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?")).toBe(
       true,
     );
-    expect(plan.embedUrl).toContain("autoplay=0");
-    expect(plan.embedUrl).toContain("controls=1");
-    expect(plan.embedUrl).toContain("rel=0");
-    expect(plan.embedUrl).toContain("playsinline=1");
-    expect(plan.embedUrl).toContain("start=90");
-    expect(plan.embedUrl).toContain("enablejsapi=1");
-    expect(plan.embedUrl).toContain(`origin=${encodeURIComponent("https://app.webflix.local")}`);
-    expect(plan.iframe.allowFullScreen).toBe(true);
-    expect(plan.iframe.title).toBe("Fixture video");
-    expect(plan.iframe.allow).toContain("autoplay");
+    expect(spec.embedUrl).toContain("autoplay=0");
+    expect(spec.embedUrl).toContain("controls=1");
+    expect(spec.embedUrl).toContain("rel=0");
+    expect(spec.embedUrl).toContain("playsinline=1");
+    expect(spec.embedUrl).toContain("start=90");
+    expect(spec.embedUrl).toContain("enablejsapi=1");
+    expect(spec.embedUrl).toContain(`origin=${encodeURIComponent("https://app.webflix.local")}`);
+    expect(spec.iframe.allowFullScreen).toBe(true);
+    expect(spec.iframe.title).toBe("Fixture video");
+    expect(spec.iframe.allow).toContain("autoplay");
+    expect(spec.videoId).toBe("dQw4w9WgXcQ");
     expect(
-      plan.provenance.some(
+      spec.provenance.some(
         (c) => c.url === "https://developers.google.com/youtube/iframe_api_reference",
       ),
     ).toBe(true);
 
+    // Secret-free record: the plan round-trips through JSON unchanged.
     const round = JSON.parse(JSON.stringify(plan)) as typeof plan;
     expect(round).toEqual(plan);
   });
@@ -830,9 +865,11 @@ describe("playback plans (official-embed)", () => {
 
   it("supports the standard domain and omits the JS API when no origin is pinned", () => {
     const plan = buildYouTubePlaybackPlan({ videoId: "dQw4w9WgXcQ", privacyEnhanced: false });
-    expect(plan.embedUrl.startsWith("https://www.youtube.com/embed/dQw4w9WgXcQ?")).toBe(true);
-    expect(plan.embedUrl).not.toContain("enablejsapi");
-    expect(plan.embedUrl).not.toContain("origin=");
-    expect(plan.notes.join(" ")).toContain("No origin supplied");
+    if (plan.kind !== "official-embed") throw new Error("expected an official-embed plan");
+    const spec = plan.embedSpec as { embedUrl: string; notes: string[] };
+    expect(spec.embedUrl.startsWith("https://www.youtube.com/embed/dQw4w9WgXcQ?")).toBe(true);
+    expect(spec.embedUrl).not.toContain("enablejsapi");
+    expect(spec.embedUrl).not.toContain("origin=");
+    expect(spec.notes.join(" ")).toContain("No origin supplied");
   });
 });

@@ -447,7 +447,7 @@ export class YouTubeDataApiClient {
         message: "getChannel requires id or mine:true",
       });
     }
-    const page = await this.call(
+    const page = await this.call<YouTubeListResponse<YouTubeChannelItem>>(
       "channels.list",
       {
         part: (params.parts ?? ["snippet", "statistics"]).join(","),

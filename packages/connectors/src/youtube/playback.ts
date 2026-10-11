@@ -1,24 +1,40 @@
 /**
  * YouTube IFrame Player embed-spec builder — PlaybackPlan (official-embed).
  *
+ * §2.2 reconciliation (MIRROR-RECON): the mirror plan carried videoId/
+ * embedUrl/iframe/playerVars/provenance/notes as TOP-LEVEL fields. The FROZEN
+ * official-embed plan is {kind, providerId, embedSpec: SecretFreeRecord} — a
+ * provider-defined record. Everything the host needs to render the official
+ * embed folds into embedSpec (all values are secret-free official player
+ * parameters and documentation): videoId, embedUrl (the resolved URL the
+ * shell renders), domain, playerVars, iframe (attributes bundle), notes and
+ * provenance (citation notes — connector-local documentation data, not a
+ * contract shape; the frozen plan carries no citation field).
+ *
  * ADR-0003: playback uses ONLY the official IFrame Player embed. No stream
  * extraction, no signature deciphering, no third-party players, no /get_video_info
  * style endpoints. Only official player parameters (developers.google.com/youtube/
  * player_parameters) are emitted, and enablejsapi is only enabled when a pinned
  * origin is supplied (the official recommendation for the JS API).
  */
-import type { PlaybackPlan, ProvenanceCitation } from "webflix-contracts";
+import type { PlaybackPlan } from "webflix-contracts";
 import { YOUTUBE_PROVIDER_ID } from "./manifest";
 
-const OFFICIAL_IFRAME_API_REFERENCE: ProvenanceCitation = {
+/** Official-documentation citation (connector-local; not a contract shape). */
+export interface CitationNote {
+  label: string;
+  url: string;
+}
+
+const OFFICIAL_IFRAME_API_REFERENCE: CitationNote = {
   label: "YouTube IFrame Player API reference (official)",
   url: "https://developers.google.com/youtube/iframe_api_reference",
 };
-const OFFICIAL_PLAYER_PARAMETERS: ProvenanceCitation = {
+const OFFICIAL_PLAYER_PARAMETERS: CitationNote = {
   label: "YouTube embedded player and player parameters (official)",
   url: "https://developers.google.com/youtube/player_parameters",
 };
-const OFFICIAL_PRIVACY_ENHANCED_MODE: ProvenanceCitation = {
+const OFFICIAL_PRIVACY_ENHANCED_MODE: CitationNote = {
   label: "YouTube privacy-enhanced mode — youtube-nocookie.com (official help)",
   url: "https://support.google.com/youtube/answer/171780",
 };
@@ -114,23 +130,26 @@ export function buildYouTubePlaybackPlan(options: YouTubePlaybackOptions): Playb
   return {
     kind: "official-embed",
     providerId: YOUTUBE_PROVIDER_ID,
-    videoId,
-    embedUrl: url.toString(),
-    iframe: {
-      width: options.width ?? DEFAULT_EMBED_WIDTH,
-      height: options.height ?? DEFAULT_EMBED_HEIGHT,
-      title: options.title ?? `YouTube player — ${videoId}`,
-      allow: OFFICIAL_IFRAME_ALLOW,
-      allowFullScreen: true,
-      referrerPolicy: "strict-origin-when-cross-origin",
-      style: "border: 0;",
+    embedSpec: {
+      videoId,
+      embedUrl: url.toString(),
+      domain: privacyEnhanced ? "youtube-nocookie.com" : "youtube.com",
+      playerVars,
+      iframe: {
+        width: options.width ?? DEFAULT_EMBED_WIDTH,
+        height: options.height ?? DEFAULT_EMBED_HEIGHT,
+        title: options.title ?? `YouTube player — ${videoId}`,
+        allow: OFFICIAL_IFRAME_ALLOW,
+        allowFullScreen: true,
+        referrerPolicy: "strict-origin-when-cross-origin",
+        style: "border: 0;",
+      },
+      notes,
+      provenance: [
+        OFFICIAL_IFRAME_API_REFERENCE,
+        OFFICIAL_PLAYER_PARAMETERS,
+        OFFICIAL_PRIVACY_ENHANCED_MODE,
+      ],
     },
-    playerVars,
-    provenance: [
-      OFFICIAL_IFRAME_API_REFERENCE,
-      OFFICIAL_PLAYER_PARAMETERS,
-      OFFICIAL_PRIVACY_ENHANCED_MODE,
-    ],
-    notes,
   };
 }
