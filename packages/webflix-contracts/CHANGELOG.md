@@ -5,6 +5,84 @@ TL2 approval + migration notes; additive changes bump minor with a consumer
 impact note. No CHANGELOG existed before 0.2.0 — the 0.1.0 history is the git
 log of this package (frozen §2 shapes, D2-LOCAL lane).
 
+## 0.6.0 — 2026-10-11 — translation + TTS engine seams (P4-TRANSLATE)
+
+Phase-4 row 6. Adds the two LOCAL engine ports (translation + TTS) + their
+descriptor / request / result schemas + the progress/options types + the
+genuinely-needed MI error codes. Frozen §2.1–2.6 module files untouched; the
+§2.7 intelligence module gains one appended section only; the DerivedArtifact
+kind enum stays CLOSED at six kinds (audio is a payload RENDITION, not an
+artifact kind). Consumer impact: none on existing consumers (purely additive;
+no existing export changed shape).
+
+### Added
+
+- `src/intelligence-translate-tts.ts` (NEW sibling module — the §2.7
+  intelligence module's additive continuation; the section was split into
+  its own file when `intelligence.ts` reached the repo's
+  400-effective-line max-lines limit. `index.ts` re-exports it beside
+  `intelligence.ts`, so the public surface is byte-identical to a
+  single-file section; frozen §2.1–2.6 module files and `intelligence.ts`
+  itself stay untouched):
+  - `TranslationEngineDescriptor` + `TtsEngineDescriptor` (+ schemas) — the
+    engine-adapter identities, same honesty rules as every engine
+    descriptor: our adapter's id/label/version always known; optional
+    `engineVersion` / `modelLineage` read from the EXTERNAL engine's own
+    output when reported, ABSENT otherwise (never guessed); `licenseNote`
+    (Argos-class and Piper-class = MIT-family, AUDIT-SOURCES §6; null when
+    none applies).
+  - `TranslationRequest` (+ schema) — the source text (resolved from a
+    STORED text payload by the calling use case — engines stay pure over
+    text) plus source/target language tags, ENGINE-INTERPRETED codes (the
+    TranscriptionRequest.language precedent: shape-checked only; an
+    unsupported tag is the engine's failure to report, never our guess).
+  - `TranslationResult` (+ schema) — `translatedText` non-empty (an engine
+    producing no translation is a FAILED run, never an empty success) plus
+    the optional run-reported lineage facts.
+  - `TtsRequest` (+ schema) — the text plus the VOICE identity the engine
+    resolves against its own discovered voices (an unknown voice is the
+    honest engine-unavailable state, surfaced with a recovery hint).
+  - `TtsResult` (+ schema) — the synthesized `audio` bytes
+    (`z.instanceof(Uint8Array)`) + the engine-produced `contentType` (e.g.
+    "audio/wav") + the optional run-reported lineage facts.
+  - `TranslationEngineProgress` / `TranslationEngineOptions` /
+    `TtsEngineProgress` / `TtsEngineOptions` (interfaces) — the cooperative
+    cancellation + progress shapes, mirroring the existing engine seams.
+  - `TranslationEnginePort` / `TtsEnginePort` (interface-only seams, the
+    TranscriptionEnginePort shape) — one method each (`translate` /
+    `synthesize`) with the binding implementation rules: LOCAL ONLY (no
+    network, no model/voice downloads, no provider reads — ever), HONEST
+    AVAILABILITY (engine absent — or, for TTS, the voice model absent —
+    rejects typed engine-unavailable with a recovery hint), COOPERATIVE
+    CANCELLATION (boundary check + mid-run child kill; typed
+    common/cancelled; no result), HONEST LINEAGE (engine-reported facts
+    only; absent means absent), OUTPUT FROM THE ENGINE'S OWN OUTPUT ONLY
+    (translation text parsed from documented CLI shapes; TTS bytes read
+    from the engine's own output path — never fabricated, never
+    substituted).
+- `src/errors.ts`: seven codes appended to the additive-only enum. The work
+  order's six listed codes are ALL kept — the trim directive was applied
+  and each maps to a distinct typed failure with its own recovery:
+  `intelligence/translation-invalid` and `intelligence/tts-invalid`
+  (mi.translate / mi.tts caller defects: blank artifact ids, language tags
+  or voice ids, referenced artifacts that are not text sources);
+  `intelligence/translation-engine-unavailable` and
+  `intelligence/tts-engine-unavailable` (the honest-absent states — engine
+  or voice model not on this machine, surfaced with a recovery hint);
+  `intelligence/translation-engine-failed` and
+  `intelligence/tts-engine-failed` (FOUND engines reporting their own
+  failures — distinct from absent because the recovery differs). PLUS one
+  code the order's four-kind text-read contract genuinely requires beyond
+  the listed six: `intelligence/text-payload-absent` — the non-transcript
+  analog of `transcript-payload-absent` (a summary/overview/qa/translation
+  artifact whose text payload was never persisted — typed, surfaced, never
+  an empty substitute). Typed cancellation reuses the existing
+  cross-cutting `common/cancelled`: no new code needed for it.
+- Anti-blank normalization: every string field the section adds uses
+  trim-then-min(1) (ids, tags, labels, lineage facts, contentType) — a
+  whitespace-only value is a BLANK and is rejected. The payload-borne text
+  fields (`text`, `translatedText`) are data, not ids: `min(1)` untrimmed.
+
 ## 0.5.0 — 2026-10-11 — text-intelligence engine seam (P4-SUMMARIZE)
 
 Phase-4 row 5. Adds the summary/overview/Q&A engine port + the six

@@ -46,9 +46,11 @@ import {
   FixtureReplaySummaryEngine,
   InMemoryArtifactRegistry,
   InMemoryTranscriptPayloadStore,
+  InMemoryTextPayloadStore,
   SummarizeTranscript,
   TextIntelligenceJobError,
   TranscribeMediaFile,
+  textPayloadChecksum,
   transcriptPayloadChecksum,
   OVERVIEW_JOB_KIND,
   QA_JOB_KIND,
@@ -182,6 +184,7 @@ interface Harness {
   readonly engine: FixtureReplaySummaryEngine;
   readonly registry: InMemoryArtifactRegistry;
   readonly payloads: InMemoryTranscriptPayloadStore;
+  readonly textPayloads: InMemoryTextPayloadStore;
   readonly summarize: SummarizeTranscript;
   readonly overview: BuildTranscriptOverview;
   readonly answer: AnswerFromTranscript;
@@ -200,6 +203,7 @@ async function makeHarness(
   const engine = new FixtureReplaySummaryEngine(script);
   const registry = new InMemoryArtifactRegistry();
   const payloads = new InMemoryTranscriptPayloadStore();
+  const textPayloads = new InMemoryTextPayloadStore();
   const clock = new FakeClock();
   const transcribe = new TranscribeMediaFile({
     engine: new FixtureReplayTranscriptionEngine({ segments }),
@@ -220,6 +224,7 @@ async function makeHarness(
     engine,
     registry,
     payloads,
+    textPayloads,
     clock,
     generateId: sequenceIds("job"),
   };
@@ -227,6 +232,7 @@ async function makeHarness(
     engine,
     registry,
     payloads,
+    textPayloads,
     summarize: new SummarizeTranscript(deps),
     overview: new BuildTranscriptOverview(deps),
     answer: new AnswerFromTranscript(deps),
@@ -381,9 +387,11 @@ describe("the built-in extractive engine through the pipeline (charter lineage)"
     answer: AnswerFromTranscript;
     transcript: DerivedArtifact;
     payloads: InMemoryTranscriptPayloadStore;
+    textPayloads: InMemoryTextPayloadStore;
   }> {
     const registry = new InMemoryArtifactRegistry();
     const payloads = new InMemoryTranscriptPayloadStore();
+    const textPayloads = new InMemoryTextPayloadStore();
     const clock = new FakeClock();
     const transcribe = new TranscribeMediaFile({
       engine: new FixtureReplayTranscriptionEngine({ segments: LECTURE }),
@@ -401,6 +409,7 @@ describe("the built-in extractive engine through the pipeline (charter lineage)"
       engine: BUILT_IN_SUMMARY_ENGINE,
       registry,
       payloads,
+      textPayloads,
       clock,
       generateId: sequenceIds("job"),
     };
@@ -410,6 +419,7 @@ describe("the built-in extractive engine through the pipeline (charter lineage)"
       answer: new AnswerFromTranscript(deps),
       transcript: artifact as DerivedArtifact,
       payloads,
+      textPayloads,
     };
   }
 
@@ -481,6 +491,7 @@ describe("the built-in extractive engine through the pipeline (charter lineage)"
       engine: new FixtureReplaySummaryEngine({ ...CANNED, descriptor }),
       registry,
       payloads,
+      textPayloads: new InMemoryTextPayloadStore(),
       clock: new FakeClock(),
       generateId: sequenceIds("job"),
     });
@@ -802,5 +813,130 @@ describe("TextIntelligenceJobError (the rethrow shape)", () => {
     expect((jobErr.job as JobDescriptor).state).toBe("failed");
     // The cause stays attached for callers that unwrap.
     expect(WebFlixError.is(jobErr.cause)).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// P4-TRANSLATE amendment: the text projections persist on success ONLY
+// ---------------------------------------------------------------------------
+describe("the P4-TRANSLATE text-projection amendment (payload put BEFORE the descriptor)", () => {
+  it("mi.summarize success persists the sentence-text projection under the SAME upfront artifact id", async () => {
+    const h = await makeHarness();
+    const output = await h.summarize.execute(input(h));
+    expect(output.artifact).not.toBeNull();
+    const stored = await h.textPayloads.get(output.artifact!.id);
+    expect(stored).toEqual({
+      artifactId: output.artifact!.id,
+      kind: "summary",
+      text: "hello",
+      checksum: textPayloadChecksum("hello"),
+    });
+  });
+
+  it("mi.overview success persists the chapter-title projection (titles joined ' ')", async () => {
+    const h = await makeHarness();
+    const output = await h.overview.execute(input(h));
+    const stored = await h.textPayloads.get(output.artifact!.id);
+    expect(stored.kind).toBe("overview");
+    expect(stored.text).toBe("chapter 1");
+  });
+
+  it("mi.qa success persists the span-quote projection (quotes joined ' ')", async () => {
+    const h = await makeHarness();
+    const output = await h.answer.execute({ ...input(h), question: "which word?" });
+    const stored = await h.textPayloads.get(output.artifact!.id);
+    expect(stored.kind).toBe("qa");
+    expect(stored.text).toBe("brave");
+  });
+
+  it("an EMPTY summary is still success and persists its EMPTY projection honestly", async () => {
+    const h = await makeHarness({ ...CANNED, summarize: { sentences: [] } });
+    const output = await h.summarize.execute(input(h));
+    expect(output.job.state).toBe("succeeded");
+    const stored = await h.textPayloads.get(output.artifact!.id);
+    expect(stored.text).toBe("");
+    expect(stored.checksum).toBe(textPayloadChecksum(""));
+  });
+
+  it("cancelled and failed runs persist NO text projection (the amendment's unchanged half)", async () => {
+    const cancelledHarness = await makeHarness();
+    const controller = new AbortController();
+    controller.abort();
+    const cancelled = await cancelledHarness.summarize.execute(
+      input(cancelledHarness, { signal: controller.signal }),
+    );
+    expect(cancelled.job.state).toBe("cancelled");
+    expect(cancelled.artifact).toBeNull();
+    await expect(
+      cancelledHarness.textPayloads.get(cancelled.artifact?.id ?? "id-none"),
+    ).rejects.toSatisfy((err: unknown) => {
+      return WebFlixError.is(err) && err.code === ErrorCode.IntelligenceTextPayloadAbsent;
+    });
+
+    const failedHarness = await makeHarness({ ...CANNED, failAfterUnits: 1 });
+    await failedHarness.summarize.execute(input(failedHarness)).then(
+      () => {
+        throw new Error("the injected failure must reject");
+      },
+      () => undefined,
+    );
+    // No payload rows exist at all.
+    expect((await failedHarness.registry.list()).length).toBe(1);
+    await expect(failedHarness.textPayloads.get(failedHarness.transcript.id)).rejects.toSatisfy(
+      (err: unknown) => {
+        return WebFlixError.is(err) && err.code === ErrorCode.IntelligenceTextPayloadAbsent;
+      },
+    );
+  });
+
+  it("a text-payload PUT failure leaves NO artifact (put-before-descriptor ordering)", async () => {
+    const engine = new FixtureReplaySummaryEngine(CANNED);
+    const registry = new InMemoryArtifactRegistry();
+    const payloads = new InMemoryTranscriptPayloadStore();
+    const textPayloads = new InMemoryTextPayloadStore();
+    const clock = new FakeClock();
+    const transcribe = new TranscribeMediaFile({
+      engine: new FixtureReplayTranscriptionEngine({ segments: SEGMENTS }),
+      registry,
+      payloadStore: payloads,
+      clock,
+      generateId: sequenceIds("seed"),
+    });
+    const { artifact } = await transcribe.execute({
+      sourceItemId: "item-a",
+      mediaPath: "/library/videos/item-a.mkv",
+      catalog: CATALOG,
+    });
+    const failing = {
+      async put(): Promise<void> {
+        throw new WebFlixError({
+          code: ErrorCode.IntelligenceArtifactInvalid,
+          reason: "injected put failure (test)",
+          retryable: false,
+          context: {},
+        });
+      },
+      async get(id: string) {
+        return textPayloads.get(id);
+      },
+    };
+    const summarize = new SummarizeTranscript({
+      engine,
+      registry,
+      payloads,
+      textPayloads: failing,
+      clock,
+      generateId: sequenceIds("job"),
+    });
+    const err = await summarize
+      .execute({ transcriptArtifactId: artifact!.id, catalog: CATALOG })
+      .then(
+        () => null,
+        (e: unknown) => e,
+      );
+    expect(err).toBeInstanceOf(TextIntelligenceJobError);
+    expect((err as TextIntelligenceJobError).job.state).toBe("failed");
+    // The registry holds ONLY the seed transcript — no artifact existed.
+    expect((await registry.list()).length).toBe(1);
   });
 });

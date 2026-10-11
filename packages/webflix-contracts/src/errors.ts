@@ -59,6 +59,33 @@ export enum ErrorCode {
   // reuses the existing cross-cutting `common/cancelled` — no new code.
   IntelligenceSummaryInvalid = "intelligence/summary-invalid",
   IntelligenceTranscriptPayloadAbsent = "intelligence/transcript-payload-absent",
+  // P4-TRANSLATE: the translation + TTS lane's typed failures, appended per
+  // the additive-only rule. `translation-invalid` / `tts-invalid` carry the
+  // mi.translate / mi.tts caller defects (blank artifact ids, language tags
+  // or voice ids, bad request shapes, referenced artifacts that are not text
+  // sources) — validated BEFORE the job exists where caller-controlled;
+  // `translation-engine-unavailable` / `tts-engine-unavailable` are the
+  // honest-absent states (the local engine — or, for TTS, the VOICE model —
+  // is not on this machine, surfaced with a recovery hint, never hidden,
+  // never a silent empty result); `translation-engine-failed` /
+  // `tts-engine-failed` are FOUND engines reporting their own failures
+  // (non-zero exit, no output), kept distinct from absent because the
+  // recovery differs. `text-payload-absent` is the non-transcript analog of
+  // `transcript-payload-absent`: a summary/overview/qa/translation artifact
+  // whose text payload was never persisted — typed and surfaced, never an
+  // empty substitute. (The work order listed the six engine/use-case codes
+  // and directed trimming to what the implementation genuinely needs: all
+  // six ARE genuinely needed — each maps to a distinct typed failure with
+  // its own recovery — plus this one payload-absent code the four-kind text
+  // read contract honestly requires.) Typed cancellation reuses the existing
+  // cross-cutting `common/cancelled` — no new code is needed for it.
+  IntelligenceTranslationInvalid = "intelligence/translation-invalid",
+  IntelligenceTranslationEngineUnavailable = "intelligence/translation-engine-unavailable",
+  IntelligenceTranslationEngineFailed = "intelligence/translation-engine-failed",
+  IntelligenceTtsInvalid = "intelligence/tts-invalid",
+  IntelligenceTtsEngineUnavailable = "intelligence/tts-engine-unavailable",
+  IntelligenceTtsEngineFailed = "intelligence/tts-engine-failed",
+  IntelligenceTextPayloadAbsent = "intelligence/text-payload-absent",
   // cross-cutting
   RateLimited = "common/rate-limited",
   Network = "common/network",

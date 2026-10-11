@@ -26,6 +26,8 @@ import type {
 } from "./types";
 import type { DerivedArtifact, FeedbackEvent, UserObjective } from "webflix-contracts";
 import type { TranscriptPayload } from "./transcript-payload";
+import type { AudioRendition } from "./audio-rendition";
+import type { TextPayload } from "./text-payload";
 
 /**
  * The credential contract is frozen in `@webflix/contracts`; re-exported here
@@ -241,4 +243,58 @@ export interface TranscriptPayloadStore {
    * absent error when none was persisted. Same-id re-puts replace.
    */
   get(artifactId: string): Promise<TranscriptPayload>;
+}
+
+/**
+ * Per-profile TEXT payload store (P4-TRANSLATE row 2) for non-transcript
+ * derived artifacts (kinds summary / overview / qa / translation): the
+ * artifact's documented text projection, keyed by its artifact id.
+ *
+ * ABSENCE IS TYPED, never null: an artifact whose text projection was
+ * never persisted makes `get` reject with the typed
+ * `intelligence/text-payload-absent` WebFlixError — surfaced with
+ * re-running the producing use case as the recovery, never hidden and
+ * never substituted with an empty payload. `put` re-validates the record
+ * defensively (a mismatched checksum is a caller defect, never silently
+ * stored); same-id re-puts replace (the put-replaces house semantic). The
+ * durable implementation is local-library migration 0005 (`mi_text_payloads`,
+ * the 0002/0003/0004 rules); the in-memory default serves hermetic tests.
+ */
+export interface TextPayloadStore {
+  /** Persists (or replaces) the text payload for one derived artifact id. */
+  put(payload: TextPayload): Promise<void>;
+  /**
+   * The stored text payload; rejects with the typed absent error when none
+   * was persisted (never null — absence is typed and surfaced).
+   */
+  get(artifactId: string): Promise<TextPayload>;
+}
+
+/**
+ * Per-profile AUDIO rendition store (P4-TRANSLATE row 2, the TTS side):
+ * synthesized audio attached to its SOURCE artifact as payload renditions
+ * — each carrying its OWN lineage (engine, voice, inputsHash) — with the
+ * source artifact's descriptor never mutated (audio-as-rendition, NOT a
+ * derived-artifact kind; the kind enum stays closed).
+ *
+ * Renditions list BY SOURCE artifact id (the attachment surface — a source
+ * may honestly carry MANY renditions: different voices, different engine
+ * runs); listing order is deterministic (createdAt then renditionId — the
+ * DeriveArtifactBookkeeping.list precedent). The retention surface (delete
+ * / deleteBySource / clearAll) mirrors the payload stores'. The durable
+ * implementation is local-library migration 0005 (`mi_audio_renditions`,
+ * the 0002/0003/0004 rules — the audio bytes a BLOB column, the canonical
+ * form of bytes); the in-memory default serves hermetic tests.
+ */
+export interface AudioRenditionStore {
+  /** Persists one rendition (id-keyed; a re-put of the same id replaces). */
+  put(rendition: AudioRendition): Promise<void>;
+  /** The source artifact's renditions, deterministic order; empty when none (honest). */
+  listBySource(sourceArtifactId: string): Promise<readonly AudioRendition[]>;
+  /** Deletes one rendition by id; true when it existed (retention surface). */
+  delete(renditionId: string): Promise<boolean>;
+  /** Deletes every rendition attached to one source artifact; returns how many (retention surface). */
+  deleteBySource(sourceArtifactId: string): Promise<number>;
+  /** Clear-all per profile; returns the number of renditions removed (retention surface). */
+  clearAll(): Promise<number>;
 }

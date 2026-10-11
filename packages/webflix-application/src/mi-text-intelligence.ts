@@ -49,6 +49,17 @@
  *   returns. An empty summary/overview/no-match answer is SUCCESS (the
  *   honest extractive outcome over an empty or unmatched source) and still
  *   records its artifact.
+ *
+ * P4-TRANSLATE AMENDMENT (sanctioned by that order's read contract — "mi.translate
+ * reads a stored text payload by artifact id (transcript/summary/overview/qa …)"):
+ * on SUCCESS the use cases ALSO persist the artifact's TEXT PROJECTION in the
+ * text payload store, keyed by an UPFRONT-generated artifact id, PUT BEFORE the
+ * descriptor creation (the mi.transcribe amendment ordering — a put failure
+ * leaves NO artifact). The projection rule per kind is FIXED and documented in
+ * text-payload.ts: summary = sentence texts joined " ", overview = chapter
+ * titles joined " ", qa = span quotes joined " ". Cancelled and failed runs
+ * persist NOTHING (unchanged). The SOURCE transcript artifact and its payload
+ * remain read-only.
  */
 import { ErrorCode, JobDescriptorSchema, WebFlixError } from "webflix-contracts";
 import type {
@@ -64,13 +75,20 @@ import type {
   TranscriptSegment,
 } from "webflix-contracts";
 import { parseOrThrow, transitionJob } from "webflix-domain";
-import type { ArtifactRegistry, ClockPort, IdGenerator, TranscriptPayloadStore } from "./ports";
+import type {
+  ArtifactRegistry,
+  ClockPort,
+  IdGenerator,
+  TextPayloadStore,
+  TranscriptPayloadStore,
+} from "./ports";
 import { DeriveArtifactBookkeeping } from "./derive-artifact-bookkeeping";
 import {
   BUILT_IN_SUMMARY_ENGINE_ID,
   EXTRACTIVE_MODEL_ID,
   EXTRACTIVE_MODEL_VERSION,
 } from "./built-in-summary-engine";
+import { textPayloadChecksum } from "./text-payload";
 
 export const SUMMARIZE_JOB_KIND = "mi.summarize";
 export const OVERVIEW_JOB_KIND = "mi.overview";
@@ -114,6 +132,8 @@ export interface TextIntelligenceDeps {
   readonly engine: SummaryEnginePort;
   readonly registry: ArtifactRegistry;
   readonly payloads: TranscriptPayloadStore;
+  /** The text payload store (P4-TRANSLATE amendment: success persists the artifact's text projection). */
+  readonly textPayloads: TextPayloadStore;
   readonly clock: ClockPort;
   readonly generateId: IdGenerator;
 }
@@ -131,6 +151,7 @@ export class SummarizeTranscript {
       jobKind: SUMMARIZE_JOB_KIND,
       artifactKind: "summary",
       input,
+      projection: (result) => result.sentences.map((sentence) => sentence.text).join(" "),
       engineCall: (segments, options) => this.deps.engine.summarize({ segments }, options),
     });
   }
@@ -145,6 +166,7 @@ export class BuildTranscriptOverview {
       jobKind: OVERVIEW_JOB_KIND,
       artifactKind: "overview",
       input,
+      projection: (result) => result.chapters.map((chapter) => chapter.title).join(" "),
       engineCall: (segments, options) => this.deps.engine.overview({ segments }, options),
     });
   }
@@ -160,6 +182,7 @@ export class AnswerFromTranscript {
       artifactKind: "qa",
       input,
       question: input.question,
+      projection: (result) => result.spans.map((span) => span.quote).join(" "),
       engineCall: (segments, options) =>
         this.deps.engine.answer({ segments, question: input.question }, options),
     });
@@ -176,6 +199,8 @@ interface TextIntelligenceRun<T> {
   readonly input: TextIntelligenceInput;
   /** Present for mi.qa — part of the engine request AND the inputsHash. */
   readonly question?: string;
+  /** The artifact's TEXT PROJECTION (P4-TRANSLATE amendment; the rule is documented per kind in text-payload.ts). */
+  readonly projection: (result: T) => string;
   readonly engineCall: (
     segments: readonly TranscriptSegment[],
     options: SummaryEngineOptions,
@@ -316,10 +341,25 @@ async function runTextIntelligence<T>(
     throw jobFailure(deps, running, err);
   }
 
-  // 4. Success: create the DerivedArtifact through the durable registry
-  //    with full lineage; job succeeded. The SOURCE transcript artifact
-  //    and its payload were READ — never written back.
+  // 4. Success: persist the artifact's TEXT PROJECTION keyed by an
+  //    UPFRONT-generated artifact id FIRST (a put failure leaves NO
+  //    artifact — the mi.transcribe amendment ordering), then create the
+  //    DerivedArtifact through the durable registry with full lineage; job
+  //    succeeded. The SOURCE transcript artifact and its payload were READ
+  //    — never written back.
   const model = resolveEngineModelLineage(engineDescriptor);
+  const artifactId = deps.generateId();
+  const projection = run.projection(result);
+  try {
+    await deps.textPayloads.put({
+      artifactId,
+      kind: run.artifactKind,
+      text: projection,
+      checksum: textPayloadChecksum(projection),
+    });
+  } catch (err) {
+    throw jobFailure(deps, running, err);
+  }
   const bookkeeping = new DeriveArtifactBookkeeping({
     registry: deps.registry,
     clock: deps.clock,
@@ -328,6 +368,7 @@ async function runTextIntelligence<T>(
   let artifact: DerivedArtifact;
   try {
     artifact = await bookkeeping.create({
+      id: artifactId,
       sourceItemId: source.sourceItemId,
       kind: run.artifactKind,
       lineage: {
@@ -429,7 +470,7 @@ function resolveEngineModelLineage(descriptor: SummaryEngineDescriptor): {
  * payload => a different hash).
  */
 function textIntelligenceInputsHash(
-  run: TextIntelligenceRun<unknown>,
+  run: { readonly input: TextIntelligenceInput; readonly question?: string },
   engineDescriptor: SummaryEngineDescriptor,
   payloadChecksum: string,
 ): string {

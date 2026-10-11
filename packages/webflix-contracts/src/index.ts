@@ -33,6 +33,10 @@ export * from "./jobs";
 // RankerPort. P4-ADAPTERS appended RankerAdapterSelection (0.3.0). ADDITIVE per
 // §3 — frozen §2.1–2.6 untouched.
 export * from "./intelligence";
+// The §2.7 intelligence module's P4-TRANSLATE continuation (0.5.0 -> 0.6.0
+// additive section, split to its own sibling at the parent's max-lines
+// limit — same entrypoint surface, byte-identical exports).
+export * from "./intelligence-translate-tts";
 
 // Errors: ErrorCode, WebFlixError.
 export * from "./errors";

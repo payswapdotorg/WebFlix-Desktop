@@ -41,6 +41,12 @@ import {
   SummaryRequestSchema,
   SummaryResultSchema,
   SummarySentenceSchema,
+  TranslationEngineDescriptorSchema,
+  TranslationRequestSchema,
+  TranslationResultSchema,
+  TtsEngineDescriptorSchema,
+  TtsRequestSchema,
+  TtsResultSchema,
 } from "../index";
 import type { RankedItem as RankedItemType } from "../index";
 
@@ -375,7 +381,7 @@ describe("intelligence contract schemas", () => {
     });
   });
 
-  it("ErrorCode carries the twelve MI codes and they parse through the schema", () => {
+  it("ErrorCode carries the nineteen MI codes and they parse through the schema", () => {
     const miCodes = [
       ErrorCode.IntelligencePolicyUnsupported,
       ErrorCode.IntelligenceObjectiveInvalid,
@@ -392,6 +398,17 @@ describe("intelligence contract schemas", () => {
       // P4-SUMMARIZE (0.5.0) — the additive text-intelligence lane codes.
       ErrorCode.IntelligenceSummaryInvalid,
       ErrorCode.IntelligenceTranscriptPayloadAbsent,
+      // P4-TRANSLATE (0.6.0) — the additive translation + TTS lane codes
+      // (the order's six listed codes ALL kept — each maps to a distinct
+      // typed failure — plus the text-payload-absent code the four-kind
+      // text-read contract genuinely requires).
+      ErrorCode.IntelligenceTranslationInvalid,
+      ErrorCode.IntelligenceTranslationEngineUnavailable,
+      ErrorCode.IntelligenceTranslationEngineFailed,
+      ErrorCode.IntelligenceTtsInvalid,
+      ErrorCode.IntelligenceTtsEngineUnavailable,
+      ErrorCode.IntelligenceTtsEngineFailed,
+      ErrorCode.IntelligenceTextPayloadAbsent,
     ] as const;
     expect(miCodes).toEqual([
       "intelligence/policy-unsupported",
@@ -406,6 +423,13 @@ describe("intelligence contract schemas", () => {
       "intelligence/engine-failed",
       "intelligence/summary-invalid",
       "intelligence/transcript-payload-absent",
+      "intelligence/translation-invalid",
+      "intelligence/translation-engine-unavailable",
+      "intelligence/translation-engine-failed",
+      "intelligence/tts-invalid",
+      "intelligence/tts-engine-unavailable",
+      "intelligence/tts-engine-failed",
+      "intelligence/text-payload-absent",
     ]);
     for (const code of miCodes) {
       expect(ErrorCodeSchema.safeParse(code).success).toBe(true);
@@ -728,6 +752,172 @@ describe("intelligence contract schemas", () => {
       startMs: 1500,
       endMs: 3000,
     });
+  });
+
+  it("re-exports the translation + TTS value surface (P4-TRANSLATE)", () => {
+    // Interfaces (TranslationEnginePort / TtsEnginePort) are erased at
+    // runtime — the value surface pins the schemas (the transcription
+    // precedent); the PORTS are pinned by the implementing adapters'
+    // structural `implements` clauses, checked by the tsc gate.
+    const translateTtsExports = [
+      "TranslationEngineDescriptorSchema",
+      "TranslationRequestSchema",
+      "TranslationResultSchema",
+      "TtsEngineDescriptorSchema",
+      "TtsRequestSchema",
+      "TtsResultSchema",
+    ];
+    for (const name of translateTtsExports) {
+      expect(contracts, `missing translation/TTS export: ${name}`).toHaveProperty(name);
+    }
+  });
+
+  it("TranslationEngineDescriptor round-trips honest lineage and rejects blanks (P4-TRANSLATE)", () => {
+    expectRoundTrip(TranslationEngineDescriptorSchema, {
+      id: "webflix.argos-local-translation",
+      label: "Argos-class translation (local)",
+      version: "0.1.0",
+      licenseNote: "Argos Translate is MIT-family licensed",
+    });
+    // Engine-reported facts are OPTIONAL: absent means absent (never guessed).
+    expectRoundTrip(TranslationEngineDescriptorSchema, {
+      id: "webflix.fixture-replay-translation-engine",
+      label: "Fixture-replay translation engine (TEST DOUBLE — no real translation)",
+      version: "0.1.0",
+      engineVersion: "1.9.6",
+      modelLineage: "argos-translate/en→es",
+      licenseNote: null,
+    });
+    expectRejected(TranslationEngineDescriptorSchema, {
+      id: "",
+      label: "x",
+      version: "0.1.0",
+      licenseNote: null,
+    });
+    expectRejected(TranslationEngineDescriptorSchema, {
+      id: "x",
+      label: "  ",
+      version: "0.1.0",
+      licenseNote: null,
+    });
+    expectRejected(TranslationEngineDescriptorSchema, {
+      id: "x",
+      label: "y",
+      version: "",
+      licenseNote: null,
+    });
+    // licenseNote is nullable but not undefined-shaped.
+    expectRejected(TranslationEngineDescriptorSchema, {
+      id: "x",
+      label: "y",
+      version: "0.1.0",
+    });
+  });
+
+  it("TranslationRequest/Result round-trip and enforce the blank floors (P4-TRANSLATE)", () => {
+    expectRoundTrip(TranslationRequestSchema, {
+      text: "the deployment failed on staging",
+      sourceLanguageTag: "en",
+      targetLanguageTag: "es",
+    });
+    // The text is DATA, not an id: min(1) untrimmed — internal whitespace
+    // and trailing newlines survive verbatim (the engine's own concern).
+    const withNewline = TranslationRequestSchema.parse({
+      text: "line one\nline two",
+      sourceLanguageTag: "en",
+      targetLanguageTag: "de",
+    });
+    expect(withNewline.text).toBe("line one\nline two");
+    expectRejected(TranslationRequestSchema, {
+      text: "",
+      sourceLanguageTag: "en",
+      targetLanguageTag: "es",
+    });
+    expectRejected(TranslationRequestSchema, {
+      text: "hello",
+      sourceLanguageTag: "",
+      targetLanguageTag: "es",
+    });
+    expectRejected(TranslationRequestSchema, {
+      text: "hello",
+      sourceLanguageTag: "  ",
+      targetLanguageTag: "es",
+    });
+    expectRejected(TranslationRequestSchema, {
+      text: "hello",
+      sourceLanguageTag: "en",
+      targetLanguageTag: "",
+    });
+    expectRejected(TranslationRequestSchema, { text: "hello", sourceLanguageTag: "en" });
+
+    expectRoundTrip(TranslationResultSchema, {
+      translatedText: "el despliegue falló en staging",
+    });
+    // Per-run lineage facts are OPTIONAL — absent means absent.
+    expectRoundTrip(TranslationResultSchema, {
+      translatedText: "el despliegue falló en staging",
+      engineVersion: "1.9.6",
+      modelLineage: "argos-translate/en→es",
+    });
+    // An empty translation is NOT representable — a failed run, never an
+    // empty success (the adapter maps it to the typed engine-failed error).
+    expectRejected(TranslationResultSchema, { translatedText: "" });
+    expectRejected(TranslationResultSchema, { translatedText: "x", engineVersion: "" });
+    expectRejected(TranslationResultSchema, { translatedText: "x", modelLineage: " " });
+  });
+
+  it("TtsEngineDescriptor/TtsRequest/TtsResult round-trip and enforce their floors (P4-TRANSLATE)", () => {
+    expectRoundTrip(TtsEngineDescriptorSchema, {
+      id: "webflix.piper-local-tts",
+      label: "Piper-class TTS (local)",
+      version: "0.1.0",
+      licenseNote: "Piper is MIT-family licensed; voice models carry their own licenses",
+    });
+    expectRejected(TtsEngineDescriptorSchema, {
+      id: "",
+      label: "y",
+      version: "0.1.0",
+      licenseNote: null,
+    });
+
+    expectRoundTrip(TtsRequestSchema, {
+      text: "welcome to the brave new world",
+      voice: { id: "en_US-amy-medium" },
+    });
+    expectRejected(TtsRequestSchema, { text: "", voice: { id: "v" } });
+    expectRejected(TtsRequestSchema, { text: "hello", voice: { id: "" } });
+    expectRejected(TtsRequestSchema, { text: "hello", voice: { id: "  " } });
+    expectRejected(TtsRequestSchema, { text: "hello" });
+
+    const audio = new Uint8Array([1, 2, 3, 4]);
+    const result = TtsResultSchema.parse({
+      audio,
+      contentType: "audio/wav",
+    });
+    expect(result.audio).toBeInstanceOf(Uint8Array);
+    expect(Array.from(result.audio)).toEqual([1, 2, 3, 4]);
+    // Per-run lineage facts OPTIONAL; absent stays absent. NOTE: the audio
+    // bytes deliberately do NOT survive a JSON.stringify round-trip (JSON
+    // is not the bytes' serialization — a plain {"0":9} object is NOT a
+    // valid TtsResult.audio), so this leg pins parse-equality instead of
+    // the JSON leg the other schemas use.
+    const withLineage = TtsResultSchema.parse({
+      audio: new Uint8Array([9]),
+      contentType: "audio/wav",
+      engineVersion: "1.2.0",
+      modelLineage: "voices/en_US-amy-medium.onnx",
+    });
+    expect(withLineage.audio).toBeInstanceOf(Uint8Array);
+    expect(Array.from(withLineage.audio)).toEqual([9]);
+    expect(withLineage.contentType).toBe("audio/wav");
+    expect(withLineage.engineVersion).toBe("1.2.0");
+    expect(withLineage.modelLineage).toBe("voices/en_US-amy-medium.onnx");
+    // audio MUST be a Uint8Array — nothing else is the bytes.
+    expectRejected(TtsResultSchema, { audio: "not-bytes", contentType: "audio/wav" });
+    expectRejected(TtsResultSchema, { audio: [1, 2, 3], contentType: "audio/wav" });
+    expectRejected(TtsResultSchema, { audio, contentType: "" });
+    expectRejected(TtsResultSchema, { audio, contentType: " " });
+    expectRejected(TtsResultSchema, { audio });
   });
 });
 

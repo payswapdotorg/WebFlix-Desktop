@@ -68,3 +68,18 @@ export * from "./transcript-payload";
 export * from "./built-in-summary-engine";
 export * from "./fixture-replay-summary-engine";
 export * from "./mi-text-intelligence";
+
+// P4-TRANSLATE: the translation + TTS text pipeline — the text payload and
+// audio rendition records/ports, their in-memory defaults, the fixture-
+// replay engine TEST DOUBLES, and mi.translate / mi.tts riding the frozen
+// §2.6 wrapper (translation = a DerivedArtifact kind=translation with
+// engine-reported lineage; TTS = an audio payload RENDITION attached to
+// the source artifact — NO new artifact kind, the enum stays closed). The
+// DURABLE stores live on the local-library seam (migration 0005) — a
+// later order wires the composition root.
+export * from "./text-payload";
+export * from "./audio-rendition";
+export * from "./fixture-replay-translation-engine";
+export * from "./fixture-replay-tts-engine";
+export * from "./mi-translate";
+export * from "./mi-tts";

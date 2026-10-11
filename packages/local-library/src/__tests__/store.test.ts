@@ -71,15 +71,17 @@ describe("local-library store (unit, temp dirs)", () => {
       const rows = store.db
         .prepare("SELECT id, name, hash FROM schema_migrations ORDER BY id")
         .all();
-      // P4-ARTIFACTS row 1 + P4-ADAPTERS row 2 + P4-SUMMARIZE row 1: the
-      // additive 0002_media_intelligence, 0003_ranker_adapter_selection
-      // and 0004_transcript_payloads migrations ship with the durable MI
-      // stores — the set is [0001, 0002, 0003, 0004].
-      expect(rows).toHaveLength(4);
+      // P4-ARTIFACTS row 1 + P4-ADAPTERS row 2 + P4-SUMMARIZE row 1 +
+      // P4-TRANSLATE row 2: the additive 0002_media_intelligence,
+      // 0003_ranker_adapter_selection, 0004_transcript_payloads and
+      // 0005_text_and_audio_payloads migrations ship with the durable MI
+      // stores — the set is [0001, 0002, 0003, 0004, 0005].
+      expect(rows).toHaveLength(5);
       expect(rows[0]["name"]).toBe("0001_init");
       expect(rows[1]["name"]).toBe("0002_media_intelligence");
       expect(rows[2]["name"]).toBe("0003_ranker_adapter_selection");
       expect(rows[3]["name"]).toBe("0004_transcript_payloads");
+      expect(rows[4]["name"]).toBe("0005_text_and_audio_payloads");
       expect(String(rows[0]["hash"])).toMatch(/^[0-9a-f]{64}$/);
     });
 
@@ -88,7 +90,7 @@ describe("local-library store (unit, temp dirs)", () => {
       store.close();
       const reopened = await open(dir);
       const count = reopened.db.prepare("SELECT COUNT(*) AS n FROM schema_migrations").get();
-      expect(Number(count?.["n"])).toBe(4);
+      expect(Number(count?.["n"])).toBe(5);
 
       const p = join(dir, "x.mp4");
       writeFileSync(p, "x");

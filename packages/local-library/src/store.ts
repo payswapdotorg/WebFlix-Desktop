@@ -7,10 +7,13 @@ import { migration0001Init } from "./db/migrations/0001_init";
 import { migration0002MediaIntelligence } from "./db/migrations/0002_media_intelligence";
 import { migration0003RankerAdapterSelection } from "./db/migrations/0003_ranker_adapter_selection";
 import { migration0004TranscriptPayloads } from "./db/migrations/0004_transcript_payloads";
+import { migration0005TextAndAudioPayloads } from "./db/migrations/0005_text_and_audio_payloads";
 import type { Migration } from "./db/migrate";
 import { createIntelligenceStores, type IntelligenceStores } from "./intelligence-stores";
 import { SqliteRankerSelectionStore } from "./ranker-selection-store";
 import { SqliteTranscriptPayloadStore } from "./transcript-payload-store";
+import { SqliteTextPayloadStore } from "./text-payload-store";
+import { SqliteAudioRenditionStore } from "./audio-rendition-store";
 import { ValidationError } from "./errors";
 import { LocalStore, type LocalStoreOptions } from "./localStore";
 import { assertNotDefaultDataRootInTests } from "./paths";
@@ -20,6 +23,7 @@ export const ALL_MIGRATIONS: readonly Migration[] = [
   migration0002MediaIntelligence,
   migration0003RankerAdapterSelection,
   migration0004TranscriptPayloads,
+  migration0005TextAndAudioPayloads,
 ];
 
 export interface OpenStoreOptions {
@@ -36,6 +40,8 @@ export class WebFlixStore {
   private miStores: IntelligenceStores | undefined;
   private rankerSelectionStore: SqliteRankerSelectionStore | undefined;
   private transcriptPayloadStore: SqliteTranscriptPayloadStore | undefined;
+  private textPayloadStore: SqliteTextPayloadStore | undefined;
+  private audioRenditionStore: SqliteAudioRenditionStore | undefined;
 
   constructor(
     public readonly baseDir: string,
@@ -86,6 +92,29 @@ export class WebFlixStore {
   get transcriptPayloads(): SqliteTranscriptPayloadStore {
     this.transcriptPayloadStore ??= new SqliteTranscriptPayloadStore(this.db);
     return this.transcriptPayloadStore;
+  }
+
+  /**
+   * Durable text payload store (P4-TRANSLATE row 2) over this profile's
+   * database — per-profile by construction (ADR-0003). Lazy and
+   * stateless: the adapter only wraps the db handle. NOT composition-root
+   * wiring — connecting it to the text-intelligence use cases and
+   * mi.translate is a later order.
+   */
+  get textPayloads(): SqliteTextPayloadStore {
+    this.textPayloadStore ??= new SqliteTextPayloadStore(this.db);
+    return this.textPayloadStore;
+  }
+
+  /**
+   * Durable audio rendition store (P4-TRANSLATE row 2, the TTS side) over
+   * this profile's database — per-profile by construction (ADR-0003).
+   * Lazy and stateless: the adapter only wraps the db handle. NOT
+   * composition-root wiring — connecting it to mi.tts is a later order.
+   */
+  get audioRenditions(): SqliteAudioRenditionStore {
+    this.audioRenditionStore ??= new SqliteAudioRenditionStore(this.db);
+    return this.audioRenditionStore;
   }
 
   close(): void {

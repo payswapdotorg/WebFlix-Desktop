@@ -9,7 +9,9 @@
  * first three ports shipped with P4-ARTIFACTS on the local-library storage
  * seam (better-sqlite3, own `mi_*` tables, additive migration 0002, exported
  * there for the composition root); the DURABLE transcript payload store
- * ships with P4-SUMMARIZE (migration 0004, same rules). These in-memory
+ * ships with P4-SUMMARIZE (migration 0004, same rules); the DURABLE text
+ * payload + audio rendition stores ship with P4-TRANSLATE (migration 0005,
+ * same rules). These in-memory
  * defaults remain for hermetic unit tests. The port interfaces in
  * ./ports.ts are the stable seam — swapping defaults for persistent
  * adapters changes nothing above the ports.
@@ -17,9 +19,11 @@
 import type { DerivedArtifact, FeedbackEvent, UserObjective } from "webflix-contracts";
 import type {
   ArtifactRegistry,
+  AudioRenditionStore,
   FeedbackAppendResult,
   FeedbackStore,
   ObjectiveStore,
+  TextPayloadStore,
   TranscriptPayloadStore,
 } from "./ports";
 import {
@@ -27,6 +31,8 @@ import {
   transcriptPayloadAbsent,
   type TranscriptPayload,
 } from "./transcript-payload";
+import { assertValidTextPayload, textPayloadAbsent, type TextPayload } from "./text-payload";
+import { assertValidAudioRendition, type AudioRendition } from "./audio-rendition";
 
 /** In-memory ObjectiveStore (NOT durable — see the module doc). */
 export class InMemoryObjectiveStore implements ObjectiveStore {
@@ -99,5 +105,72 @@ export class InMemoryTranscriptPayloadStore implements TranscriptPayloadStore {
       throw transcriptPayloadAbsent(artifactId);
     }
     return stored;
+  }
+}
+
+/**
+ * In-memory TextPayloadStore (NOT durable) — the same defensive validation
+ * as the durable adapter (assertValidTextPayload) and the same TYPED
+ * absent error, so tests exercise the port's honest contract.
+ */
+export class InMemoryTextPayloadStore implements TextPayloadStore {
+  private readonly payloads = new Map<string, TextPayload>();
+
+  async put(payload: TextPayload): Promise<void> {
+    assertValidTextPayload(payload);
+    this.payloads.set(payload.artifactId, payload);
+  }
+
+  async get(artifactId: string): Promise<TextPayload> {
+    const stored = this.payloads.get(artifactId);
+    if (stored === undefined) {
+      throw textPayloadAbsent(artifactId);
+    }
+    return stored;
+  }
+}
+
+/**
+ * In-memory AudioRenditionStore (NOT durable) — renditions held in a
+ * rendition-id map; `listBySource` filters by the source artifact id and
+ * sorts deterministically (createdAt then renditionId — the bookkeeping
+ * list precedent). Empty listing is the honest "no rendition attached yet".
+ */
+export class InMemoryAudioRenditionStore implements AudioRenditionStore {
+  private readonly renditions = new Map<string, AudioRendition>();
+
+  async put(rendition: AudioRendition): Promise<void> {
+    assertValidAudioRendition(rendition);
+    this.renditions.set(rendition.renditionId, rendition);
+  }
+
+  async listBySource(sourceArtifactId: string): Promise<readonly AudioRendition[]> {
+    return [...this.renditions.values()]
+      .filter((rendition) => rendition.sourceArtifactId === sourceArtifactId)
+      .sort((a, b) => {
+        if (a.createdAt !== b.createdAt) return a.createdAt < b.createdAt ? -1 : 1;
+        return a.renditionId < b.renditionId ? -1 : a.renditionId > b.renditionId ? 1 : 0;
+      });
+  }
+
+  async delete(renditionId: string): Promise<boolean> {
+    return this.renditions.delete(renditionId);
+  }
+
+  async deleteBySource(sourceArtifactId: string): Promise<number> {
+    let removed = 0;
+    for (const [renditionId, rendition] of this.renditions) {
+      if (rendition.sourceArtifactId === sourceArtifactId) {
+        this.renditions.delete(renditionId);
+        removed += 1;
+      }
+    }
+    return removed;
+  }
+
+  async clearAll(): Promise<number> {
+    const removed = this.renditions.size;
+    this.renditions.clear();
+    return removed;
   }
 }
