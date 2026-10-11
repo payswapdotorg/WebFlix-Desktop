@@ -1,0 +1,13 @@
+{
+  "kind": "t5",
+  "data": {
+    "display_name": "videos",
+    "title": "videos",
+    "subscribers": 27200000,
+    "public_description": "The best place for video content of all kinds.",
+    "over18": false,
+    "url": "/r/videos/",
+    "icon_img": "https://www.redditstatic.com/community-icons/videos.png",
+    "active_user_count": 1234
+  }
+}

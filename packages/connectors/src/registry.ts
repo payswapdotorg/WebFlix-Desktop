@@ -27,6 +27,7 @@ import { youtubeManifest } from "./youtube/manifest";
 import { tiktokManifest } from "./tiktok/manifest";
 import { twitchManifest } from "./twitch/manifest";
 import { instagramManifest } from "./instagram/manifest";
+import { redditManifest } from "./reddit/manifest";
 
 export class RegistryError extends Error {
   constructor(message: string) {
@@ -158,5 +159,8 @@ export function createDefaultRegistry(): ConnectorRegistry {
       // (professional-account reads + the honest-unsupported totality for
       // every discovery surface the platform does not offer officially).
       .register(instagramManifest)
+      // REDDIT-CONNECT: the fifth platform — the REST read surface (the
+      // richest of the five) + the ON-by-default official embed watch path.
+      .register(redditManifest)
   );
 }

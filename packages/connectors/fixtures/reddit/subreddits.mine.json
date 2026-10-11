@@ -1,0 +1,28 @@
+{
+  "kind": "Listing",
+  "data": {
+    "after": null,
+    "before": null,
+    "dist": 2,
+    "children": [
+      {
+        "kind": "t5",
+        "data": {
+          "display_name": "videos",
+          "title": "videos",
+          "subscribers": 27200000,
+          "url": "/r/videos/"
+        }
+      },
+      {
+        "kind": "t5",
+        "data": {
+          "display_name": "documentaries",
+          "title": "documentaries",
+          "subscribers": 19000000,
+          "url": "/r/documentaries/"
+        }
+      }
+    ]
+  }
+}

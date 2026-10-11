@@ -1,0 +1,223 @@
+{
+  "kind": "Listing",
+  "data": {
+    "after": "t3_deadbee3",
+    "before": null,
+    "dist": 7,
+    "children": [
+      {
+        "kind": "t3",
+        "data": {
+          "id": "abcvid001",
+          "name": "t3_abcvid001",
+          "subreddit": "videos",
+          "subreddit_id": "t5_2qh1e",
+          "title": "A community long-form video post (native Reddit video)",
+          "permalink": "/r/videos/comments/abcvid001/a_community_longform_video_post/",
+          "domain": "v.redd.it",
+          "url": "https://v.redd.it/abcvid001",
+          "author": "communityposter",
+          "created_utc": 1760131200,
+          "score": 1523,
+          "num_comments": 208,
+          "over_18": false,
+          "is_video": true,
+          "is_self": false,
+          "thumbnail": "https://preview.redd.it/abcvid001.jpg?width=640&auto=webp&s=aaa111",
+          "post_hint": "hosted:video",
+          "secure_media": {
+            "reddit_video": {
+              "fallback_url": "https://v.redd.it/abcvid001/DASH_720.mp4",
+              "dash_url": "https://v.redd.it/abcvid001/DASHPlaylist.mpd",
+              "hls_url": "https://v.redd.it/abcvid001/HLSPlaylist.m3u8",
+              "duration": 184,
+              "height": 720,
+              "width": 1280,
+              "is_gif": false
+            }
+          },
+          "preview": {
+            "enabled": true,
+            "images": [
+              {
+                "source": {
+                  "url": "https://preview.redd.it/abcvid001.jpg?width=1280&auto=webp&s=bbb222",
+                  "width": 1280,
+                  "height": 720
+                },
+                "resolutions": []
+              }
+            ]
+          }
+        }
+      },
+      {
+        "kind": "t3",
+        "data": {
+          "id": "xyzvid002",
+          "name": "t3_xyzvid002",
+          "subreddit": "videos",
+          "subreddit_id": "t5_2qh1e",
+          "title": "A crosspost of a native Reddit video (original is still Reddit)",
+          "permalink": "/r/videos/comments/xyzvid002/a_crosspost_of_a_native_reddit_video/",
+          "domain": "v.redd.it",
+          "url": "https://v.redd.it/xyzvid002",
+          "author": "crossposter",
+          "created_utc": 1760132400,
+          "score": 431,
+          "num_comments": 57,
+          "over_18": false,
+          "is_video": true,
+          "is_self": false,
+          "thumbnail": "https://preview.redd.it/xyzvid002.jpg?width=640&auto=webp&s=ccc333",
+          "post_hint": "hosted:video",
+          "secure_media": {
+            "reddit_video": {
+              "fallback_url": "https://v.redd.it/xyzvid002/DASH_720.mp4",
+              "duration": 96,
+              "height": 720,
+              "width": 1280,
+              "is_gif": false
+            }
+          },
+          "crosspost_parent_list": [
+            {
+              "id": "origvid0",
+              "subreddit": "interestingasfuck",
+              "title": "The original native video post",
+              "is_video": true
+            }
+          ]
+        }
+      },
+      {
+        "kind": "t3",
+        "data": {
+          "id": "ytlink003",
+          "name": "t3_ytlink003",
+          "subreddit": "videos",
+          "subreddit_id": "t5_2qh1e",
+          "title": "A YouTube link the community surfaced (payload attributes it)",
+          "permalink": "/r/videos/comments/ytlink003/a_youtube_link_the_community_surfaced/",
+          "domain": "youtube.com",
+          "url": "https://www.youtube.com/watch?v=FIXVID00001",
+          "author": "linksharer",
+          "created_utc": 1760133600,
+          "score": 982,
+          "num_comments": 144,
+          "over_18": false,
+          "is_video": false,
+          "is_self": false,
+          "thumbnail": "https://b.thumbs.redditmedia.com/ytlink003.jpg",
+          "secure_media": {
+            "oembed": {
+              "type": "youtube.com",
+              "provider_name": "YouTube",
+              "url": "https://www.youtube.com/watch?v=FIXVID00001",
+              "author_name": "Some Channel",
+              "width": 459,
+              "height": 344
+            }
+          },
+          "preview": {
+            "enabled": true,
+            "images": [
+              {
+                "source": {
+                  "url": "https://external-preview.redd.it/ytlink003.jpg?width=480&auto=webp&s=ddd444",
+                  "width": 480,
+                  "height": 360
+                },
+                "resolutions": []
+              }
+            ]
+          }
+        }
+      },
+      {
+        "kind": "t3",
+        "data": {
+          "id": "imgpost04",
+          "name": "t3_imgpost04",
+          "subreddit": "videos",
+          "subreddit_id": "t5_2qh1e",
+          "title": "An image post (dropped honestly — no photo kind in the frozen enum)",
+          "permalink": "/r/videos/comments/imgpost04/an_image_post/",
+          "domain": "i.redd.it",
+          "url": "https://i.redd.it/imgpost04.png",
+          "author": "imageposter",
+          "created_utc": 1760134800,
+          "score": 77,
+          "num_comments": 12,
+          "over_18": false,
+          "is_video": false,
+          "is_self": false,
+          "post_hint": "image",
+          "thumbnail": "https://preview.redd.it/imgpost04.png?width=640&auto=webp&s=eee555"
+        }
+      },
+      {
+        "kind": "t3",
+        "data": {
+          "id": "selfpost05",
+          "name": "t3_selfpost05",
+          "subreddit": "videos",
+          "subreddit_id": "t5_2qh1e",
+          "title": "A self text post (dropped honestly — text is not a watchable media unit)",
+          "permalink": "/r/videos/comments/selfpost05/a_self_text_post/",
+          "domain": "self.videos",
+          "url": "https://www.reddit.com/r/videos/comments/selfpost05/a_self_text_post/",
+          "author": "selfposter",
+          "created_utc": 1760136000,
+          "score": 210,
+          "num_comments": 89,
+          "over_18": false,
+          "is_video": false,
+          "is_self": true,
+          "selftext": "A discussion post with no media."
+        }
+      },
+      {
+        "kind": "t3",
+        "data": {
+          "id": "galpost06",
+          "name": "t3_galpost06",
+          "subreddit": "videos",
+          "subreddit_id": "t5_2qh1e",
+          "title": "A gallery post (dropped honestly — a mixed container is not a single watchable unit)",
+          "permalink": "/r/videos/comments/galpost06/a_gallery_post/",
+          "domain": "reddit.com",
+          "url": "https://www.reddit.com/gallery/galpost06",
+          "author": "galleryposter",
+          "created_utc": 1760137200,
+          "score": 54,
+          "num_comments": 9,
+          "over_18": false,
+          "is_video": false,
+          "is_self": false,
+          "is_gallery": true
+        }
+      },
+      {
+        "kind": "t3",
+        "data": {
+          "id": "newslk007",
+          "name": "t3_newslk007",
+          "subreddit": "videos",
+          "subreddit_id": "t5_2qh1e",
+          "title": "A news-site link (dropped honestly — no provider WebFlix knows is identified)",
+          "permalink": "/r/videos/comments/newslk007/a_news_site_link/",
+          "domain": "example-news.com",
+          "url": "https://example-news.com/some-article",
+          "author": "newssharer",
+          "created_utc": 1760138400,
+          "score": 31,
+          "num_comments": 4,
+          "over_18": false,
+          "is_video": false,
+          "is_self": false
+        }
+      }
+    ]
+  }
+}

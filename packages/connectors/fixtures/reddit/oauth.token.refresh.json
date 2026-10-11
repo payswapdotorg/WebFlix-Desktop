@@ -1,0 +1,6 @@
+{
+  "access_token": "fixture-refreshed-access-token-33333333333333333333333333333333333333333333333333333333333333333333333333",
+  "token_type": "bearer",
+  "expires_in": 3600,
+  "scope": "identity mysubreddits read"
+}

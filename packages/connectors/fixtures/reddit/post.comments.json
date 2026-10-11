@@ -1,0 +1,83 @@
+[
+  {
+    "kind": "Listing",
+    "data": {
+      "after": null,
+      "before": null,
+      "dist": 1,
+      "children": [
+        {
+          "kind": "t3",
+          "data": {
+            "id": "abcvid001",
+            "name": "t3_abcvid001",
+            "subreddit": "videos",
+            "subreddit_id": "t5_2qh1e",
+            "title": "A community long-form video post (native Reddit video)",
+            "permalink": "/r/videos/comments/abcvid001/a_community_longform_video_post/",
+            "domain": "v.redd.it",
+            "url": "https://v.redd.it/abcvid001",
+            "author": "communityposter",
+            "created_utc": 1760131200,
+            "score": 1523,
+            "num_comments": 208,
+            "over_18": false,
+            "is_video": true,
+            "is_self": false,
+            "thumbnail": "https://preview.redd.it/abcvid001.jpg?width=640&auto=webp&s=aaa111",
+            "post_hint": "hosted:video",
+            "secure_media": {
+              "reddit_video": {
+                "fallback_url": "https://v.redd.it/abcvid001/DASH_720.mp4",
+                "dash_url": "https://v.redd.it/abcvid001/DASHPlaylist.mpd",
+                "hls_url": "https://v.redd.it/abcvid001/HLSPlaylist.m3u8",
+                "duration": 184,
+                "height": 720,
+                "width": 1280,
+                "is_gif": false
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "kind": "Listing",
+    "data": {
+      "after": "t1_cmt0002",
+      "before": null,
+      "dist": 2,
+      "children": [
+        {
+          "kind": "t1",
+          "data": {
+            "id": "cmt0001",
+            "author": "firstcommenter",
+            "body": "Top-level comment about the video.",
+            "score": 42,
+            "created_utc": 1760131300,
+            "permalink": "/r/videos/comments/abcvid001/a_community_longform_video_post/cmt0001/",
+            "depth": 0
+          }
+        },
+        {
+          "kind": "t1",
+          "data": {
+            "id": "cmt0002",
+            "author": "secondcommenter",
+            "body": "A reply deeper in the tree.",
+            "score": 7,
+            "created_utc": 1760131400,
+            "permalink": "/r/videos/comments/abcvid001/a_community_longform_video_post/cmt0002/",
+            "depth": 1
+          }
+        },
+        {
+          "kind": "more",
+          "data": { "count": 12, "children": ["cmt0003", "cmt0004"] }
+        }
+      ]
+    }
+  }
+]

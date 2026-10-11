@@ -57,3 +57,14 @@ export * from "./instagram/catalogMapping";
 export * from "./instagram/playback";
 export * from "./instagram/service";
 export * from "./instagram/substitutes";
+// Reddit — fifth platform: the REST read surface + the official embed
+// (REDDIT-CONNECT). Same collision-safety discipline as tiktok/twitch/
+// instagram: the provider-neutral OAuth substrate names are exported once via
+// the youtube module; the reddit module exports only Reddit-suffixed names.
+export * from "./reddit/manifest";
+export * from "./reddit/restApi";
+export * from "./reddit/oauth";
+export * from "./reddit/catalogMapping";
+export * from "./reddit/playback";
+export * from "./reddit/service";
+export * from "./reddit/substitutes";

@@ -195,10 +195,10 @@ function memoryInstagramStore() {
 // ---------------------------------------------------------------------------
 
 describe("instagram manifest (frozen §2.3 honesty)", () => {
-  it("registers as the fourth platform in the default registry", () => {
+  it("registers as the fourth platform in the default registry (reddit joined fifth at REDDIT-CONNECT)", () => {
     const registry = createDefaultRegistry();
-    expect(registry.size).toBe(4);
-    for (const providerId of ["youtube", "tiktok", "twitch", "instagram"]) {
+    expect(registry.size).toBe(5);
+    for (const providerId of ["youtube", "tiktok", "twitch", "instagram", "reddit"]) {
       expect(registry.has(providerId)).toBe(true);
     }
     const manifest = registry.require("instagram") as ConnectorManifest;

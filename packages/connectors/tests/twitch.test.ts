@@ -236,14 +236,15 @@ function fixtureTwitchFetcher(
 // ---------------------------------------------------------------------------
 
 describe("twitch manifest honesty (frozen §2.3 + AUDIT-SOURCES §5)", () => {
-  it("registers in the default registry alongside youtube and tiktok (third platform, same contracts; instagram joined at INSTAGRAM-CONNECT)", () => {
+  it("registers in the default registry alongside youtube and tiktok (third platform, same contracts; instagram joined at INSTAGRAM-CONNECT, reddit at REDDIT-CONNECT)", () => {
     const registry = createDefaultRegistry();
     expect(registry.require("twitch")).toBe(twitchManifest);
     expect(registry.has("youtube")).toBe(true);
     expect(registry.has("tiktok")).toBe(true);
-    expect(registry.size).toBe(4);
+    expect(registry.size).toBe(5);
     expect(registry.list().map((m: ConnectorManifest) => m.providerId)).toEqual([
       "instagram",
+      "reddit",
       "tiktok",
       "twitch",
       "youtube",

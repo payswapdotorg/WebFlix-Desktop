@@ -1,0 +1,12 @@
+{
+  "kind": "t2",
+  "data": {
+    "name": "communityposter",
+    "id": "u2abc",
+    "link_karma": 5321,
+    "comment_karma": 9876,
+    "is_gold": false,
+    "icon_img": "https://www.redditstatic.com/avatars/communityposter.png",
+    "created_utc": 1400000000
+  }
+}

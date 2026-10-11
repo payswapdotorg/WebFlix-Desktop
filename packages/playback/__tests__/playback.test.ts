@@ -779,3 +779,58 @@ describe("instagram lane (INSTAGRAM-CONNECT watch path — honest default OFF)",
     expect(isPlayablePlan(approved)).toBe(true);
   });
 });
+
+// ---------------------------------------------------------------------------
+// REDDIT-CONNECT — the Reddit lane through this resolver
+// ---------------------------------------------------------------------------
+
+describe("reddit lane (REDDIT-CONNECT watch path — official embed ON by default)", () => {
+  // Structural twin of connectors' exported REDDIT_PLAYBACK_CONNECTOR
+  // (architecture-policy keeps playback from importing connectors; the two
+  // packages meet at the canonical §2.2 PlaybackPlan shape). Unlike the
+  // Instagram lane (allowsEmbedding FALSE — the app-review-gated surface),
+  // Reddit's official embed is the platform's public share mechanism:
+  // live-verified 2026-10-11, embed.reddit.com/comments/<id> answers 200
+  // both direct and iframe-context with CSP frame-ancestors * — the honest
+  // default is the official-embed plan.
+  const REDDIT_CONNECTOR: Connector = {
+    id: "reddit",
+    providerId: "reddit",
+    version: "1.0.0",
+    embed: {
+      providerId: "reddit",
+      urlTemplate: "https://embed.reddit.com/comments/{mediaId}",
+      allowsEmbedding: true,
+    },
+  };
+
+  it("resolves the official-embed plan for reddit listings BY DEFAULT (no gate on the share-embed surface)", () => {
+    const plan = resolvePlaybackPlan(
+      request({
+        listings: [{ providerId: "reddit", externalId: "abcvid001" }],
+        connectors: [REDDIT_CONNECTOR],
+      }),
+    );
+    if (plan.kind !== "official-embed") {
+      throw new Error(`expected official-embed, got ${plan.kind}`);
+    }
+    expect(plan.providerId).toBe("reddit");
+    // The shortlink fold: one {mediaId} placeholder, the base36 post id.
+    expect(plan.embedSpec.embedUrl).toBe("https://embed.reddit.com/comments/abcvid001");
+    expect(isPlayablePlan(plan)).toBe(true);
+  });
+
+  it("answers the honest unavailable plan when the operator disables the embed (the flip has a test)", () => {
+    const disallowed = resolvePlaybackPlan(
+      request({
+        listings: [{ providerId: "reddit", externalId: "abcvid001" }],
+        connectors: [
+          { ...REDDIT_CONNECTOR, embed: { ...REDDIT_CONNECTOR.embed!, allowsEmbedding: false } },
+        ],
+      }),
+    );
+    expect(disallowed).toMatchObject({ kind: "unavailable", reason: "unsupported" });
+    if (disallowed.kind !== "unavailable") throw new Error("unreachable");
+    expect(disallowed.recovery?.action).toBe("open-provider-app");
+  });
+});
