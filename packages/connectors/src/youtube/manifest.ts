@@ -172,7 +172,7 @@ export const YOUTUBE_OPERATIONS: Readonly<Record<string, OperationCapability>> =
     `Keyword search across videos, channels, and playlists. YouTube Data API v3 search.list (GET ${YOUTUBE_API_BASE}/search).`,
   ),
   "videos.list": supported(
-    `Video metadata (title, description, duration, statistics) for known video ids. YouTube Data API v3 videos.list (GET ${YOUTUBE_API_BASE}/videos).`,
+    `Video metadata (title, description, duration, statistics) for known video ids, and trending browse via chart=mostPopular (region/category selectable). YouTube Data API v3 videos.list (GET ${YOUTUBE_API_BASE}/videos).`,
   ),
   "channels.list": supported(
     `Channel metadata, including the authorized account via mine=true. YouTube Data API v3 channels.list (GET ${YOUTUBE_API_BASE}/channels).`,

@@ -1,0 +1,81 @@
+{
+  "_fixture": "FIXTURE-ONLY: abridged YouTube Data API v3 videos.list?chart=mostPopular response envelope; synthetic values, never a live capture; no credentials",
+  "kind": "youtube#videoListResponse",
+  "etag": "fixture-etag-videos-chart-1",
+  "nextPageToken": "FIXTURE-CHART-NEXT-PAGE-1",
+  "pageInfo": { "totalResults": 3, "resultsPerPage": 3 },
+  "items": [
+    {
+      "kind": "youtube#video",
+      "etag": "fixture-etag-video-chart-1",
+      "id": "FIXVID00003",
+      "snippet": {
+        "publishedAt": "2025-01-10T09:00:00Z",
+        "channelId": "UCFIXCH0000000000000002",
+        "title": "Fixture: trending gadget teardown",
+        "description": "Fixture-only abridged description.",
+        "channelTitle": "Fixture Teardowns",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/FIXVID00003/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/FIXVID00003/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          }
+        },
+        "liveBroadcastContent": "none",
+        "categoryId": "28"
+      },
+      "contentDetails": { "duration": "PT8M31S", "dimension": "2d", "definition": "hd" },
+      "statistics": { "viewCount": "1048576", "likeCount": "65536", "commentCount": "4096" }
+    },
+    {
+      "kind": "youtube#video",
+      "etag": "fixture-etag-video-chart-2",
+      "id": "FIXVID00004",
+      "snippet": {
+        "publishedAt": "2025-01-11T12:00:00Z",
+        "channelId": "UCFIXCH0000000000000002",
+        "title": "Fixture: live rocket launch coverage",
+        "description": "Fixture-only abridged description.",
+        "channelTitle": "Fixture Teardowns",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/FIXVID00004/default.jpg",
+            "width": 120,
+            "height": 90
+          }
+        },
+        "liveBroadcastContent": "live"
+      },
+      "contentDetails": { "duration": "PT0S", "dimension": "2d", "definition": "hd" },
+      "statistics": { "viewCount": "524288", "likeCount": "32768", "commentCount": "2048" }
+    },
+    {
+      "kind": "youtube#video",
+      "etag": "fixture-etag-video-chart-3",
+      "id": "FIXVID00005",
+      "snippet": {
+        "publishedAt": "2024-06-01T18:45:00Z",
+        "channelId": "UCFIXCH0000000000000001",
+        "title": "Fixture: winter soil prep (chart return)",
+        "description": "Fixture-only abridged description.",
+        "channelTitle": "Fixture Channel",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/FIXVID00005/default.jpg",
+            "width": 120,
+            "height": 90
+          }
+        },
+        "liveBroadcastContent": "none"
+      },
+      "contentDetails": { "duration": "PT12M4S", "dimension": "2d", "definition": "sd" },
+      "statistics": { "viewCount": "1024", "likeCount": "64", "commentCount": "8" }
+    }
+  ]
+}

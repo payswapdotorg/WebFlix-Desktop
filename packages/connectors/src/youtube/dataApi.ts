@@ -225,6 +225,8 @@ export interface YouTubeChannelItem {
   id: string;
   snippet?: YouTubeSnippet;
   statistics?: Record<string, unknown>;
+  /** Present when part=contentDetails was requested (relatedPlaylists). */
+  contentDetails?: Record<string, unknown>;
 }
 
 export interface YouTubePlaylistItem {
@@ -434,6 +436,34 @@ export class YouTubeDataApiClient {
       });
     }
     return item;
+  }
+
+  /**
+   * Trending browse — the official `chart=mostPopular` read (videos.list;
+   * YOUTUBE-EXPAND scope row 1: "Browse/trending" from AUDIT-SOURCES §2).
+   *
+   * Quota-honest: a 1-unit read, ledger-recorded like every other call.
+   * `regionCode` selects the region's chart (official semantics: the
+   * parameter is only meaningful together with `chart`); omit it and the
+   * provider serves its default chart. Nothing is fabricated when the
+   * provider returns fewer items than requested.
+   */
+  async getTrendingVideos(
+    params: {
+      regionCode?: string;
+      videoCategoryId?: string;
+      maxResults?: number;
+      pageToken?: string;
+    } = {},
+  ): Promise<YouTubeListResponse<YouTubeVideoItem>> {
+    return this.call("videos.list", {
+      part: "snippet,contentDetails,statistics",
+      chart: "mostPopular",
+      regionCode: params.regionCode,
+      videoCategoryId: params.videoCategoryId,
+      maxResults: clampInt(params.maxResults ?? 25, 1, 50),
+      pageToken: params.pageToken,
+    });
   }
 
   async getChannel(params: {

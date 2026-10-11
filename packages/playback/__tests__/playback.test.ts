@@ -538,3 +538,60 @@ describe("plan kind exhaustiveness", () => {
     expect(describePlan(unavailable)).toBe("unavailable:unsupported:open-system-settings");
   });
 });
+
+// ---------------------------------------------------------------------------
+// YOUTUBE-EXPAND — the YouTube official-embed lane through this resolver
+// ---------------------------------------------------------------------------
+
+describe("youtube official-embed lane (YOUTUBE-EXPAND watch path)", () => {
+  // Structural twin of connectors' exported YOUTUBE_PLAYBACK_CONNECTOR
+  // (architecture-policy keeps playback from importing connectors; the two
+  // packages meet at the canonical §2.2 PlaybackPlan shape. The connectors
+  // suite asserts the constant's fields; this proves the resolver accepts
+  // that exact structural shape and emits the official-embed plan the shell
+  // WatchScreen renders).
+  const YOUTUBE_CONNECTOR: Connector = {
+    id: "youtube",
+    providerId: "youtube",
+    version: "1.0.0",
+    embed: {
+      providerId: "youtube",
+      urlTemplate: "https://www.youtube-nocookie.com/embed/{mediaId}",
+      allowsEmbedding: true,
+    },
+  };
+
+  it("resolves a youtube listing to the official privacy-enhanced embed URL", () => {
+    const plan = resolvePlaybackPlan(
+      request({
+        listings: [{ providerId: "youtube", externalId: "FIXVID00001" }],
+        connectors: [YOUTUBE_CONNECTOR],
+      }),
+    );
+    if (plan.kind !== "official-embed") {
+      throw new Error(`expected official-embed, got ${plan.kind}`);
+    }
+    expect(plan.providerId).toBe("youtube");
+    expect(plan.embedSpec.embedUrl).toBe("https://www.youtube-nocookie.com/embed/FIXVID00001");
+    expect(isPlayablePlan(plan)).toBe(true);
+  });
+
+  it("stays honest when the youtube connector is absent or embedding is disallowed", () => {
+    const noConnector = resolvePlaybackPlan(
+      request({ listings: [{ providerId: "youtube", externalId: "FIXVID00001" }] }),
+    );
+    expect(noConnector).toMatchObject({ kind: "unavailable", reason: "unsupported" });
+
+    const disallowed = resolvePlaybackPlan(
+      request({
+        listings: [{ providerId: "youtube", externalId: "FIXVID00001" }],
+        connectors: [
+          { ...YOUTUBE_CONNECTOR, embed: { ...YOUTUBE_CONNECTOR.embed!, allowsEmbedding: false } },
+        ],
+      }),
+    );
+    expect(disallowed).toMatchObject({ kind: "unavailable", reason: "unsupported" });
+    if (disallowed.kind !== "unavailable") throw new Error("unreachable");
+    expect(disallowed.recovery?.action).toBe("open-provider-app");
+  });
+});
