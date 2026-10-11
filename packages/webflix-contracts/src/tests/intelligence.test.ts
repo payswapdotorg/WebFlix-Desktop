@@ -19,6 +19,7 @@ import {
   NonEmptyArray,
   RANKING_POLICY_V1_WEIGHTS,
   RankedItem,
+  RankerAdapterSelectionSchema,
   RankingPolicySchema,
   RankingPolicyVersionSchema,
   RankingResultSchema,
@@ -63,6 +64,7 @@ describe("intelligence contract schemas", () => {
       "RankingReasonSchema",
       "RankingEmptyReasonSchema",
       "RankingResultSchema",
+      "RankerAdapterSelectionSchema",
       "DerivedArtifactKindSchema",
       "ArtifactLineageSchema",
       "DerivedArtifactSchema",
@@ -346,7 +348,7 @@ describe("intelligence contract schemas", () => {
     });
   });
 
-  it("ErrorCode carries the six MI codes and they parse through the schema", () => {
+  it("ErrorCode carries the seven MI codes and they parse through the schema", () => {
     const miCodes = [
       ErrorCode.IntelligencePolicyUnsupported,
       ErrorCode.IntelligenceObjectiveInvalid,
@@ -354,6 +356,8 @@ describe("intelligence contract schemas", () => {
       ErrorCode.IntelligenceFeedbackConflict,
       ErrorCode.IntelligenceRankingInvalid,
       ErrorCode.IntelligenceArtifactInvalid,
+      // P4-ADAPTERS (0.3.0) — the additive selection code.
+      ErrorCode.IntelligenceAdapterSelectionInvalid,
     ] as const;
     expect(miCodes).toEqual([
       "intelligence/policy-unsupported",
@@ -362,10 +366,25 @@ describe("intelligence contract schemas", () => {
       "intelligence/feedback-conflict",
       "intelligence/ranking-invalid",
       "intelligence/artifact-invalid",
+      "intelligence/adapter-selection-invalid",
     ]);
     for (const code of miCodes) {
       expect(ErrorCodeSchema.safeParse(code).success).toBe(true);
     }
+  });
+
+  it("RankerAdapterSelection round-trips and rejects empty ids / non-ISO instants (P4-ADAPTERS)", () => {
+    expectRoundTrip(RankerAdapterSelectionSchema, {
+      adapterId: "webflix.built-in-ranker",
+      selectedAt: ISO_NOW,
+    });
+    // The record is deliberately tiny: no silent defaults; empty ids and
+    // non-ISO instants are rejected (unknown keys strip, per zod house default).
+    expectRejected(RankerAdapterSelectionSchema, { adapterId: "", selectedAt: ISO_NOW });
+    expectRejected(RankerAdapterSelectionSchema, {
+      adapterId: "webflix.built-in-ranker",
+      selectedAt: "2026-10-11 08:00:00",
+    });
   });
 });
 

@@ -5,8 +5,10 @@ import { createSqliteDatabase, type SqliteDatabase } from "./db/adapter";
 import { runMigrations } from "./db/migrate";
 import { migration0001Init } from "./db/migrations/0001_init";
 import { migration0002MediaIntelligence } from "./db/migrations/0002_media_intelligence";
+import { migration0003RankerAdapterSelection } from "./db/migrations/0003_ranker_adapter_selection";
 import type { Migration } from "./db/migrate";
 import { createIntelligenceStores, type IntelligenceStores } from "./intelligence-stores";
+import { SqliteRankerSelectionStore } from "./ranker-selection-store";
 import { ValidationError } from "./errors";
 import { LocalStore, type LocalStoreOptions } from "./localStore";
 import { assertNotDefaultDataRootInTests } from "./paths";
@@ -14,6 +16,7 @@ import { assertNotDefaultDataRootInTests } from "./paths";
 export const ALL_MIGRATIONS: readonly Migration[] = [
   migration0001Init,
   migration0002MediaIntelligence,
+  migration0003RankerAdapterSelection,
 ];
 
 export interface OpenStoreOptions {
@@ -28,6 +31,7 @@ export interface OpenStoreOptions {
 
 export class WebFlixStore {
   private miStores: IntelligenceStores | undefined;
+  private rankerSelectionStore: SqliteRankerSelectionStore | undefined;
 
   constructor(
     public readonly baseDir: string,
@@ -54,6 +58,18 @@ export class WebFlixStore {
   get intelligence(): IntelligenceStores {
     this.miStores ??= createIntelligenceStores(this.db);
     return this.miStores;
+  }
+
+  /**
+   * Durable ranker-adapter selection store (P4-ADAPTERS row 2) over this
+   * profile's database — per-profile by construction (ADR-0003). Lazy and
+   * stateless: the adapter only wraps the db handle. NOT composition-root
+   * wiring — connecting it to the application selection use cases is a
+   * later order.
+   */
+  get rankerAdapterSelection(): SqliteRankerSelectionStore {
+    this.rankerSelectionStore ??= new SqliteRankerSelectionStore(this.db);
+    return this.rankerSelectionStore;
   }
 
   close(): void {

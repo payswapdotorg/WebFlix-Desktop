@@ -343,6 +343,30 @@ export interface RankerPort {
 }
 
 // ---------------------------------------------------------------------------
+// RankerAdapterSelection — the user's explicit, persistent adapter choice
+// (P4-ADAPTERS; phase4-mi-plan §6: user-selected adapters, never a hidden
+// default)
+// ---------------------------------------------------------------------------
+
+/**
+ * The per-profile ranker-adapter selection record. `adapterId` MUST be an
+ * id the active registry knows (validated by the application use case at
+ * set time; registry drift at resolve time is a documented fail-soft with
+ * this record's invalidity surfaced); `selectedAt` is the explicit
+ * provenance instant of the user action — never inferred. null / absence of
+ * a stored selection is DISTINCT from selecting the built-in: it means "no
+ * selection set", and the documented default (the built-in deterministic
+ * ranker) is then active and stated as such by the resolving use case.
+ */
+export const RankerAdapterSelectionSchema = z.object({
+  /** Registry-known adapter id (e.g. `webflix.built-in-ranker`). */
+  adapterId: z.string().min(1),
+  /** When the user made this choice (explicit provenance). */
+  selectedAt: IsoDateTimeSchema,
+});
+export type RankerAdapterSelection = z.infer<typeof RankerAdapterSelectionSchema>;
+
+// ---------------------------------------------------------------------------
 // DerivedArtifact — original/derived separation is structural
 // (phase4-mi-plan §3)
 // ---------------------------------------------------------------------------

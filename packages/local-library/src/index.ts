@@ -45,6 +45,19 @@ export { ALL_MIGRATIONS, openStore, WebFlixStore } from "./store";
 export type { OpenStoreOptions } from "./store";
 
 export { migration0002MediaIntelligence } from "./db/migrations/0002_media_intelligence";
+export { migration0003RankerAdapterSelection } from "./db/migrations/0003_ranker_adapter_selection";
+
+// Durable ranker-adapter selection store (P4-ADAPTERS row 2): the
+// per-profile selection on this package's storage seam (own mi_ranker_selection
+// table, additive migration 0003, the 0002 rules), exported for the
+// composition root (a later order wires it — the port is a structural mirror
+// of the application layer's RankerSelectionStore, per the LocalStorePort
+// precedent).
+export { SqliteRankerSelectionStore } from "./ranker-selection-store";
+export type {
+  RankerSelectionStoreOptions,
+  RankerSelectionStorePort,
+} from "./ranker-selection-store";
 
 // Durable media-intelligence stores (P4-ARTIFACTS row 1): the MI store trio
 // on this package's storage seam, exported for the composition root (a

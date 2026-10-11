@@ -5,6 +5,29 @@ TL2 approval + migration notes; additive changes bump minor with a consumer
 impact note. No CHANGELOG existed before 0.2.0 — the 0.1.0 history is the git
 log of this package (frozen §2 shapes, D2-LOCAL lane).
 
+## 0.3.0 — 2026-10-11 — ranker-adapter selection (P4-ADAPTERS)
+
+Phase-4 row 3. Adds the smallest additive surface the adapter-selection
+foundation needs: one appended error code and the persisted selection
+record. Frozen §2.1–2.6 module files untouched; the §2.7 intelligence
+module gains one appended section only. Consumer impact: none on existing
+consumers (purely additive; no existing export changed shape).
+
+### Added
+
+- `src/intelligence.ts` (ADDITIVE section, after `RankerPort`):
+  - `RankerAdapterSelection` (+ `RankerAdapterSelectionSchema`) — the
+    per-profile record of the user's explicit, persistent ranker-adapter
+    choice: `adapterId` (registry-known, validated at set time by the
+    application use case) + `selectedAt` (explicit provenance instant,
+    never inferred). Absence of a stored selection is DISTINCT from
+    selecting the built-in adapter — it means "no selection set", with the
+    documented built-in default then active and stated as such.
+- `src/errors.ts`: `ErrorCode.IntelligenceAdapterSelectionInvalid`
+  (`intelligence/adapter-selection-invalid`) appended to the additive-only
+  enum — carried by the set-time unknown-id rejection, the resolve-time
+  registry-drift fail-soft reason, and corrupt persisted selection rows.
+
 ## 0.2.0 — 2026-10-11 — media-intelligence contract module (P4-CONTRACTS)
 
 Phase 4 opener. Adds the media-intelligence shapes the later Phase-4 orders

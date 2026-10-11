@@ -251,19 +251,28 @@ describe("durable MI stores (sqlite seam, temp dirs)", () => {
   // -------------------------------------------------------------------------
 
   describe("migration honesty (0002_media_intelligence)", () => {
-    it("a fresh store records both migrations and creates the mi_* tables", async () => {
+    it("a fresh store records all migrations and creates the mi_* tables", async () => {
       const store = await open(dir);
       const rows = store.db.prepare("SELECT id, name FROM schema_migrations ORDER BY id").all();
-      expect(rows).toHaveLength(2);
+      // P4-ADAPTERS row 2 appended 0003_ranker_adapter_selection — the set
+      // is [0001, 0002, 0003] now (honest pin update, the 2→3 precedent of
+      // P4-ARTIFACTS' 1→2).
+      expect(rows).toHaveLength(3);
       expect(rows[0]["name"]).toBe("0001_init");
       expect(rows[1]["name"]).toBe("0002_media_intelligence");
+      expect(rows[2]["name"]).toBe("0003_ranker_adapter_selection");
       const tables = store.db
         .prepare(
           "SELECT name FROM sqlite_master WHERE type = 'table' AND name LIKE 'mi_%' ORDER BY name",
         )
         .all()
         .map((row) => String(row["name"]));
-      expect(tables).toEqual(["mi_derived_artifacts", "mi_feedback_events", "mi_objectives"]);
+      expect(tables).toEqual([
+        "mi_derived_artifacts",
+        "mi_feedback_events",
+        "mi_objectives",
+        "mi_ranker_selection",
+      ]);
     });
 
     it("a pre-0002 store file (0001 only, mi tables absent) migrates honestly on reopen — library data intact", async () => {
@@ -282,7 +291,7 @@ describe("durable MI stores (sqlite seam, temp dirs)", () => {
 
       const reopened = await open(dir);
       const rows = reopened.db.prepare("SELECT id, name FROM schema_migrations ORDER BY id").all();
-      expect(rows).toHaveLength(2);
+      expect(rows).toHaveLength(3);
       // Pre-existing library data survived the additive migration untouched.
       expect(reopened.local.listLibraryEntries()).toHaveLength(1);
       // The MI stores are immediately usable on the migrated file.
@@ -297,7 +306,7 @@ describe("durable MI stores (sqlite seam, temp dirs)", () => {
       second.close();
       const third = await open(dir);
       const count = third.db.prepare("SELECT COUNT(*) AS n FROM schema_migrations").get();
-      expect(Number(count?.["n"])).toBe(2);
+      expect(Number(count?.["n"])).toBe(3);
     });
   });
 

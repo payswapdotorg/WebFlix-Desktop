@@ -30,7 +30,8 @@ export * from "./jobs";
 
 // Intelligence (Phase 4, P4-CONTRACTS): UserObjective, FeedbackEvent, LibraryFact,
 // RankingPolicy (+ canonical v1 weights), RankedItem/RankingResult, DerivedArtifact,
-// RankerPort. ADDITIVE per §3 — frozen §2.1–2.6 untouched.
+// RankerPort. P4-ADAPTERS appended RankerAdapterSelection (0.3.0). ADDITIVE per
+// §3 — frozen §2.1–2.6 untouched.
 export * from "./intelligence";
 
 // Errors: ErrorCode, WebFlixError.

@@ -29,6 +29,13 @@ export * from "./run-indexing-job";
 // all come from the domain package now.
 export * from "./in-memory-intelligence-stores";
 export * from "./built-in-ranker";
+// P4-ADAPTERS row 1: the ranker-adapter registry (static default seeded
+// with exactly one entry — the built-in v1) and the selection use cases
+// (set/clear validate registry-known ids; resolveSelectedRanker returns the
+// active adapter with honest resolution metadata — default, selected, or
+// fail-soft fallback with the typed error surfaced).
+export * from "./ranker-adapter-registry";
+export * from "./ranker-adapter-selection";
 export * from "./set-objectives";
 export * from "./record-feedback";
 export * from "./generate-recommendations";

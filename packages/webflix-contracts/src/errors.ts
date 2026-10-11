@@ -31,6 +31,10 @@ export enum ErrorCode {
   IntelligenceFeedbackConflict = "intelligence/feedback-conflict",
   IntelligenceRankingInvalid = "intelligence/ranking-invalid",
   IntelligenceArtifactInvalid = "intelligence/artifact-invalid",
+  // P4-ADAPTERS: the ranker-adapter SELECTION is invalid — unknown adapter
+  // id at set time (caller defect), registry drift at resolve time, or a
+  // corrupt persisted selection row. Appended per the additive-only rule.
+  IntelligenceAdapterSelectionInvalid = "intelligence/adapter-selection-invalid",
   // cross-cutting
   RateLimited = "common/rate-limited",
   Network = "common/network",
