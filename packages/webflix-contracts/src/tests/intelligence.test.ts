@@ -31,6 +31,16 @@ import {
   TranscriptionRequestSchema,
   TranscriptionResultSchema,
   UserObjectiveSchema,
+  OverviewChapterSchema,
+  OverviewRequestSchema,
+  OverviewResultSchema,
+  QaAnswerSchema,
+  QaRequestSchema,
+  QaSpanSchema,
+  SummaryEngineDescriptorSchema,
+  SummaryRequestSchema,
+  SummaryResultSchema,
+  SummarySentenceSchema,
 } from "../index";
 import type { RankedItem as RankedItemType } from "../index";
 
@@ -77,6 +87,14 @@ describe("intelligence contract schemas", () => {
       "TranscriptionRequestSchema",
       "TranscriptSegmentSchema",
       "TranscriptionResultSchema",
+      // P4-SUMMARIZE (0.5.0) — the text-intelligence seam's value surface.
+      "SummaryEngineDescriptorSchema",
+      "SummaryRequestSchema",
+      "SummaryResultSchema",
+      "OverviewRequestSchema",
+      "OverviewResultSchema",
+      "QaRequestSchema",
+      "QaAnswerSchema",
     ];
     for (const name of miValueExports) {
       expect(contracts, `missing MI export: ${name}`).toHaveProperty(name);
@@ -357,7 +375,7 @@ describe("intelligence contract schemas", () => {
     });
   });
 
-  it("ErrorCode carries the ten MI codes and they parse through the schema", () => {
+  it("ErrorCode carries the twelve MI codes and they parse through the schema", () => {
     const miCodes = [
       ErrorCode.IntelligencePolicyUnsupported,
       ErrorCode.IntelligenceObjectiveInvalid,
@@ -371,6 +389,9 @@ describe("intelligence contract schemas", () => {
       ErrorCode.IntelligenceTranscriptionInvalid,
       ErrorCode.IntelligenceEngineUnavailable,
       ErrorCode.IntelligenceEngineFailed,
+      // P4-SUMMARIZE (0.5.0) — the additive text-intelligence lane codes.
+      ErrorCode.IntelligenceSummaryInvalid,
+      ErrorCode.IntelligenceTranscriptPayloadAbsent,
     ] as const;
     expect(miCodes).toEqual([
       "intelligence/policy-unsupported",
@@ -383,12 +404,15 @@ describe("intelligence contract schemas", () => {
       "intelligence/transcription-invalid",
       "intelligence/engine-unavailable",
       "intelligence/engine-failed",
+      "intelligence/summary-invalid",
+      "intelligence/transcript-payload-absent",
     ]);
     for (const code of miCodes) {
       expect(ErrorCodeSchema.safeParse(code).success).toBe(true);
     }
     // Typed cancellation reuses the cross-cutting common/cancelled — the
-    // transcription lane deliberately adds NO cancelled code of its own.
+    // transcription and text-intelligence lanes deliberately add NO
+    // cancelled code of their own.
     expect(ErrorCode.Cancelled).toBe("common/cancelled");
   });
 
@@ -533,6 +557,176 @@ describe("intelligence contract schemas", () => {
     expectRejected(TranscriptionResultSchema, {
       segments: [],
       engineVersion: "   ",
+    });
+  });
+
+  it("SummaryEngineDescriptor round-trips honest lineage and rejects blanks (P4-SUMMARIZE)", () => {
+    // Fully populated: adapter identity + every model-reported fact present.
+    expectRoundTrip(SummaryEngineDescriptorSchema, {
+      id: "webflix.built-in-summary-engine",
+      label: "Built-in extractive engine (deterministic)",
+      version: "0.1.0",
+      licenseNote: null,
+    });
+    // An adapter wrapping an external model: identity ours, lineage honestly
+    // read from the model's own output, license note carried.
+    expectRoundTrip(SummaryEngineDescriptorSchema, {
+      id: "webflix.some-model-adapter",
+      label: "Some local model (user-selected)",
+      version: "0.2.1",
+      engineVersion: "2.0.7",
+      modelLineage: "some-model-instruct-v2",
+      licenseNote: "check the model license before redistribution",
+    });
+    // Blank identity fields are caller defects (trim-then-min(1)).
+    expectRejected(SummaryEngineDescriptorSchema, {
+      id: "  ",
+      label: "x",
+      version: "0.1.0",
+      licenseNote: null,
+    });
+    expectRejected(SummaryEngineDescriptorSchema, {
+      id: "webflix.built-in-summary-engine",
+      label: "Built-in extractive engine (deterministic)",
+      version: "",
+      licenseNote: null,
+    });
+    // An EMPTY engineVersion is an absent fact reported as "" — blank, rejected.
+    expectRejected(SummaryEngineDescriptorSchema, {
+      id: "webflix.built-in-summary-engine",
+      label: "Built-in extractive engine (deterministic)",
+      version: "0.1.0",
+      engineVersion: "",
+      licenseNote: null,
+    });
+  });
+
+  it("SummaryRequest/Result round-trip source-ordered sentences and reject citation defects (P4-SUMMARIZE)", () => {
+    const segments = [
+      { startMs: 0, endMs: 1500, text: "hello" },
+      { startMs: 1500, endMs: 3000, text: "brave world" },
+    ];
+    expectRoundTrip(SummaryRequestSchema, { segments });
+    // The honest empty request: a no-speech transcript.
+    expectRoundTrip(SummaryRequestSchema, { segments: [] });
+    // Bad segments are rejected through composition.
+    expectRejected(SummaryRequestSchema, { segments: [{ startMs: 500, endMs: 100, text: "x" }] });
+
+    expectRoundTrip(SummaryResultSchema, {
+      sentences: [
+        { text: "brave world", segmentIndex: 1, startMs: 1500, endMs: 3000 },
+        { text: "hello", segmentIndex: 0, startMs: 0, endMs: 1500 },
+      ],
+    });
+    // The honest empty summary is representable (never an error upstream).
+    expectRoundTrip(SummaryResultSchema, { sentences: [] });
+    // Quote discipline at the schema floor: blank sentence text is a defect.
+    expectRejected(SummaryResultSchema, {
+      sentences: [{ text: "   ", segmentIndex: 0, startMs: 0, endMs: 1500 }],
+    });
+    // Negative citations / fractional ms are defects.
+    expectRejected(SummaryResultSchema, {
+      sentences: [{ text: "x", segmentIndex: -1, startMs: 0, endMs: 1500 }],
+    });
+    expectRejected(SummaryResultSchema, {
+      sentences: [{ text: "x", segmentIndex: 0, startMs: 0.5, endMs: 1500 }],
+    });
+    // Padded sentence text normalizes to the trimmed canonical form.
+    expect(
+      SummaryResultSchema.parse({
+        sentences: [{ text: " hi ", segmentIndex: 0, startMs: 0, endMs: 1500 }],
+      }),
+    ).toEqual({ sentences: [{ text: "hi", segmentIndex: 0, startMs: 0, endMs: 1500 }] });
+    // The sentence schema is exported surface too.
+    expectRoundTrip(SummarySentenceSchema, {
+      text: "hello",
+      segmentIndex: 0,
+      startMs: 0,
+      endMs: 1500,
+    });
+  });
+
+  it("OverviewRequest/Result round-trip timeline chapters and reject range defects (P4-SUMMARIZE)", () => {
+    expectRoundTrip(OverviewRequestSchema, {
+      segments: [{ startMs: 0, endMs: 1500, text: "hello" }],
+    });
+    expectRoundTrip(OverviewRequestSchema, { segments: [] });
+
+    expectRoundTrip(OverviewResultSchema, {
+      chapters: [
+        { title: "deployment · testing", startMs: 0, endMs: 300000, segmentCount: 10 },
+        { title: "chapter 2", startMs: 300000, endMs: 600000, segmentCount: 8 },
+      ],
+    });
+    expectRoundTrip(OverviewResultSchema, { chapters: [] });
+    expectRejected(OverviewResultSchema, {
+      chapters: [{ title: "", startMs: 0, endMs: 300000, segmentCount: 10 }],
+    });
+    expectRejected(OverviewResultSchema, {
+      chapters: [{ title: "   ", startMs: 0, endMs: 300000, segmentCount: 10 }],
+    });
+    // endMs < startMs is a range defect (the TranscriptSegment rule).
+    expectRejected(OverviewResultSchema, {
+      chapters: [{ title: "x", startMs: 300000, endMs: 0, segmentCount: 10 }],
+    });
+    // An empty chapter is never emitted — segmentCount >= 1.
+    expectRejected(OverviewResultSchema, {
+      chapters: [{ title: "x", startMs: 0, endMs: 300000, segmentCount: 0 }],
+    });
+    expectRejected(OverviewResultSchema, {
+      chapters: [{ title: "x", startMs: 0, endMs: 300000, segmentCount: 1.5 }],
+    });
+    expectRoundTrip(OverviewChapterSchema, {
+      title: "deployment",
+      startMs: 0,
+      endMs: 0,
+      segmentCount: 1,
+    });
+  });
+
+  it("QaRequest/QaAnswer round-trip quoted spans and enforce the blank-question floor (P4-SUMMARIZE)", () => {
+    const segments = [
+      { startMs: 0, endMs: 1500, text: "the deployment failed on staging" },
+      { startMs: 1500, endMs: 3000, text: "we rolled back the database" },
+    ];
+    expectRoundTrip(QaRequestSchema, { segments, question: "what happened to the deployment?" });
+    expectRejected(QaRequestSchema, { segments, question: "" });
+    // Whitespace-only questions are BLANKS (trim-then-min(1)).
+    expectRejected(QaRequestSchema, { segments, question: "   " });
+    expectRejected(QaRequestSchema, { segments });
+    // Padded questions normalize to the trimmed canonical form.
+    expect(QaRequestSchema.parse({ segments, question: " why? " })).toEqual({
+      segments,
+      question: "why?",
+    });
+
+    expectRoundTrip(QaAnswerSchema, {
+      spans: [
+        {
+          quote: "the deployment failed on staging",
+          segmentIndex: 0,
+          startMs: 0,
+          endMs: 1500,
+        },
+      ],
+    });
+    // The honest no-match answer is the EMPTY span list — representable,
+    // and there is NO free-text field to fabricate an answer into.
+    expectRoundTrip(QaAnswerSchema, { spans: [] });
+    expectRejected(QaAnswerSchema, {
+      spans: [{ quote: "", segmentIndex: 0, startMs: 0, endMs: 1500 }],
+    });
+    expectRejected(QaAnswerSchema, {
+      spans: [{ quote: "  ", segmentIndex: 0, startMs: 0, endMs: 1500 }],
+    });
+    expectRejected(QaAnswerSchema, {
+      spans: [{ quote: "x", segmentIndex: -1, startMs: 0, endMs: 1500 }],
+    });
+    expectRoundTrip(QaSpanSchema, {
+      quote: "we rolled back the database",
+      segmentIndex: 1,
+      startMs: 1500,
+      endMs: 3000,
     });
   });
 });

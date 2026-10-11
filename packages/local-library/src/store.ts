@@ -6,9 +6,11 @@ import { runMigrations } from "./db/migrate";
 import { migration0001Init } from "./db/migrations/0001_init";
 import { migration0002MediaIntelligence } from "./db/migrations/0002_media_intelligence";
 import { migration0003RankerAdapterSelection } from "./db/migrations/0003_ranker_adapter_selection";
+import { migration0004TranscriptPayloads } from "./db/migrations/0004_transcript_payloads";
 import type { Migration } from "./db/migrate";
 import { createIntelligenceStores, type IntelligenceStores } from "./intelligence-stores";
 import { SqliteRankerSelectionStore } from "./ranker-selection-store";
+import { SqliteTranscriptPayloadStore } from "./transcript-payload-store";
 import { ValidationError } from "./errors";
 import { LocalStore, type LocalStoreOptions } from "./localStore";
 import { assertNotDefaultDataRootInTests } from "./paths";
@@ -17,6 +19,7 @@ export const ALL_MIGRATIONS: readonly Migration[] = [
   migration0001Init,
   migration0002MediaIntelligence,
   migration0003RankerAdapterSelection,
+  migration0004TranscriptPayloads,
 ];
 
 export interface OpenStoreOptions {
@@ -32,6 +35,7 @@ export interface OpenStoreOptions {
 export class WebFlixStore {
   private miStores: IntelligenceStores | undefined;
   private rankerSelectionStore: SqliteRankerSelectionStore | undefined;
+  private transcriptPayloadStore: SqliteTranscriptPayloadStore | undefined;
 
   constructor(
     public readonly baseDir: string,
@@ -70,6 +74,18 @@ export class WebFlixStore {
   get rankerAdapterSelection(): SqliteRankerSelectionStore {
     this.rankerSelectionStore ??= new SqliteRankerSelectionStore(this.db);
     return this.rankerSelectionStore;
+  }
+
+  /**
+   * Durable transcript payload store (P4-SUMMARIZE row 1) over this
+   * profile's database — per-profile by construction (ADR-0003). Lazy and
+   * stateless: the adapter only wraps the db handle. NOT composition-root
+   * wiring — connecting it to the mi.transcribe amendment and the
+   * text-intelligence use cases is a later order.
+   */
+  get transcriptPayloads(): SqliteTranscriptPayloadStore {
+    this.transcriptPayloadStore ??= new SqliteTranscriptPayloadStore(this.db);
+    return this.transcriptPayloadStore;
   }
 
   close(): void {

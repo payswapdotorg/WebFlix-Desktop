@@ -42,6 +42,19 @@
  *   returns. Empty segments is SUCCESS (the honest "no speech" outcome)
  *   and still records an artifact — an engine that ran and reported no
  *   speech produced a real (empty) transcript.
+ * - PAYLOAD PERSISTED ON SUCCESS (the P4-SUMMARIZE amendment, sanctioned
+ *   by that order — it resolves this pipeline's recorded adjacency): the
+ *   engine's segments are ALSO persisted through the TranscriptPayloadStore
+ *   keyed by the new artifact id (segments + FNV-1a checksum), so downstream
+ *   consumers (mi.summarize / mi.overview / mi.qa) read STORED transcripts
+ *   without re-transcribing. CANCELLED and FAILED runs persist NOTHING —
+ *   unchanged. Ordering, documented: the artifact id is generated UPFRONT,
+ *   the payload is put BEFORE the descriptor is created, so a payload put
+ *   failure stamps the job failed with NO artifact and NO payload; a
+ *   descriptor-creation failure after a successful put leaves the payload
+ *   row keyed by an id no descriptor references — a harmless orphan (get
+ *   by that id resolves; nothing lists it; the id is never reused). The
+ *   ORIGINAL catalog item is still never touched.
  * - Inputs validated BEFORE the job exists (the generate-recommendations
  *   precedent): a bad request shape or an unknown source item is a CALLER
  *   DEFECT (typed IntelligenceTranscriptionInvalid), never a job failure.
@@ -61,8 +74,9 @@ import type {
   TranscriptionResult,
 } from "webflix-contracts";
 import { parseOrThrow, transitionJob } from "webflix-domain";
-import type { ArtifactRegistry, ClockPort, IdGenerator } from "./ports";
+import type { ArtifactRegistry, ClockPort, IdGenerator, TranscriptPayloadStore } from "./ports";
 import { DeriveArtifactBookkeeping } from "./derive-artifact-bookkeeping";
+import { transcriptPayloadChecksum } from "./transcript-payload";
 
 export const TRANSCRIBE_JOB_KIND = "mi.transcribe";
 
@@ -98,6 +112,8 @@ export interface TranscribeMediaFileDeps {
   /** The engine adapter to run (fixture double in tests; the local whisper adapter in production wiring). */
   readonly engine: TranscriptionEnginePort;
   readonly registry: ArtifactRegistry;
+  /** The transcript payload store (P4-SUMMARIZE amendment: success persists the payload). */
+  readonly payloadStore: TranscriptPayloadStore;
   readonly clock: ClockPort;
   readonly generateId: IdGenerator;
 }
@@ -228,14 +244,31 @@ export class TranscribeMediaFile {
       });
     }
 
-    // 5. Success: create the DerivedArtifact kind=transcript through the
-    //    durable registry with full lineage; job succeeded.
+    // 5. Success: persist the transcript PAYLOAD first (the P4-SUMMARIZE
+    //    amendment — downstream text-intelligence reads stored transcripts),
+    //    keyed by the artifact id generated UPFRONT so the descriptor and the
+    //    payload share it; a put failure stamps the job failed with NO
+    //    artifact and NO payload (the ordering note in the module doc).
+    const artifactId = this.deps.generateId();
+    try {
+      await this.deps.payloadStore.put({
+        artifactId,
+        segments: result.segments,
+        checksum: transcriptPayloadChecksum(result.segments),
+      });
+    } catch (err) {
+      throw transcribeJobFailure(this.deps, running, err);
+    }
+
+    // 6. Create the DerivedArtifact kind=transcript through the durable
+    //    registry with full lineage; job succeeded.
     const bookkeeping = new DeriveArtifactBookkeeping({
       registry: this.deps.registry,
       clock: this.deps.clock,
       generateId: this.deps.generateId,
     });
     const artifact = await bookkeeping.create({
+      id: artifactId,
       sourceItemId: input.sourceItemId,
       kind: "transcript",
       lineage: {
@@ -280,6 +313,28 @@ export class TranscribeJobError extends WebFlixError {
     this.job = init.job;
     this.cause = init.cause;
   }
+}
+
+/**
+ * Stamps the running job FAILED and wraps the error in a TranscribeJobError
+ * — the payload-put failure path of the P4-SUMMARIZE amendment (a failed
+ * put means NO artifact and NO payload; the typed cause rethrows intact).
+ */
+function transcribeJobFailure(
+  deps: TranscribeMediaFileDeps,
+  running: JobDescriptor,
+  err: unknown,
+): TranscribeJobError {
+  const described = describeEngineError(err);
+  const failed = expectTransitioned(
+    transitionJob(running, "failed", deps.clock.now().toISOString()),
+    "running -> failed",
+    ErrorCode.IntelligenceTranscriptionInvalid,
+  );
+  return new TranscribeJobError({
+    job: { ...failed, lastError: described.text },
+    cause: asWebFlixErrorOrWrap(err),
+  });
 }
 
 /**

@@ -53,3 +53,18 @@ export * from "./derive-artifact-bookkeeping";
 // this path.
 export * from "./transcribe-media-file";
 export * from "./fixture-replay-engine";
+// P4-SUMMARIZE: the text-intelligence producers. The transcript payload
+// record + checksum (and its port, in ./ports.ts) resolve the P4-TRANSCRIBE
+// recorded adjacency; mi.transcribe now persists the payload on success
+// (the sanctioned amendment above). The built-in extractive engine is
+// DETERMINISTIC, pure, local (no model, no network, no generative text);
+// the fixture-replay summary engine is its DETERMINISTIC TEST DOUBLE; and
+// mi.summarize / mi.overview / mi.qa ride the frozen §2.6 wrapper with
+// lineage (webflix.extractive.v1 via webflix.built-in-summary-engine) and
+// the source transcript artifact never mutated. The DURABLE payload store
+// lives on the local-library seam (migration 0004) — a later order wires
+// the composition root.
+export * from "./transcript-payload";
+export * from "./built-in-summary-engine";
+export * from "./fixture-replay-summary-engine";
+export * from "./mi-text-intelligence";

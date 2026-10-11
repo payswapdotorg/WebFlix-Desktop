@@ -46,6 +46,21 @@ export type { OpenStoreOptions } from "./store";
 
 export { migration0002MediaIntelligence } from "./db/migrations/0002_media_intelligence";
 export { migration0003RankerAdapterSelection } from "./db/migrations/0003_ranker_adapter_selection";
+export { migration0004TranscriptPayloads } from "./db/migrations/0004_transcript_payloads";
+
+// Durable transcript payload store (P4-SUMMARIZE row 1): the transcript
+// segment payloads keyed by their transcript artifact id, on this package's
+// storage seam (own mi_transcript_payloads table, additive migration 0004,
+// the 0002/0003 rules), exported for the composition root (a later order
+// wires it — the port is a structural mirror of the application layer's
+// TranscriptPayloadStore, per the LocalStorePort precedent; the FNV-1a
+// checksum is a mirrored-and-test-pinned algorithm, see the module doc).
+export { SqliteTranscriptPayloadStore } from "./transcript-payload-store";
+export type {
+  TranscriptPayload,
+  TranscriptPayloadStoreOptions,
+  TranscriptPayloadStorePort,
+} from "./transcript-payload-store";
 
 // Durable ranker-adapter selection store (P4-ADAPTERS row 2): the
 // per-profile selection on this package's storage seam (own mi_ranker_selection

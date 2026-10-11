@@ -23,7 +23,7 @@ Scope rows:
 
 1. **Transcript payload persistence (the P4-TRANSCRIBE adjacency)**:
    a durable `TranscriptPayloadStore` (local-library, migration 0004
-   per the 0002/0003 rules — OWN mi_* table, canonical JSON columns,
+   per the 0002/0003 rules — OWN mi\_\* table, canonical JSON columns,
    per-profile structural isolation, no FK into originals); `put` keyed
    by transcript artifact id (segments + a payload checksum), `get`
    returns segments or a typed absent error. AMEND `mi.transcribe`

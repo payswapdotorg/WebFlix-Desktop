@@ -5,6 +5,60 @@ TL2 approval + migration notes; additive changes bump minor with a consumer
 impact note. No CHANGELOG existed before 0.2.0 — the 0.1.0 history is the git
 log of this package (frozen §2 shapes, D2-LOCAL lane).
 
+## 0.5.0 — 2026-10-11 — text-intelligence engine seam (P4-SUMMARIZE)
+
+Phase-4 row 5. Adds the summary/overview/Q&A engine port + the six
+request/result schemas + the two genuinely-needed MI error codes. Frozen
+§2.1–2.6 module files untouched; the §2.7 intelligence module gains one
+appended section only. Consumer impact: none on existing consumers (purely
+additive; no existing export changed shape).
+
+### Added
+
+- `src/intelligence.ts` (ADDITIVE section, after `TranscriptionEnginePort`):
+  - `SummaryEngineDescriptor` (+ schema) — the text-intelligence adapter
+    identity, same honesty rules as the transcription descriptor: our
+    adapter's id/label/version always known; optional `engineVersion` /
+    `modelLineage` read from an external model's own output when reported,
+    ABSENT otherwise (never guessed); `licenseNote` (null for the built-in —
+    it is our own deterministic code, no external model license applies).
+  - `SummaryRequest` / `OverviewRequest` (+ schemas) — the STORED transcript
+    segments (engines are pure over segments; the calling use case resolves
+    the payload from the transcript-payload store). Empty segments is the
+    honest "no speech" transcript — every operation returns its honest
+    empty result over it.
+  - `SummaryResult` (+ `SummarySentence` + schemas) — the selected sentences
+    in SOURCE order, each a VERBATIM excerpt of its source segment's text
+    with a citation (segment index + [startMs, endMs) range).
+  - `OverviewResult` (+ `OverviewChapter` + schemas) — timeline chapters in
+    transcript order: contiguous time-ranged sections titled by dominant
+    terms, each citing its segment count; `endMs < startMs` rejected.
+  - `QaRequest` / `QaAnswer` (+ `QaSpan` + schemas) — the answer IS the
+    QUOTED spans: the `QaAnswer` shape deliberately has NO free-text answer
+    field, so quote discipline is STRUCTURAL (no generative wording can be
+    represented). Empty spans is the honest "no segment matched" outcome.
+  - `SummaryEngineProgress` + `SummaryEngineOptions` + `SummaryEnginePort`
+    (interfaces, the port seam) — summarize/overview/answer methods over one
+    seam with cooperative cancellation (signal checked at entry AND between
+    units; a thrown onProgress callback is a stop request) and the binding
+    implementation rules: quote discipline (inventing wording outside the
+    source quotes is a defect), extraction over the given segments only
+    (pure — no storage, no network, no model files), honest empties. The
+    BUILT-IN implementation is fully deterministic (corpus-pinned); a later
+    user-selected model adapter honestly is not and says so through its
+    lineage — never a hidden default LLM.
+- `src/errors.ts`: two codes appended to the additive-only enum —
+  `intelligence/summary-invalid` (mi.summarize / mi.overview / mi.qa caller
+  defects: blank ids or questions, bad request shapes, referenced artifacts
+  that are not transcripts) and `intelligence/transcript-payload-absent`
+  (a transcript artifact exists but its segment payload was never persisted
+  — typed, surfaced, re-transcription as the recovery; never hidden, never
+  an empty substitute). Typed cancellation reuses the existing
+  `common/cancelled`: no new code needed for it.
+- Anti-blank normalization: every string field the section adds uses
+  trim-then-min(1) — a whitespace-only question / sentence text / span
+  quote / chapter title is a BLANK and is rejected.
+
 ## 0.4.0 — 2026-10-11 — transcription-engine seam (P4-TRANSCRIBE)
 
 Phase-4 row 4. Adds the LOCAL transcription-engine port + the request /

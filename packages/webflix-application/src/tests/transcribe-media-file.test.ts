@@ -37,8 +37,10 @@ import {
   ENGINE_UNAVAILABLE_RECOVERY_HINT,
   FixtureReplayTranscriptionEngine,
   InMemoryArtifactRegistry,
+  InMemoryTranscriptPayloadStore,
   TranscribeMediaFile,
   TRANSCRIBE_JOB_KIND,
+  transcriptPayloadChecksum,
 } from "../index";
 import type { ClockPort } from "../ports";
 import type { FixtureReplayScript } from "../index";
@@ -83,13 +85,15 @@ function sequenceIds(prefix = "id"): () => string {
 function makeHarness(script: FixtureReplayScript) {
   const engine = new FixtureReplayTranscriptionEngine(script);
   const registry = new InMemoryArtifactRegistry();
+  const payloads = new InMemoryTranscriptPayloadStore();
   const useCase = new TranscribeMediaFile({
     engine,
     registry,
+    payloadStore: payloads,
     clock: new FakeClock(),
     generateId: sequenceIds(),
   });
-  return { engine, registry, useCase };
+  return { engine, registry, payloads, useCase };
 }
 
 async function expectWebFlixErrorAsync(
@@ -265,6 +269,7 @@ describe("TranscribeMediaFile (mi.transcribe — the transcript artifact pipelin
     const useCase = new TranscribeMediaFile({
       engine: unavailableEngine,
       registry,
+      payloadStore: new InMemoryTranscriptPayloadStore(),
       clock: new FakeClock(),
       generateId: sequenceIds(),
     });
@@ -423,5 +428,89 @@ describe("TranscribeMediaFile (mi.transcribe — the transcript artifact pipelin
     expect(Object.keys(record.lineage).sort()).toEqual(
       ["generatedAt", "inputsHash", "modelId", "modelVersion", "producedBy"].sort(),
     );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// The P4-SUMMARIZE amendment: transcript payload persisted on SUCCESS ONLY
+// -------------------------------------------------------------------------
+describe("TranscribeMediaFile payload persistence (the P4-SUMMARIZE amendment)", () => {
+  it("a successful run ALSO persists the payload keyed by the artifact id (segments + checksum)", async () => {
+    const { payloads, useCase } = makeHarness({ segments: SEGMENTS });
+    const { artifact } = await useCase.execute(standardInput());
+
+    expect(artifact).not.toBeNull();
+    const stored = await payloads.get(artifact?.id as string);
+    expect(stored.segments).toEqual(SEGMENTS);
+    expect(stored.checksum).toBe(transcriptPayloadChecksum(SEGMENTS));
+    expect(stored.artifactId).toBe(artifact?.id);
+  });
+
+  it("the empty-segments honest success persists its (empty) payload too", async () => {
+    const { payloads, useCase } = makeHarness({ segments: [] });
+    const { artifact, result } = await useCase.execute(standardInput());
+
+    expect(artifact).not.toBeNull();
+    expect(result?.segments).toEqual([]);
+    const stored = await payloads.get(artifact?.id as string);
+    expect(stored.segments).toEqual([]);
+    expect(stored.checksum).toBe(transcriptPayloadChecksum([]));
+  });
+
+  it("the payload checksum is deterministic: same segments => same stored checksum", async () => {
+    const first = makeHarness({ segments: SEGMENTS });
+    const second = makeHarness({ segments: SEGMENTS });
+    const one = await first.useCase.execute(standardInput());
+    const two = await second.useCase.execute(standardInput());
+    const payloadOne = await first.payloads.get(one.artifact?.id as string);
+    const payloadTwo = await second.payloads.get(two.artifact?.id as string);
+    expect(payloadOne.checksum).toBe(payloadTwo.checksum);
+  });
+
+  it("a boundary-cancelled run persists NOTHING (no artifact, no payload)", async () => {
+    const { registry, payloads, useCase } = makeHarness({ segments: SEGMENTS });
+    const controller = new AbortController();
+    controller.abort();
+    const { job, artifact } = await useCase.execute(standardInput({ signal: controller.signal }));
+
+    expect(job.state).toBe("cancelled");
+    expect(artifact).toBeNull();
+    expect(await registry.list()).toHaveLength(0);
+    await expect(payloads.get("any-id")).rejects.toMatchObject({
+      code: ErrorCode.IntelligenceTranscriptPayloadAbsent,
+    });
+  });
+
+  it("a mid-run-cancelled run persists NOTHING (partials discarded)", async () => {
+    const { registry, payloads, useCase } = makeHarness({ segments: SEGMENTS });
+    const controller = new AbortController();
+    const pending = useCase.execute(standardInput({ signal: controller.signal }));
+    // Deterministic microtask ordering (the cancellation suite's pinned
+    // pattern): the abort lands between segment 1 and segment 2.
+    queueMicrotask(() => controller.abort());
+    const output = await pending;
+
+    expect(output.job.state).toBe("cancelled");
+    expect(output.artifact).toBeNull();
+    expect(await registry.list()).toHaveLength(0);
+    // The payload store is EMPTY — nothing was persisted.
+    await expect(payloads.get("any-id")).rejects.toMatchObject({
+      code: ErrorCode.IntelligenceTranscriptPayloadAbsent,
+    });
+  });
+
+  it("a failed run persists NOTHING (engine-failed: no artifact, no payload)", async () => {
+    const { registry, payloads, useCase } = makeHarness({
+      segments: SEGMENTS,
+      failAfterSegments: 1,
+    });
+    await expect(useCase.execute(standardInput())).rejects.toMatchObject({
+      code: ErrorCode.IntelligenceEngineFailed,
+    });
+
+    expect(await registry.list()).toHaveLength(0);
+    await expect(payloads.get("any-id")).rejects.toMatchObject({
+      code: ErrorCode.IntelligenceTranscriptPayloadAbsent,
+    });
   });
 });

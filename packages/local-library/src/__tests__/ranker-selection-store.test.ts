@@ -161,7 +161,7 @@ describe("durable ranker-adapter selection store (sqlite seam, temp dirs)", () =
   // Honest migration of pre-0003 store files
   // -------------------------------------------------------------------------
 
-  it("a pre-0003 store file (0001+0002 only) applies 0003 additively on its next open — library data intact, no selection yet", async () => {
+  it("a pre-0003 store file (0001+0002 only) applies the later additive migrations on its next open — library data intact, no selection yet", async () => {
     // Build an old-generation store by hand: run ONLY migrations 0001+0002.
     const raw = await createSqliteDatabase(join(dir, "webflix.db"));
     runMigrations(raw, [migration0001Init, migration0002MediaIntelligence], AS_OF_MS);
@@ -171,8 +171,9 @@ describe("durable ranker-adapter selection store (sqlite seam, temp dirs)", () =
     raw.prepare("INSERT INTO _old_gen_probe (id, note) VALUES (1, 'pre-0003 data')").run();
     raw.close();
 
-    // Open through the normal path: 0003 applies, the probe table survives
-    // untouched (additive-only), and there is no selection (never-set).
+    // Open through the normal path: 0003 AND 0004 (P4-SUMMARIZE appended
+    // it) apply additively, the probe table survives untouched
+    // (additive-only), and there is no selection (never-set).
     const store = await open(dir);
     const probe = store.db.prepare("SELECT note FROM _old_gen_probe WHERE id = 1").get();
     expect(probe?.["note"]).toBe("pre-0003 data");
@@ -183,6 +184,7 @@ describe("durable ranker-adapter selection store (sqlite seam, temp dirs)", () =
       "0001_init",
       "0002_media_intelligence",
       "0003_ranker_adapter_selection",
+      "0004_transcript_payloads",
     ]);
   });
 

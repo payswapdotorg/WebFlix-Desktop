@@ -48,6 +48,17 @@ export enum ErrorCode {
   IntelligenceTranscriptionInvalid = "intelligence/transcription-invalid",
   IntelligenceEngineUnavailable = "intelligence/engine-unavailable",
   IntelligenceEngineFailed = "intelligence/engine-failed",
+  // P4-SUMMARIZE: the text-intelligence lane's typed failures, appended per
+  // the additive-only rule. `summary-invalid` carries mi.summarize /
+  // mi.overview / mi.qa caller defects (blank ids or questions, bad request
+  // shapes, referenced artifacts that are not transcripts);
+  // `transcript-payload-absent` is the honest state where a transcript
+  // artifact exists but its segment payload was never persisted (a
+  // pre-0004 transcript) — typed and SURFACED with re-transcription as the
+  // recovery, never hidden and never an empty substitute. Typed cancellation
+  // reuses the existing cross-cutting `common/cancelled` — no new code.
+  IntelligenceSummaryInvalid = "intelligence/summary-invalid",
+  IntelligenceTranscriptPayloadAbsent = "intelligence/transcript-payload-absent",
   // cross-cutting
   RateLimited = "common/rate-limited",
   Network = "common/network",

@@ -224,6 +224,78 @@ describe("durable MI stores (sqlite seam, temp dirs)", () => {
       expect(transcripts.every((entry) => entry.lineage === "attached")).toBe(true);
     });
 
+    it("text-intelligence artifacts (P4-SUMMARIZE pipeline shape) survive a restart with lineage + payloads intact", async () => {
+      // The exact descriptor shapes mi.summarize / mi.overview / mi.qa store:
+      // the built-in extractive model identity, the deterministic inputsHash
+      // digest, null license (our own deterministic code), PLUS the paired
+      // transcript payload in the migration-0004 store.
+      const summary: DerivedArtifact = {
+        id: "art-sum-1",
+        sourceItemId: "item-a",
+        kind: "summary",
+        lineage: {
+          modelId: "webflix.extractive.v1",
+          modelVersion: "v1",
+          producedBy: "webflix.built-in-summary-engine",
+          generatedAt: AS_OF,
+          inputsHash: "fnv1a32:d266a8c0",
+        },
+        licenseNote: null,
+        createdAt: AS_OF,
+      };
+      const overview: DerivedArtifact = {
+        id: "art-ov-1",
+        sourceItemId: "item-a",
+        kind: "overview",
+        lineage: { ...summary.lineage, inputsHash: "fnv1a32:1a2b3c4d" },
+        licenseNote: null,
+        createdAt: AS_OF,
+      };
+      const qa: DerivedArtifact = {
+        id: "art-qa-1",
+        sourceItemId: "item-b",
+        kind: "qa",
+        lineage: { ...summary.lineage, inputsHash: "fnv1a32:00000000" },
+        licenseNote: null,
+        createdAt: AS_OF,
+      };
+      const first = await open(dir);
+      const stores = storesOf(first);
+      await stores.artifacts.put(summary);
+      await stores.artifacts.put(overview);
+      await stores.artifacts.put(qa);
+      await first.transcriptPayloads.put({
+        artifactId: "art-sum-1",
+        segments: [
+          { startMs: 0, endMs: 1500, text: "hello" },
+          { startMs: 1500, endMs: 3000, text: "brave" },
+          { startMs: 3000, endMs: 4500, text: "world" },
+        ],
+        checksum: "fnv1a32:d266a8c0",
+      });
+      first.close();
+
+      const reopened = await open(dir);
+      const read = await storesOf(reopened).artifacts.list();
+      // The registry's deterministic (createdAt, id) order: all three share
+      // the pinned instant, so the tie-break is the id (alphabetical).
+      expect(read).toEqual([overview, qa, summary]);
+      // The PAIRED payload survived the same restart, checksum verified on read.
+      const payload = await reopened.transcriptPayloads.get("art-sum-1");
+      expect(payload.checksum).toBe("fnv1a32:d266a8c0");
+      expect(payload.segments).toHaveLength(3);
+      // listWithLineage keeps resolving both sources (no dangling markers).
+      const withLineage = await storesOf(reopened).artifacts.listWithLineage([
+        catalogItem("item-a", "Rust Compiler Deep Dive"),
+        catalogItem("item-b", "Advanced Pasta Making"),
+      ]);
+      const kinds = withLineage
+        .filter((entry) => ["summary", "overview", "qa"].includes(entry.descriptor.kind))
+        .map((entry) => entry.descriptor.kind);
+      expect(kinds.sort()).toEqual(["overview", "qa", "summary"]);
+      expect(withLineage.every((entry) => entry.lineage === "attached")).toBe(true);
+    });
+
     it("feedback idempotency SURVIVES a restart: same id re-append is a duplicate, never a second row", async () => {
       const first = await open(dir);
       const event = explicitFeedback("fb-001", "item-a");
@@ -308,13 +380,15 @@ describe("durable MI stores (sqlite seam, temp dirs)", () => {
     it("a fresh store records all migrations and creates the mi_* tables", async () => {
       const store = await open(dir);
       const rows = store.db.prepare("SELECT id, name FROM schema_migrations ORDER BY id").all();
-      // P4-ADAPTERS row 2 appended 0003_ranker_adapter_selection — the set
-      // is [0001, 0002, 0003] now (honest pin update, the 2→3 precedent of
-      // P4-ARTIFACTS' 1→2).
-      expect(rows).toHaveLength(3);
+      // P4-ADAPTERS row 2 appended 0003_ranker_adapter_selection and
+      // P4-SUMMARIZE row 1 appended 0004_transcript_payloads — the set is
+      // [0001, 0002, 0003, 0004] now (honest pin update, the 2→3→4 chain of
+      // the P4-ARTIFACTS 1→2 precedent).
+      expect(rows).toHaveLength(4);
       expect(rows[0]["name"]).toBe("0001_init");
       expect(rows[1]["name"]).toBe("0002_media_intelligence");
       expect(rows[2]["name"]).toBe("0003_ranker_adapter_selection");
+      expect(rows[3]["name"]).toBe("0004_transcript_payloads");
       const tables = store.db
         .prepare(
           "SELECT name FROM sqlite_master WHERE type = 'table' AND name LIKE 'mi_%' ORDER BY name",
@@ -326,6 +400,7 @@ describe("durable MI stores (sqlite seam, temp dirs)", () => {
         "mi_feedback_events",
         "mi_objectives",
         "mi_ranker_selection",
+        "mi_transcript_payloads",
       ]);
     });
 
@@ -345,7 +420,7 @@ describe("durable MI stores (sqlite seam, temp dirs)", () => {
 
       const reopened = await open(dir);
       const rows = reopened.db.prepare("SELECT id, name FROM schema_migrations ORDER BY id").all();
-      expect(rows).toHaveLength(3);
+      expect(rows).toHaveLength(4);
       // Pre-existing library data survived the additive migration untouched.
       expect(reopened.local.listLibraryEntries()).toHaveLength(1);
       // The MI stores are immediately usable on the migrated file.
@@ -360,7 +435,9 @@ describe("durable MI stores (sqlite seam, temp dirs)", () => {
       second.close();
       const third = await open(dir);
       const count = third.db.prepare("SELECT COUNT(*) AS n FROM schema_migrations").get();
-      expect(Number(count?.["n"])).toBe(3);
+      // 4 = [0001, 0002, 0003, 0004] (P4-SUMMARIZE appended 0004 — honest
+      // pin update, the 3→4 step of the 1→2→3 chain).
+      expect(Number(count?.["n"])).toBe(4);
     });
   });
 

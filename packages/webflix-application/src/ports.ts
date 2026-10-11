@@ -25,6 +25,7 @@ import type {
   TrackProbe,
 } from "./types";
 import type { DerivedArtifact, FeedbackEvent, UserObjective } from "webflix-contracts";
+import type { TranscriptPayload } from "./transcript-payload";
 
 /**
  * The credential contract is frozen in `@webflix/contracts`; re-exported here
@@ -213,4 +214,31 @@ export interface ArtifactRegistry {
   put(descriptor: DerivedArtifact): Promise<void>;
   get(id: string): Promise<DerivedArtifact | null>;
   list(): Promise<readonly DerivedArtifact[]>;
+}
+
+/**
+ * Per-profile transcript segment payload store (P4-SUMMARIZE row 1 — the
+ * P4-TRANSCRIBE recorded adjacency resolved). Keyed by the TRANSCRIPT
+ * artifact id; `put` persists the payload (segments + checksum, both
+ * re-validated defensively — a mismatched checksum is a caller defect, not
+ * silently stored); `get` resolves it.
+ *
+ * ABSENCE IS TYPED, never null: a transcript artifact whose payload was
+ * never persisted (a pre-0004 transcript) makes `get` reject with the typed
+ * `intelligence/transcript-payload-absent` WebFlixError — surfaced with
+ * re-transcription as the recovery, never hidden and never substituted with
+ * an empty payload. The durable implementation is local-library migration
+ * 0004 (own `mi_transcript_payloads` table, per-profile by construction);
+ * the in-memory default below serves hermetic tests. The store does NOT
+ * know the artifact registry — it persists what the validated use cases
+ * hand over, keyed by the id they computed.
+ */
+export interface TranscriptPayloadStore {
+  /** Persists (or replaces) the payload for one transcript artifact id. */
+  put(payload: TranscriptPayload): Promise<void>;
+  /**
+   * The stored payload for a transcript artifact id; rejects with the typed
+   * absent error when none was persisted. Same-id re-puts replace.
+   */
+  get(artifactId: string): Promise<TranscriptPayload>;
 }

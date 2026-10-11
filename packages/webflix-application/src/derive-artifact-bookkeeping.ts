@@ -35,6 +35,14 @@ import type { ArtifactRegistry, ClockPort, IdGenerator } from "./ports";
 export interface CreateDerivedArtifactInput {
   /** The ORIGINAL the artifact was derived from — must exist in `catalog`. */
   readonly sourceItemId: string;
+  /**
+   * Optional caller-supplied artifact id (P4-SUMMARIZE transcribe
+   * amendment): the mi.transcribe use case generates the id UPFRONT so the
+   * transcript payload row can be persisted BEFORE the descriptor (a put
+   * failure then leaves no artifact at all — the no-artifact-on-failure
+   * contract stays airtight) while both share the id. Default: generated.
+   */
+  readonly id?: string;
   readonly kind: DerivedArtifactKind;
   readonly lineage: Omit<ArtifactLineage, "generatedAt"> & { generatedAt?: string };
   /** License note for the derived output; null/undefined = none applies. */
@@ -56,7 +64,7 @@ export class DeriveArtifactBookkeeping {
     const descriptor: DerivedArtifact = parseOrThrow(
       DerivedArtifactSchema,
       {
-        id: this.deps.generateId(),
+        id: input.id ?? this.deps.generateId(),
         sourceItemId: input.sourceItemId,
         kind: input.kind,
         lineage: {

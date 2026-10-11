@@ -566,3 +566,229 @@ export interface TranscriptionEnginePort {
     options?: TranscriptionOptions,
   ): Promise<TranscriptionResult>;
 }
+
+// ---------------------------------------------------------------------------
+// Text intelligence — the summary/overview/Q&A engine seam (P4-SUMMARIZE;
+// phase4-mi-plan row 5: summaries, structured overviews and extractive Q&A
+// over STORED transcripts on a deterministic built-in engine).
+//
+// ADDITIVE §3 surface (0.4.0 -> 0.5.0): the engine port, the six
+// request/result schemas and the progress/options types the port needs.
+// Frozen §2.1–2.6 module files untouched; this section appends only.
+//
+// QUOTE DISCIPLINE, binding on every implementation: these artifacts are
+// EXTRACTIVE — a summary sentence's `text`, and a Q&A span's `quote`, must
+// be verbatim excerpts of the referenced source segment's text. An
+// implementation inventing wording outside the source quotes is a defect
+// (the work order says so in exactly those words). The QaAnswer shape
+// enforces this STRUCTURALLY: it can carry ONLY quoted spans (no free-text
+// answer field exists to put generative text in).
+// ---------------------------------------------------------------------------
+
+/**
+ * Identity of one text-intelligence engine adapter — the same honesty rules
+ * as the transcription descriptor: `id`/`label`/`version` are the WebFlix
+ * ADAPTER's own identity (our code — always known); the optional
+ * `engineVersion`/`modelLineage` are facts read from an EXTERNAL model's own
+ * output when it reports them, absent when it does not (never guessed);
+ * `licenseNote` carries the model's license class, null when none applies
+ * (the built-in extractive engine is our own deterministic code — null).
+ */
+export const SummaryEngineDescriptorSchema = z.object({
+  /** Stable dot-namespaced adapter id (e.g. `webflix.built-in-summary-engine`). */
+  id: z.string().trim().min(1),
+  /** Human label, rendered verbatim by later UI orders. */
+  label: z.string().trim().min(1),
+  /** The WebFlix adapter implementation's version (OUR code's — always known). */
+  version: z.string().trim().min(1),
+  /** The external model's own version string, read from its own output; absent when it reports none — never guessed. */
+  engineVersion: z.string().trim().min(1).optional(),
+  /** Model lineage read from the model's own output (e.g. a loaded model name); absent when unreported. */
+  modelLineage: z.string().trim().min(1).optional(),
+  /** License note for this engine class; null when none applies. */
+  licenseNote: z.string().trim().min(1).nullable(),
+});
+export type SummaryEngineDescriptor = z.infer<typeof SummaryEngineDescriptorSchema>;
+
+/**
+ * What to summarize / outline / answer over: the STORED transcript segments
+ * (read from the transcript payload store by the calling use case — engines
+ * stay pure over segments and never touch storage). Segments MAY be empty:
+ * that is the honest "no speech" transcript, and every operation returns
+ * its honest empty result over it.
+ */
+const TranscriptSegmentsField = z.array(TranscriptSegmentSchema);
+
+/** The summarize operation's input: the stored transcript segments. */
+export const SummaryRequestSchema = z.object({
+  segments: TranscriptSegmentsField,
+});
+/**
+ * Hand-declared readonly view over the schema (the RankedItem precedent):
+ * requests are read-only data handed to a pure engine — callers may pass
+ * frozen/readonly segment arrays.
+ */
+export type SummaryRequest = { readonly segments: readonly TranscriptSegment[] };
+
+/**
+ * One selected summary sentence: a VERBATIM excerpt of the referenced
+ * segment's text plus its citation (segment index + the segment's
+ * [startMs, endMs) range). Sentences are listed in SOURCE order — a summary
+ * reads in transcript order, not score order.
+ */
+export const SummarySentenceSchema = z.object({
+  /** The sentence text — an exact excerpt of the source segment's text (quote discipline). */
+  text: z.string().trim().min(1),
+  /** Index of the source transcript segment this sentence was extracted from. */
+  segmentIndex: z.number().int().min(0),
+  startMs: z.number().int().min(0),
+  endMs: z.number().int().min(0),
+});
+export type SummarySentence = z.infer<typeof SummarySentenceSchema>;
+
+/**
+ * The summarize operation's output: the selected sentences, possibly EMPTY
+ * (the honest summary of an empty/wordless transcript — never an error and
+ * never a fabricated sentence).
+ */
+export const SummaryResultSchema = z.object({
+  sentences: z.array(SummarySentenceSchema),
+});
+export type SummaryResult = z.infer<typeof SummaryResultSchema>;
+
+/** The overview operation's input: the stored transcript segments. */
+export const OverviewRequestSchema = z.object({
+  segments: TranscriptSegmentsField,
+});
+/** Readonly view over the schema (the SummaryRequest precedent). */
+export type OverviewRequest = { readonly segments: readonly TranscriptSegment[] };
+
+/**
+ * One timeline chapter: a contiguous time-ranged section of the transcript
+ * titled by its dominant terms. The range is [startMs, endMs) of the
+ * chapter's first/last segment; `segmentCount` cites how many source
+ * segments the chapter covers.
+ */
+export const OverviewChapterSchema = z
+  .object({
+    /** Deterministic title built from the chapter's dominant terms (the engine documents the exact construction). */
+    title: z.string().trim().min(1),
+    startMs: z.number().int().min(0),
+    endMs: z.number().int().min(0),
+    /** How many source segments this chapter covers (>= 1 — an empty chapter is never emitted). */
+    segmentCount: z.number().int().min(1),
+  })
+  .superRefine((chapter, ctx) => {
+    if (chapter.endMs < chapter.startMs) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `chapter endMs must be >= startMs, got [${chapter.startMs}, ${chapter.endMs}]`,
+      });
+    }
+  });
+export type OverviewChapter = z.infer<typeof OverviewChapterSchema>;
+
+/**
+ * The overview operation's output: the timeline chapters in transcript
+ * order, possibly EMPTY (the honest overview of an empty transcript).
+ */
+export const OverviewResultSchema = z.object({
+  chapters: z.array(OverviewChapterSchema),
+});
+export type OverviewResult = z.infer<typeof OverviewResultSchema>;
+
+/**
+ * The Q&A operation's input: the stored transcript segments plus the user's
+ * question. The question is a free-form non-blank string the engine matches
+ * deterministically against segment terms.
+ */
+export const QaRequestSchema = z.object({
+  segments: TranscriptSegmentsField,
+  question: z.string().trim().min(1),
+});
+/** Readonly view over the schema (the SummaryRequest precedent). */
+export type QaRequest = {
+  readonly segments: readonly TranscriptSegment[];
+  readonly question: string;
+};
+
+/**
+ * One quoted answer span: the quote is a VERBATIM excerpt of the referenced
+ * segment's text; the segment index + [startMs, endMs) range are the
+ * citation the answer is auditable through.
+ */
+export const QaSpanSchema = z.object({
+  quote: z.string().trim().min(1),
+  segmentIndex: z.number().int().min(0),
+  startMs: z.number().int().min(0),
+  endMs: z.number().int().min(0),
+});
+export type QaSpan = z.infer<typeof QaSpanSchema>;
+
+/**
+ * The Q&A operation's output: the answer IS the quoted spans — there is
+ * deliberately NO free-text answer field, so no implementation can return
+ * generative wording (quote discipline is structural). Spans MAY be empty:
+ * that is the honest "no segment matched the question" outcome, never an
+ * error and never an invented answer.
+ */
+export const QaAnswerSchema = z.object({
+  spans: z.array(QaSpanSchema),
+});
+export type QaAnswer = z.infer<typeof QaAnswerSchema>;
+
+/**
+ * Progress a text-intelligence engine surfaces between work units. A "unit"
+ * is defined per implementation (the built-in engine processes transcript
+ * segments one at a time — units = segments); `totalUnits` is present only
+ * when the engine honestly knows it up front (segment-count inputs do).
+ */
+export interface SummaryEngineProgress {
+  /** Work units completed so far (monotone non-decreasing). */
+  readonly completedUnits: number;
+  /** Total units when genuinely known up front; absent otherwise. */
+  readonly totalUnits?: number;
+}
+
+/** Per-run engine options: cooperative cancellation + progress surfacing. */
+export interface SummaryEngineOptions {
+  /** Honoured at the engine boundary AND cooperatively between units. */
+  readonly signal?: AbortSignal;
+  /**
+   * Called after each completed unit. Implementations treat a THROWN
+   * callback as a cooperative stop request and MUST stop and reject with
+   * the typed cancelled error rather than swallow it.
+   */
+  readonly onProgress?: (progress: SummaryEngineProgress) => void;
+}
+
+/**
+ * The text-intelligence engine seam (INTERFACE ONLY, like
+ * TranscriptionEnginePort). Three methods over the same stored-transcript
+ * input — one seam, documented per implementation. Contract rules for
+ * every implementation, binding:
+ * - QUOTE DISCIPLINE: summary sentences and Q&A spans are VERBATIM excerpts
+ *   of the referenced source segment's text — inventing wording outside the
+ *   source quotes is a defect (auditable through the span citations);
+ * - EXTRACTION OVER THE GIVEN SEGMENTS ONLY: the engine is pure over its
+ *   request — it reads no storage, no network, no model files the caller
+ *   did not hand it. The BUILT-IN implementation is fully deterministic
+ *   (same request => byte-identical result, corpus-pinned); a later
+ *   user-selected model adapter honestly is not, and says so through its
+ *   lineage — never a hidden default LLM (phase4-mi-plan §6);
+ * - COOPERATIVE CANCELLATION: `signal` is checked at entry and between
+ *   units; a cancelled run rejects with the typed `common/cancelled` error
+ *   and produces NO result;
+ * - HONEST EMPTIES: an empty-segment request yields the honest empty result
+ *   for every operation — never an error, never fabricated content.
+ */
+export interface SummaryEnginePort {
+  /** The adapter's identity + honest lineage + license note. */
+  readonly descriptor: SummaryEngineDescriptor;
+  /** Extractive summary: the highest-scoring sentences, in source order. */
+  summarize(request: SummaryRequest, options?: SummaryEngineOptions): Promise<SummaryResult>;
+  /** Timeline chapters: time-ranged sections titled by dominant terms. */
+  overview(request: OverviewRequest, options?: SummaryEngineOptions): Promise<OverviewResult>;
+  /** Extractive Q&A: the answer as QUOTED spans with segment citations. */
+  answer(request: QaRequest, options?: SummaryEngineOptions): Promise<QaAnswer>;
+}
