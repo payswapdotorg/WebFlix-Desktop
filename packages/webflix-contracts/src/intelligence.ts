@@ -330,10 +330,12 @@ export interface RankerInput {
 /**
  * The user-selected ranker adapter seam (INTERFACE ONLY, like CredentialPort
  * in §2.5). The default implementation is the built-in DETERMINISTIC ranker
- * (webflix-domain, RankingPolicy v1). Contract rules for every
- * implementation: PURE (no side effects), LOCAL (no network, no provider
- * reads, no scraping), NO hidden LLM, reasons mandatory on every item.
- * Implementations are validated by the domain runtime guard
+ * (RankingPolicy v1: policy/weights resolution + runtime guards in
+ * webflix-domain, the engine homed in webflix-application's use-case layer —
+ * the P4-ARTIFACTS arbitration kept it there deliberately). Contract rules
+ * for every implementation: PURE (no side effects), LOCAL (no network, no
+ * provider reads, no scraping), NO hidden LLM, reasons mandatory on every
+ * item. Implementations are validated by the domain runtime guard
  * `assertReasonedRanking` and the determinism corpus tests.
  */
 export interface RankerPort {
