@@ -35,6 +35,19 @@ export enum ErrorCode {
   // id at set time (caller defect), registry drift at resolve time, or a
   // corrupt persisted selection row. Appended per the additive-only rule.
   IntelligenceAdapterSelectionInvalid = "intelligence/adapter-selection-invalid",
+  // P4-TRANSCRIBE: the transcription lane's typed failures, appended per the
+  // additive-only rule. `transcription-invalid` carries mi.transcribe caller
+  // defects (bad request shape / job descriptor construction — validated
+  // BEFORE the job exists, the generate-recommendations precedent);
+  // `engine-unavailable` is the honest-absent state (the local engine is not
+  // on this machine — surfaced with a recovery hint, never hidden);
+  // `engine-failed` is a FOUND engine reporting its own failure (non-zero
+  // exit), kept distinct from absent because the recovery differs. Typed
+  // cancellation reuses the existing cross-cutting `common/cancelled` — no
+  // new code is needed for it.
+  IntelligenceTranscriptionInvalid = "intelligence/transcription-invalid",
+  IntelligenceEngineUnavailable = "intelligence/engine-unavailable",
+  IntelligenceEngineFailed = "intelligence/engine-failed",
   // cross-cutting
   RateLimited = "common/rate-limited",
   Network = "common/network",

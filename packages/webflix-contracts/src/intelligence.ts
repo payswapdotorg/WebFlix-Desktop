@@ -414,3 +414,155 @@ export const DerivedArtifactSchema = z.object({
   createdAt: IsoDateTimeSchema,
 });
 export type DerivedArtifact = z.infer<typeof DerivedArtifactSchema>;
+
+// ---------------------------------------------------------------------------
+// Transcription — the LOCAL-engine seam (P4-TRANSCRIBE; phase4-mi-plan §7:
+// whisper.cpp-class engines verified license-clean, XTTS/NLLB excluded)
+//
+// ADDITIVE §3 surface (0.3.0 -> 0.4.0): the engine port, the request /
+// segment / result schemas and the progress/options types the port needs.
+// Honest-lineage rules baked into the shapes: every engine-reported field
+// (`engineVersion`, `modelLineage`, `language`) is OPTIONAL — an engine that
+// does not volunteer the fact in its own output leaves it ABSENT, and absent
+// means absent, never a guessed value.
+// ---------------------------------------------------------------------------
+
+/**
+ * Identity of one transcription engine adapter. `id`/`label`/`version` are
+ * the WebFlix ADAPTER's own identity (our code — always known); the optional
+ * `engineVersion`/`modelLineage` are facts read from the EXTERNAL engine's
+ * own output when it reports them, absent when it does not (never guessed);
+ * `licenseNote` carries the engine's license class (whisper.cpp-class =
+ * MIT-family, verified in docs/plans/audits/AUDIT-SOURCES.md §6), null when
+ * none applies.
+ */
+export const TranscriptionEngineDescriptorSchema = z.object({
+  /** Stable dot-namespaced adapter id (e.g. `webflix.whisper-cpp-local`). */
+  id: z.string().trim().min(1),
+  /** Human label, rendered verbatim by later UI orders. */
+  label: z.string().trim().min(1),
+  /** The WebFlix adapter implementation's version (OUR code's version — always known, unlike the external binary's). */
+  version: z.string().trim().min(1),
+  /** The external engine binary's own version string, READ FROM THE BINARY'S OWN OUTPUT; absent when it reports none — never guessed. */
+  engineVersion: z.string().trim().min(1).optional(),
+  /** Model lineage read from the engine's own output (e.g. the loaded ggml model name); absent when unreported. */
+  modelLineage: z.string().trim().min(1).optional(),
+  /** License note for this engine class; null when none applies. */
+  licenseNote: z.string().trim().min(1).nullable(),
+});
+export type TranscriptionEngineDescriptor = z.infer<typeof TranscriptionEngineDescriptorSchema>;
+
+/**
+ * What to transcribe: a LOCAL media file path plus an optional language
+ * hint. The path is handed to the engine adapter UNTOUCHED — audio decoding,
+ * demux and probing are ENGINE-INTERNAL concerns (mi-plan §7); no
+ * WebFlix-layer code in the transcription pipeline reads media bytes. The
+ * language hint (an engine-interpreted code, e.g. an ISO 639 tag) is
+ * OPTIONAL and engines that do not support hints ignore it (documented per
+ * implementation, never silently assumed to have applied).
+ */
+export const TranscriptionRequestSchema = z.object({
+  /** Absolute or adapter-resolvable path to the local media file. */
+  mediaPath: z.string().trim().min(1),
+  /** Optional language hint (engine-interpreted, e.g. "en"); absent = no hint. */
+  language: z.string().trim().min(1).optional(),
+});
+export type TranscriptionRequest = z.infer<typeof TranscriptionRequestSchema>;
+
+/**
+ * One transcript segment: a half-open [startMs, endMs) time range plus its
+ * non-empty text. Timestamps are integer milliseconds from the media start.
+ */
+export const TranscriptSegmentSchema = z
+  .object({
+    startMs: z.number().int().min(0),
+    endMs: z.number().int().min(0),
+    text: z.string().trim().min(1),
+  })
+  .superRefine((segment, ctx) => {
+    if (segment.endMs < segment.startMs) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `segment endMs must be >= startMs, got [${segment.startMs}, ${segment.endMs}]`,
+      });
+    }
+  });
+export type TranscriptSegment = z.infer<typeof TranscriptSegmentSchema>;
+
+/**
+ * The engine's output for one run. `segments` MAY be empty — that is the
+ * honest "engine reported no speech" outcome, never an error. The optional
+ * facts (`language`, `engineVersion`, `modelLineage`) are read from the
+ * ENGINE'S OWN OUTPUT for THIS run; each stays absent when the engine did
+ * not report it — never inferred from the request, never guessed.
+ */
+export const TranscriptionResultSchema = z.object({
+  segments: z.array(TranscriptSegmentSchema),
+  /** Language the engine itself reported for this run (detected or echoed); absent when unreported. */
+  language: z.string().trim().min(1).optional(),
+  /** Engine binary version read from this run's own output; absent when unreported. */
+  engineVersion: z.string().trim().min(1).optional(),
+  /** Model lineage read from this run's own output (e.g. loaded model name); absent when unreported. */
+  modelLineage: z.string().trim().min(1).optional(),
+});
+export type TranscriptionResult = z.infer<typeof TranscriptionResultSchema>;
+
+/**
+ * Progress an engine surfaces between segments. `totalSegments` is present
+ * only when the engine HONESTLY knows it up front (a fixture/replay engine
+ * does; a streaming ASR engine does not — absent, never estimated).
+ */
+export interface TranscriptionProgress {
+  /** Segments completed so far (monotone non-decreasing). */
+  readonly completedSegments: number;
+  /** Total segment count when genuinely known up front; absent otherwise. */
+  readonly totalSegments?: number;
+  /** endMs of the most recently completed segment; absent before the first. */
+  readonly lastEndMs?: number;
+}
+
+/** Per-run engine options: cooperative cancellation + progress surfacing. */
+export interface TranscriptionOptions {
+  /** Honoured at the engine boundary AND cooperatively between segments. */
+  readonly signal?: AbortSignal;
+  /**
+   * Called after each completed segment. Implementations treat a THROWN
+   * callback as a cooperative stop request (the mi.transcribe use case
+   * throws here when its signal aborted) and MUST stop and reject with the
+   * typed cancelled error rather than swallow it.
+   */
+  readonly onProgress?: (progress: TranscriptionProgress) => void;
+}
+
+/**
+ * The LOCAL transcription-engine seam (INTERFACE ONLY, like RankerPort).
+ * Contract rules for every implementation, stated as binding as the ranker's:
+ * - LOCAL ONLY: the adapter shells out to a binary on THIS machine (or
+ *   replays fixtures in the labeled test double); NO network, NO model
+ *   downloads, NO provider reads — ever;
+ * - HONEST AVAILABILITY: an implementation whose engine is absent from the
+ *   machine REJECTS with the typed `intelligence/engine-unavailable` error
+ *   (surfaced with a recovery hint, never hidden, never a silent empty
+ *   result);
+ * - COOPERATIVE CANCELLATION: `signal` is checked at entry and between
+ *   segments; a cancelled run rejects with the typed `common/cancelled`
+ *   error and produces NO result;
+ * - HONEST LINEAGE: `engineVersion`/`modelLineage`/`language` values are
+ *   read from the engine's OWN output; facts the engine did not report
+ *   stay absent — never guessed, never defaulted.
+ */
+export interface TranscriptionEnginePort {
+  /** The adapter's identity + honest lineage + license note. */
+  readonly descriptor: TranscriptionEngineDescriptor;
+  /**
+   * Transcribes one local media file. Rejects with the typed
+   * engine-unavailable error when the engine is absent, the typed cancelled
+   * error when the run was cancelled (at the boundary or between segments),
+   * or a typed engine-failed error when the engine ran and itself reported
+   * failure.
+   */
+  transcribe(
+    request: TranscriptionRequest,
+    options?: TranscriptionOptions,
+  ): Promise<TranscriptionResult>;
+}

@@ -81,3 +81,30 @@ export type {
   IntelligenceStores,
   ObjectiveStorePort,
 } from "./intelligence-stores";
+
+// The REAL local transcription-engine adapter (P4-TRANSCRIBE row 3b): a
+// whisper.cpp-class binary discovered on THIS machine (override + PATH +
+// standard locations), honestly typed engine-unavailable when absent, with
+// lineage read from the binary's own output only — never guessed. Implements
+// the contracts TranscriptionEnginePort DIRECTLY (the port lives in
+// @webflix/contracts, so this is an allowed edge; structural typing wires it
+// into mi.transcribe's `engine` dependency without any cross-package edge —
+// the port-mirror precedent inverted, no mirror needed). NO engine is
+// bundled; no network exists anywhere in this path; the spawn seam is
+// injectable so tests replay canned children without process I/O.
+export {
+  discoverWhisperBinary,
+  WHISPER_BINARY_NAMES,
+  WHISPER_CPP_LOCAL_ENGINE_DESCRIPTOR,
+  WHISPER_CPP_LOCAL_ENGINE_ID,
+  WHISPER_CPP_LOCAL_ENGINE_VERSION,
+  WHISPER_CPP_RECOVERY_HINT,
+  WhisperCppLocalEngine,
+} from "./whisper-engine";
+export type {
+  EngineChildProcess,
+  EngineChildStreams,
+  EngineProcessEnv,
+  SpawnEngineBinary,
+  WhisperCppLocalEngineOptions,
+} from "./whisper-engine";

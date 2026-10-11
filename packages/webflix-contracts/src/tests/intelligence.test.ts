@@ -26,6 +26,10 @@ import {
   RankingSignalFamilySchema,
   RankingWeightsSchema,
   TimeBudgetsSchema,
+  TranscriptSegmentSchema,
+  TranscriptionEngineDescriptorSchema,
+  TranscriptionRequestSchema,
+  TranscriptionResultSchema,
   UserObjectiveSchema,
 } from "../index";
 import type { RankedItem as RankedItemType } from "../index";
@@ -68,6 +72,11 @@ describe("intelligence contract schemas", () => {
       "DerivedArtifactKindSchema",
       "ArtifactLineageSchema",
       "DerivedArtifactSchema",
+      // P4-TRANSCRIBE (0.4.0) — the transcription-engine seam's value surface.
+      "TranscriptionEngineDescriptorSchema",
+      "TranscriptionRequestSchema",
+      "TranscriptSegmentSchema",
+      "TranscriptionResultSchema",
     ];
     for (const name of miValueExports) {
       expect(contracts, `missing MI export: ${name}`).toHaveProperty(name);
@@ -348,7 +357,7 @@ describe("intelligence contract schemas", () => {
     });
   });
 
-  it("ErrorCode carries the seven MI codes and they parse through the schema", () => {
+  it("ErrorCode carries the ten MI codes and they parse through the schema", () => {
     const miCodes = [
       ErrorCode.IntelligencePolicyUnsupported,
       ErrorCode.IntelligenceObjectiveInvalid,
@@ -358,6 +367,10 @@ describe("intelligence contract schemas", () => {
       ErrorCode.IntelligenceArtifactInvalid,
       // P4-ADAPTERS (0.3.0) — the additive selection code.
       ErrorCode.IntelligenceAdapterSelectionInvalid,
+      // P4-TRANSCRIBE (0.4.0) — the additive transcription lane codes.
+      ErrorCode.IntelligenceTranscriptionInvalid,
+      ErrorCode.IntelligenceEngineUnavailable,
+      ErrorCode.IntelligenceEngineFailed,
     ] as const;
     expect(miCodes).toEqual([
       "intelligence/policy-unsupported",
@@ -367,10 +380,16 @@ describe("intelligence contract schemas", () => {
       "intelligence/ranking-invalid",
       "intelligence/artifact-invalid",
       "intelligence/adapter-selection-invalid",
+      "intelligence/transcription-invalid",
+      "intelligence/engine-unavailable",
+      "intelligence/engine-failed",
     ]);
     for (const code of miCodes) {
       expect(ErrorCodeSchema.safeParse(code).success).toBe(true);
     }
+    // Typed cancellation reuses the cross-cutting common/cancelled — the
+    // transcription lane deliberately adds NO cancelled code of its own.
+    expect(ErrorCode.Cancelled).toBe("common/cancelled");
   });
 
   it("RankerAdapterSelection round-trips and rejects empty ids / non-ISO instants (P4-ADAPTERS)", () => {
@@ -384,6 +403,136 @@ describe("intelligence contract schemas", () => {
     expectRejected(RankerAdapterSelectionSchema, {
       adapterId: "webflix.built-in-ranker",
       selectedAt: "2026-10-11 08:00:00",
+    });
+  });
+
+  it("re-exports the transcription value surface (P4-TRANSCRIBE)", () => {
+    const transcriptionExports = [
+      "TranscriptionEngineDescriptorSchema",
+      "TranscriptionRequestSchema",
+      "TranscriptSegmentSchema",
+      "TranscriptionResultSchema",
+    ];
+    for (const name of transcriptionExports) {
+      expect(contracts, `missing transcription export: ${name}`).toHaveProperty(name);
+    }
+  });
+
+  it("TranscriptionEngineDescriptor round-trips honest lineage and rejects blanks (P4-TRANSCRIBE)", () => {
+    // Fully populated: adapter identity + every engine-reported fact present.
+    expectRoundTrip(TranscriptionEngineDescriptorSchema, {
+      id: "webflix.whisper-cpp-local",
+      label: "whisper.cpp (local)",
+      version: "0.1.0",
+      engineVersion: "1.7.4",
+      modelLineage: "ggml-base.en-q5_1",
+      licenseNote: "whisper.cpp is MIT licensed (model licenses vary)",
+    });
+    // The honest minimum: adapter identity known; every engine-reported fact
+    // ABSENT (the engine reported nothing — absent means absent) + null license.
+    expectRoundTrip(TranscriptionEngineDescriptorSchema, {
+      id: "webflix.whisper-cpp-local",
+      label: "whisper.cpp (local)",
+      version: "0.1.0",
+      licenseNote: null,
+    });
+    // Blank identity fields are caller defects.
+    expectRejected(TranscriptionEngineDescriptorSchema, {
+      id: "",
+      label: "x",
+      version: "0.1.0",
+      licenseNote: null,
+    });
+    expectRejected(TranscriptionEngineDescriptorSchema, {
+      id: "webflix.whisper-cpp-local",
+      label: "  ",
+      version: "0.1.0",
+      licenseNote: null,
+    });
+    // engineVersion/modelLineage are min(1): an engine that reports an EMPTY
+    // string reported nothing — the honest value is ABSENT, not "".
+    expectRejected(TranscriptionEngineDescriptorSchema, {
+      id: "webflix.whisper-cpp-local",
+      label: "whisper.cpp (local)",
+      version: "0.1.0",
+      engineVersion: "",
+      licenseNote: null,
+    });
+  });
+
+  it("TranscriptionRequest round-trips with/without the language hint (P4-TRANSCRIBE)", () => {
+    expectRoundTrip(TranscriptionRequestSchema, {
+      mediaPath: "/home/z/media/rust-talk.mp4",
+    });
+    expectRoundTrip(TranscriptionRequestSchema, {
+      mediaPath: "/home/z/media/rust-talk.mp4",
+      language: "en",
+    });
+    expectRejected(TranscriptionRequestSchema, { mediaPath: "" });
+    // Whitespace-only strings are BLANKS: trim-then-min(1) rejects them
+    // (the same anti-blank guarantee the descriptor schema carries).
+    expectRejected(TranscriptionRequestSchema, { mediaPath: "   " });
+    expectRejected(TranscriptionRequestSchema, { mediaPath: "/x.mp4", language: "" });
+    expectRejected(TranscriptionRequestSchema, { mediaPath: "/x.mp4", language: "  " });
+    expectRejected(TranscriptionRequestSchema, {});
+  });
+
+  it("TranscriptSegment enforces integer ms, non-negative, non-empty text, endMs >= startMs (P4-TRANSCRIBE)", () => {
+    expectRoundTrip(TranscriptSegmentSchema, {
+      startMs: 0,
+      endMs: 1500,
+      text: "Hello, and welcome back.",
+    });
+    expectRoundTrip(TranscriptSegmentSchema, { startMs: 1500, endMs: 1500, text: "— pause —" });
+    // Padded text normalizes to the trimmed canonical form (whitespace
+    // around a segment's text is not transcript content).
+    expect(TranscriptSegmentSchema.parse({ startMs: 0, endMs: 1500, text: " hi " })).toEqual({
+      startMs: 0,
+      endMs: 1500,
+      text: "hi",
+    });
+    expectRejected(TranscriptSegmentSchema, { startMs: -1, endMs: 100, text: "x" });
+    expectRejected(TranscriptSegmentSchema, { startMs: 0.5, endMs: 100, text: "x" });
+    expectRejected(TranscriptSegmentSchema, { startMs: 0, endMs: 1500.5, text: "x" });
+    expectRejected(TranscriptSegmentSchema, { startMs: 100, endMs: 99, text: "x" });
+    expectRejected(TranscriptSegmentSchema, { startMs: 0, endMs: 100, text: "" });
+    expectRejected(TranscriptSegmentSchema, { startMs: 0, endMs: 100, text: "   " });
+    expectRejected(TranscriptSegmentSchema, { startMs: 0, endMs: 100 });
+  });
+
+  it("TranscriptionResult accepts the honest empty and rejects per-run lineage violations (P4-TRANSCRIBE)", () => {
+    // Zero segments is the honest "engine reported no speech" outcome.
+    expectRoundTrip(TranscriptionResultSchema, { segments: [] });
+    // Per-run facts all present (the engine reported them for THIS run).
+    expectRoundTrip(TranscriptionResultSchema, {
+      segments: [
+        { startMs: 0, endMs: 1200, text: "one" },
+        { startMs: 1200, endMs: 2400, text: "two" },
+      ],
+      language: "en",
+      engineVersion: "1.7.4",
+      modelLineage: "ggml-base.en-q5_1",
+    });
+    // Bad segments are rejected through composition.
+    expectRejected(TranscriptionResultSchema, {
+      segments: [{ startMs: 500, endMs: 100, text: "backwards" }],
+    });
+    expectRejected(TranscriptionResultSchema, {
+      segments: [{ startMs: 0, endMs: 100, text: "x" }],
+      language: "",
+    });
+    expectRejected(TranscriptionResultSchema, {
+      segments: [],
+      engineVersion: "",
+    });
+    expectRejected(TranscriptionResultSchema, {
+      segments: [],
+      modelLineage: "",
+    });
+    // A whitespace-only lineage report reported nothing: blank, rejected.
+    expectRejected(TranscriptionResultSchema, {
+      segments: [],
+      engineVersion: "   ",
     });
   });
 });

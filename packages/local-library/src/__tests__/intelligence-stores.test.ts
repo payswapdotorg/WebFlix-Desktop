@@ -170,6 +170,60 @@ describe("durable MI stores (sqlite seam, temp dirs)", () => {
       expect(await storesOf(reopened).artifacts.get("missing")).toBeNull();
     });
 
+    it("transcript-kind artifacts (P4-TRANSCRIBE pipeline shape) survive a restart with lineage intact", async () => {
+      // The exact descriptor shape mi.transcribe stores: engine adapter as
+      // model, the binary's own lineage reports, the deterministic
+      // inputsHash digest, whisper.cpp's license note.
+      const transcript: DerivedArtifact = {
+        id: "art-tr-1",
+        sourceItemId: "item-a",
+        kind: "transcript",
+        lineage: {
+          modelId: "webflix.whisper-cpp-local",
+          modelVersion: "1.7.4",
+          producedBy: "webflix.whisper-cpp-local",
+          generatedAt: AS_OF,
+          inputsHash: "fnv1a32:1a2b3c4d",
+        },
+        licenseNote: "whisper.cpp is MIT licensed; model files carry their own licenses",
+        createdAt: AS_OF,
+      };
+      // The honest-floor shape too: a run that reported no binary lineage
+      // falls back to the ADAPTER's own version (never a guess).
+      const floorTranscript: DerivedArtifact = {
+        id: "art-tr-2",
+        sourceItemId: "item-b",
+        kind: "transcript",
+        lineage: {
+          modelId: "webflix.whisper-cpp-local",
+          modelVersion: "0.1.0",
+          producedBy: "webflix.whisper-cpp-local",
+          generatedAt: AS_OF,
+          inputsHash: "fnv1a32:00000000",
+        },
+        licenseNote: null,
+        createdAt: AS_OF,
+      };
+      const first = await open(dir);
+      const stores = storesOf(first);
+      await stores.artifacts.put(transcript);
+      await stores.artifacts.put(floorTranscript);
+      first.close();
+
+      const reopened = await open(dir);
+      const read = await storesOf(reopened).artifacts.list();
+      expect(read).toEqual([transcript, floorTranscript]);
+      expect(await storesOf(reopened).artifacts.get("art-tr-1")).toEqual(transcript);
+      // listWithLineage keeps resolving the sources (no dangling markers).
+      const withLineage = await storesOf(reopened).artifacts.listWithLineage([
+        catalogItem("item-a", "Rust Compiler Deep Dive"),
+        catalogItem("item-b", "Advanced Pasta Making"),
+      ]);
+      const transcripts = withLineage.filter((entry) => entry.descriptor.kind === "transcript");
+      expect(transcripts).toHaveLength(2);
+      expect(transcripts.every((entry) => entry.lineage === "attached")).toBe(true);
+    });
+
     it("feedback idempotency SURVIVES a restart: same id re-append is a duplicate, never a second row", async () => {
       const first = await open(dir);
       const event = explicitFeedback("fb-001", "item-a");

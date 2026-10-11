@@ -5,6 +5,51 @@ TL2 approval + migration notes; additive changes bump minor with a consumer
 impact note. No CHANGELOG existed before 0.2.0 — the 0.1.0 history is the git
 log of this package (frozen §2 shapes, D2-LOCAL lane).
 
+## 0.4.0 — 2026-10-11 — transcription-engine seam (P4-TRANSCRIBE)
+
+Phase-4 row 4. Adds the LOCAL transcription-engine port + the request /
+segment / result schemas + the three genuinely-needed MI error codes. Frozen
+§2.1–2.6 module files untouched; the §2.7 intelligence module gains one
+appended section only. Consumer impact: none on existing consumers (purely
+additive; no existing export changed shape).
+
+### Added
+
+- `src/intelligence.ts` (ADDITIVE section, after `DerivedArtifact`):
+  - `TranscriptionEngineDescriptor` (+ schema) — adapter identity
+    (id/label/version — OUR code's, always known) plus the honest optional
+    external facts (`engineVersion`, `modelLineage` — read from the engine's
+    own output when reported, ABSENT otherwise, never guessed) and the
+    license note (whisper.cpp-class = MIT-family, AUDIT-SOURCES §6; null
+    when none applies).
+  - `TranscriptionRequest` (+ schema) — a LOCAL media path plus an optional
+    engine-interpreted language hint; media bytes stay ENGINE-INTERNAL (no
+    WebFlix-layer decoding/demux/ffprobe — the order's honest non-goal).
+  - `TranscriptSegment` (+ schema) — integer-ms `[startMs, endMs]` range
+    with non-empty text; `endMs < startMs` rejected.
+  - `TranscriptionResult` (+ schema) — segments (possibly EMPTY: the honest
+    "engine reported no speech" outcome) plus the per-run honest reads
+    (`language` / `engineVersion` / `modelLineage`, each absent when the
+    engine did not report it — never inferred from the request).
+  - `TranscriptionProgress` + `TranscriptionOptions` + `TranscriptionEnginePort`
+    (interfaces, the port seam) — transcribe(request, options) with
+    cooperative cancellation (signal checked at entry AND between segments;
+    a thrown onProgress callback is a stop request) and the binding
+    implementation rules: LOCAL only (no network, no model downloads),
+    honest typed-unavailable when the engine is absent (surfaced, recovery
+    hint, never hidden), typed cancelled, honest lineage.
+- `src/errors.ts`: three codes appended to the additive-only enum —
+  `intelligence/transcription-invalid` (mi.transcribe caller defects,
+  validated before the job exists), `intelligence/engine-unavailable`
+  (honest-absent engine), `intelligence/engine-failed` (a FOUND engine
+  reporting its own failure — kept distinct from absent because recovery
+  differs). Typed cancellation reuses the existing `common/cancelled`: no
+  new code needed for it.
+- Anti-blank normalization: every string field the transcription section
+  adds uses trim-then-min(1) — a whitespace-only value is a BLANK and is
+  rejected (media paths, language hints, segment text, per-run lineage
+  reports). Padded segment text parses to its trimmed canonical form.
+
 ## 0.3.0 — 2026-10-11 — ranker-adapter selection (P4-ADAPTERS)
 
 Phase-4 row 3. Adds the smallest additive surface the adapter-selection

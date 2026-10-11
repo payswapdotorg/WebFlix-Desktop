@@ -40,3 +40,16 @@ export * from "./set-objectives";
 export * from "./record-feedback";
 export * from "./generate-recommendations";
 export * from "./derive-artifact-bookkeeping";
+// P4-TRANSCRIBE: the transcript pipeline — the first REAL derived-artifact
+// producer. mi.transcribe rides the frozen §2.6 job wrapper (boundary +
+// cooperative mid-run cancellation; cancelled/failed runs store NO artifact),
+// and the fixture-replay engine is the DETERMINISTIC TEST DOUBLE (canned
+// segments, labelled as such, no real ASR). The REAL local whisper.cpp
+// adapter is node-bound (child_process/fs/os) and therefore lives on the
+// local-library adapters seam (which already owns every machine-bound
+// adapter) implementing the SAME contracts TranscriptionEnginePort —
+// structural typing wires it into mi.transcribe's `engine` dep without a
+// cross-package edge. No engine is bundled; no network exists anywhere in
+// this path.
+export * from "./transcribe-media-file";
+export * from "./fixture-replay-engine";
