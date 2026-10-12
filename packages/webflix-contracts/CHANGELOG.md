@@ -5,6 +5,29 @@ TL2 approval + migration notes; additive changes bump minor with a consumer
 impact note. No CHANGELOG existed before 0.2.0 — the 0.1.0 history is the git
 log of this package (frozen §2 shapes, D2-LOCAL lane).
 
+## 0.10.0 — 2026-10-12 — the verification store's absent code (P5-VERIFY)
+
+Phase-5 row 4 (offer verification + review signals). Adds the ONE code this
+order genuinely needed: the durable OfferVerification store's typed absence
+(local-library migration 0007, this order) — `get` on a verification id no
+ads.verify run ever appended rejects with `ads/verification-absent`, never
+null and never an invented read-out (the 0.9.0 family rule; the 0.9.0 entry
+pre-announced exactly this addition: "no verification-absent code exists
+because no verification store exists yet (P5-VERIFY builds the verification
+machinery)"). The 0.8.0/0.9.0 shapes and codes are otherwise untouched —
+the OfferVerification shape already carries everything the verification
+engine states (WHAT was checked via `claimId`, against WHICH declared
+sources via `declaredSources`, WHEN via `checkedAt`, the typed `outcome`);
+the engine's checks list rides `VerificationSource.source` (the evidence
+node id + kind + what was compared, as the check consulted it), `url`, and
+`asReported` (the evidence text, verbatim). Consumer impact: none on
+existing consumers (purely additive; no existing export changed shape).
+
+### Added
+
+- `ErrorCode.AdsVerificationAbsent` = `ads/verification-absent` — the
+  OfferVerificationStore's typed absence.
+
 ## 0.9.0 — 2026-10-12 — the Ad Center absent error codes (P5-STORES)
 
 Phase-5 row 2 (the durable Ad Center stores). Adds the typed-ABSENT half of

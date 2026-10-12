@@ -123,9 +123,29 @@ export * from "./ads-import-items";
 // minted claim ids, the source record never mutated) and ads.linkEvidence
 // (explicit-input-only evidence-graph construction — NO inference: the
 // engine links exactly what the input batch carries, idempotent by edge
-// identity). No verification (P5-VERIFY), no qualification (P5-QUALIFY),
-// no connectors (P5-SOURCES), no LLM, no network — recall is not promised.
+// identity). No qualification (P5-QUALIFY), no connectors (P5-SOURCES),
+// no LLM, no network — recall is not promised.
 export * from "./ads-claim-extractor";
 export * from "./ads-extract-claims";
 export * from "./ads-link-evidence";
 export * from "./fixture-replay-ads-claim-extractor";
+
+// P5-VERIFY (Phase-5 row 4): offer verification over STORED evidence +
+// the as-reported review-signal reading path. ads.verify resolves each
+// claim's stored evidence edges + review signals, runs the DETERMINISTIC
+// documented comparison (numeric/text rules + the declared-relationship
+// polarity mapping — fixed parameters in ads-verify-comparison.ts's
+// docblock, the built-in-summary-engine house style), and appends one
+// typed OfferVerification per claim through the migration-0007
+// verification store (append-only by verification id; every record
+// re-validated through the domain state-machine invariant BEFORE it is
+// stored — an empty checks list can never yield verified, structurally).
+// ads.reviewSignals lists the stored signals AS-REPORTED (one row per
+// signal, verbatim vocabulary + full provenance, NO aggregation, NO
+// scoring, NO normalization across sources). No external fetching, no
+// truth invention: the engine compares what the user imported, and says
+// so. The in-memory OfferVerificationStore double rides the P5-STORES
+// in-memory set above.
+export * from "./ads-verify";
+export * from "./ads-verify-comparison";
+export * from "./ads-review-signals";

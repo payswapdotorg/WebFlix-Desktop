@@ -32,6 +32,7 @@ import type {
   AdvertiserIdentity,
   Claim,
   EvidenceLink,
+  OfferVerification,
   ReviewSignal,
 } from "webflix-contracts";
 import {
@@ -39,6 +40,7 @@ import {
   AdvertiserIdentitySchema,
   ClaimSchema,
   EvidenceLinkSchema,
+  OfferVerificationSchema,
   ReviewSignalSchema,
 } from "webflix-contracts";
 import type {
@@ -47,6 +49,8 @@ import type {
   ClaimStore,
   EvidenceEdgeAppendResult,
   EvidenceEdgeStore,
+  OfferVerificationAppendResult,
+  OfferVerificationStore,
   ReviewSignalAppendResult,
   ReviewSignalStore,
 } from "./ports";
@@ -272,6 +276,48 @@ export class InMemoryReviewSignalStore implements ReviewSignalStore {
   }
 }
 
+/** In-memory OfferVerificationStore (NOT durable — see the module doc). */
+export class InMemoryOfferVerificationStore implements OfferVerificationStore {
+  private readonly verifications = new Map<string, OfferVerification>();
+  private readonly order: string[] = [];
+
+  async append(verification: OfferVerification): Promise<OfferVerificationAppendResult> {
+    const parsed = OfferVerificationSchema.safeParse(verification);
+    if (!parsed.success) {
+      throw adsInvalid(
+        ErrorCode.AdsVerificationInvalid,
+        `not a valid OfferVerification (append): ${parsed.error.message}`,
+        "OfferVerification",
+      );
+    }
+    const existing = this.verifications.get(parsed.data.id);
+    if (existing !== undefined) {
+      return { outcome: "duplicate", existing };
+    }
+    this.order.push(parsed.data.id);
+    this.verifications.set(parsed.data.id, parsed.data);
+    return { outcome: "appended", verification: parsed.data };
+  }
+
+  async get(id: string): Promise<OfferVerification> {
+    const stored = this.verifications.get(id);
+    if (stored === undefined) {
+      throw adsAbsent(ErrorCode.AdsVerificationAbsent, id, "offer verification");
+    }
+    return stored;
+  }
+
+  async list(): Promise<readonly OfferVerification[]> {
+    return this.order.map((id) => this.verifications.get(id)!);
+  }
+
+  async listByClaim(claimId: string): Promise<readonly OfferVerification[]> {
+    return this.order
+      .map((id) => this.verifications.get(id)!)
+      .filter((verification) => verification.claimId === claimId);
+  }
+}
+
 /** The full in-memory ads store set (one per port, fresh per profile). */
 export interface InMemoryAdsStores {
   readonly identities: InMemoryAdvertiserIdentityStore;
@@ -279,6 +325,7 @@ export interface InMemoryAdsStores {
   readonly claims: InMemoryClaimStore;
   readonly evidenceEdges: InMemoryEvidenceEdgeStore;
   readonly reviewSignals: InMemoryReviewSignalStore;
+  readonly offerVerifications: InMemoryOfferVerificationStore;
 }
 
 /** Creates a fresh set of in-memory ads store doubles (hermetic tests). */
@@ -289,5 +336,6 @@ export function createInMemoryAdsStores(): InMemoryAdsStores {
     claims: new InMemoryClaimStore(),
     evidenceEdges: new InMemoryEvidenceEdgeStore(),
     reviewSignals: new InMemoryReviewSignalStore(),
+    offerVerifications: new InMemoryOfferVerificationStore(),
   };
 }

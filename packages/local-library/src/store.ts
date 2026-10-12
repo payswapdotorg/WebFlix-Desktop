@@ -9,6 +9,7 @@ import { migration0003RankerAdapterSelection } from "./db/migrations/0003_ranker
 import { migration0004TranscriptPayloads } from "./db/migrations/0004_transcript_payloads";
 import { migration0005TextAndAudioPayloads } from "./db/migrations/0005_text_and_audio_payloads";
 import { migration0006AdCenterStores } from "./db/migrations/0006_ad_center_stores";
+import { migration0007AdOfferVerificationStore } from "./db/migrations/0007_ad_offer_verification_store";
 import type { Migration } from "./db/migrate";
 import { createIntelligenceStores, type IntelligenceStores } from "./intelligence-stores";
 import { createAdsStores, type AdsStores } from "./ads-stores";
@@ -27,6 +28,7 @@ export const ALL_MIGRATIONS: readonly Migration[] = [
   migration0004TranscriptPayloads,
   migration0005TextAndAudioPayloads,
   migration0006AdCenterStores,
+  migration0007AdOfferVerificationStore,
 ];
 
 export interface OpenStoreOptions {
@@ -80,13 +82,13 @@ export class WebFlixStore {
   }
 
   /**
-   * Durable Ad Center stores (P5-STORES row 2) over this profile's
-   * database — per-profile by construction (ADR-0003): the five `ad_*`
-   * table families (identities, records, claims, evidence edges, review
-   * signals), structurally separated from every catalog/intelligence
-   * table. Lazy and stateless: the adapters only wrap the db handle. NOT
-   * composition-root wiring — connecting them to the application layer's
-   * ads.import use case is a later order.
+   * Durable Ad Center stores (P5-STORES row 2 + P5-VERIFY row 1) over this
+   * profile's database — per-profile by construction (ADR-0003): the six
+   * `ad_*` table families (identities, records, claims, evidence edges,
+   * review signals, offer verifications), structurally separated from every
+   * catalog/intelligence table. Lazy and stateless: the adapters only wrap
+   * the db handle. NOT composition-root wiring — connecting them to the
+   * application layer's ads.import / ads.verify use cases is a later order.
    */
   get ads(): AdsStores {
     this.adsStores ??= createAdsStores(this.db, this.now !== undefined ? { now: this.now } : {});

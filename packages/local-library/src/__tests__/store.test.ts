@@ -72,18 +72,20 @@ describe("local-library store (unit, temp dirs)", () => {
         .prepare("SELECT id, name, hash FROM schema_migrations ORDER BY id")
         .all();
       // P4-ARTIFACTS row 1 + P4-ADAPTERS row 2 + P4-SUMMARIZE row 1 +
-      // P4-TRANSLATE row 2 + P5-STORES row 2: the additive
+      // P4-TRANSLATE row 2 + P5-STORES row 2 + P5-VERIFY row 1: the additive
       // 0002_media_intelligence, 0003_ranker_adapter_selection,
-      // 0004_transcript_payloads, 0005_text_and_audio_payloads and
-      // 0006_ad_center_stores migrations ship with the durable MI + ads
-      // stores — the set is [0001, 0002, 0003, 0004, 0005, 0006].
-      expect(rows).toHaveLength(6);
+      // 0004_transcript_payloads, 0005_text_and_audio_payloads,
+      // 0006_ad_center_stores and 0007_ad_offer_verification_store
+      // migrations ship with the durable MI + ads stores — the set is
+      // [0001..0007].
+      expect(rows).toHaveLength(7);
       expect(rows[0]["name"]).toBe("0001_init");
       expect(rows[1]["name"]).toBe("0002_media_intelligence");
       expect(rows[2]["name"]).toBe("0003_ranker_adapter_selection");
       expect(rows[3]["name"]).toBe("0004_transcript_payloads");
       expect(rows[4]["name"]).toBe("0005_text_and_audio_payloads");
       expect(rows[5]["name"]).toBe("0006_ad_center_stores");
+      expect(rows[6]["name"]).toBe("0007_ad_offer_verification_store");
       expect(String(rows[0]["hash"])).toMatch(/^[0-9a-f]{64}$/);
     });
 
@@ -92,7 +94,7 @@ describe("local-library store (unit, temp dirs)", () => {
       store.close();
       const reopened = await open(dir);
       const count = reopened.db.prepare("SELECT COUNT(*) AS n FROM schema_migrations").get();
-      expect(Number(count?.["n"])).toBe(6);
+      expect(Number(count?.["n"])).toBe(7);
 
       const p = join(dir, "x.mp4");
       writeFileSync(p, "x");

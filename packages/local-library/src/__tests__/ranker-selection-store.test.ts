@@ -187,6 +187,7 @@ describe("durable ranker-adapter selection store (sqlite seam, temp dirs)", () =
       "0004_transcript_payloads",
       "0005_text_and_audio_payloads",
       "0006_ad_center_stores",
+      "0007_ad_offer_verification_store",
     ]);
   });
 

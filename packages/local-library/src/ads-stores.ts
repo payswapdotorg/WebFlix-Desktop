@@ -16,6 +16,11 @@ import {
   type EvidenceEdgeStorePort,
 } from "./ads-evidence-edge-store";
 import {
+  SqliteOfferVerificationStore,
+  type OfferVerificationStoreOptions,
+  type OfferVerificationStorePort,
+} from "./ads-offer-verification-store";
+import {
   SqliteReviewSignalStore,
   type ReviewSignalStoreOptions,
   type ReviewSignalStorePort,
@@ -53,6 +58,12 @@ export interface AdsStores {
   readonly evidenceEdges: EvidenceEdgeStorePort;
   /** ReviewSignal rows (`ad_review_signals`): append-only, idempotent-by-id. */
   readonly reviewSignals: ReviewSignalStorePort;
+  /**
+   * OfferVerification rows (`ad_offer_verifications`, migration 0007 /
+   * P5-VERIFY): append-only by verification id, idempotent-by-id — the
+   * ads.verify engine's immutable check read-outs.
+   */
+  readonly offerVerifications: OfferVerificationStorePort;
 }
 
 /** Options shared by every ads store adapter (the injectable clock). */
@@ -60,9 +71,13 @@ export type AdsStoreOptions = AdvertiserIdentityStoreOptions &
   AdRecordStoreOptions &
   ClaimStoreOptions &
   EvidenceEdgeStoreOptions &
-  ReviewSignalStoreOptions;
+  ReviewSignalStoreOptions &
+  OfferVerificationStoreOptions;
 
-/** Creates the five durable ads stores over ONE profile-scoped db handle. */
+/**
+ * Creates the durable ads stores over ONE profile-scoped db handle (the
+ * verification store joined the bundle with migration 0007 / P5-VERIFY).
+ */
 export function createAdsStores(db: SqliteDatabase, options: AdsStoreOptions = {}): AdsStores {
   return {
     identities: new SqliteAdvertiserIdentityStore(db, options),
@@ -70,5 +85,6 @@ export function createAdsStores(db: SqliteDatabase, options: AdsStoreOptions = {
     claims: new SqliteClaimStore(db, options),
     evidenceEdges: new SqliteEvidenceEdgeStore(db, options),
     reviewSignals: new SqliteReviewSignalStore(db, options),
+    offerVerifications: new SqliteOfferVerificationStore(db, options),
   };
 }

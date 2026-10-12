@@ -30,6 +30,7 @@ import type {
   AdvertiserIdentity,
   Claim,
   EvidenceLink,
+  OfferVerification,
   ReviewSignal,
 } from "webflix-contracts";
 import type { TranscriptPayload } from "./transcript-payload";
@@ -326,6 +327,12 @@ export type EvidenceEdgeAppendResult =
   /** Same id as a stored edge: the store returns the stored one. */
   | { readonly outcome: "duplicate"; readonly existing: EvidenceLink };
 
+/** Idempotent-append outcome for offer verifications (immutable read-outs). */
+export type OfferVerificationAppendResult =
+  | { readonly outcome: "appended"; readonly verification: OfferVerification }
+  /** Same id as a stored verification: the store returns the stored one. */
+  | { readonly outcome: "duplicate"; readonly existing: OfferVerification };
+
 /**
  * Per-profile AdvertiserIdentity store: the source-reported identity
  * REFERENCE TARGETS (the 0.8.0 shape). `put` replaces wholesale for the
@@ -501,6 +508,46 @@ export interface ReviewSignalStore {
   get(id: string): Promise<ReviewSignal>;
   /** All stored signals, deterministic order. */
   list(): Promise<readonly ReviewSignal[]>;
+}
+
+/**
+ * Per-profile OfferVerification store: the ads.verify engine's read-outs
+ * (the 0.8.0 shape — WHAT was checked via `claimId`, against WHICH
+ * declared sources via `declaredSources`, WHEN via `checkedAt`, the TYPED
+ * `outcome`; the state-machine legality is the domain invariant
+ * `validateOfferVerificationState`, which ads.verify runs over every
+ * record BEFORE appending — stores persist verifications AS DATA).
+ *
+ * APPEND-ONLY BY VERIFICATION ID, by design: an OfferVerification is an
+ * IMMUTABLE read-out of one check instant (the domain transition rule
+ * allows only unchecked -> checked within a record, and a re-verification
+ * is a NEW record with its own id), so `append` is idempotent-by-id (a
+ * stored id re-appends as a duplicate returning the STORED record — never
+ * a second row, idempotency surviving restarts); there is no put, no
+ * delete, no clearAll. `listByClaim` is the attachment surface (one
+ * claim's verification history, for the reading path).
+ *
+ * ABSENCE IS TYPED, never null: `get` rejects with the typed
+ * `ads/verification-absent` WebFlixError (the 0.10.0 code). The durable
+ * implementation is local-library migration 0007
+ * (`ad_offer_verifications`); the in-memory default serves hermetic tests.
+ */
+export interface OfferVerificationStore {
+  /** Appends one verification; a stored id re-appends as a duplicate. */
+  append(verification: OfferVerification): Promise<OfferVerificationAppendResult>;
+  /**
+   * The stored verification; rejects with the typed
+   * `ads/verification-absent` error when none was appended (never null —
+   * absence is typed and surfaced).
+   */
+  get(id: string): Promise<OfferVerification>;
+  /** All stored verifications, deterministic order. */
+  list(): Promise<readonly OfferVerification[]>;
+  /**
+   * The verification history of ONE claim, deterministic order; empty when
+   * the claim has none (honest empty — the not-yet-verified state).
+   */
+  listByClaim(claimId: string): Promise<readonly OfferVerification[]>;
 }
 
 // ---------------------------------------------------------------------------

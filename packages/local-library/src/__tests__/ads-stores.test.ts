@@ -1,13 +1,14 @@
 /**
- * Durable Ad Center store tests (P5-STORES row 2): the ad_* sqlite seam
- * (migration 0006) — round-trips (full + honest-absent), restart
- * durability, the typed ads/*-absent errors, the FNV-1a checksum
- * re-verification on read (tampering surfaces typed — both the payload
- * column and the checksum column), put-replaces vs append-only
- * idempotency, the record version history surface (listBySourceAdId),
- * retention delete, the pre-0006-migration regression (an 0001–0005 store
- * file applies 0006 forward with all prior data intact), and per-profile
- * isolation (ADR-0003).
+ * Durable Ad Center store tests (P5-STORES row 2 + P5-VERIFY row 1): the
+ * ad_* sqlite seam (migrations 0006 + 0007) — round-trips (full +
+ * honest-absent), restart durability, the typed ads/*-absent errors, the
+ * FNV-1a checksum re-verification on read (tampering surfaces typed —
+ * both the payload column and the checksum column), put-replaces vs
+ * append-only idempotency, the record version history surface
+ * (listBySourceAdId), retention delete, the pre-migration regressions
+ * (an 0001–0005 store file applies 0006+0007 forward; a REAL 0006-era
+ * store file with claims/edges applies 0007 forward with all prior data
+ * intact), and per-profile isolation (ADR-0003).
  */
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -19,6 +20,7 @@ import type {
   AdvertiserIdentity,
   Claim,
   EvidenceLink,
+  OfferVerification,
   ReviewSignal,
 } from "webflix-contracts";
 import {
@@ -26,12 +28,15 @@ import {
   createSqliteDatabase,
   openStore,
   runMigrations,
+  SqliteClaimStore,
+  SqliteEvidenceEdgeStore,
   SqliteTextPayloadStore,
   WebFlixStore,
   type AdRecordStorePort,
   type AdvertiserIdentityStorePort,
   type ClaimStorePort,
   type EvidenceEdgeStorePort,
+  type OfferVerificationStorePort,
   type ReviewSignalStorePort,
 } from "../index";
 
@@ -108,6 +113,27 @@ const signal: ReviewSignal = {
   provenance: { source: "user-import", importedAt: ISO_LATER, importBatchId: "batch-002" },
 };
 
+const verificationBare: OfferVerification = {
+  id: "verif-1",
+  claimId: "claim-1",
+  outcome: "unchecked",
+};
+
+const verificationChecked: OfferVerification = {
+  id: "verif-2",
+  claimId: "claim-1",
+  declaredSources: [
+    {
+      source:
+        'offer-terms evidence node "ev-3" — numeric/text comparison of the claim quote against the declared terms excerpt (verifies)',
+      url: "https://acme.example/offer-terms",
+      asReported: "50% off applies to the first 3 months",
+    },
+  ],
+  checkedAt: ISO_LATER,
+  outcome: "verified-against-declared-source",
+};
+
 async function expectWebFlixErrorAsync(
   fn: () => Promise<unknown>,
   code: ErrorCode,
@@ -141,10 +167,11 @@ describe("durable Ad Center stores (sqlite seam, temp dirs)", () => {
   // The migration itself
   // -------------------------------------------------------------------------
 
-  it("migration 0006 creates the five ad_* tables and is recorded exactly once", async () => {
+  it("migration 0006 + 0007 create the six ad_* tables and are recorded exactly once", async () => {
     const rows = store.db.prepare("SELECT id, name FROM schema_migrations ORDER BY id").all();
-    expect(rows).toHaveLength(6);
+    expect(rows).toHaveLength(7);
     expect(rows[5]["name"]).toBe("0006_ad_center_stores");
+    expect(rows[6]["name"]).toBe("0007_ad_offer_verification_store");
     const tables = store.db
       .prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name LIKE 'ad_%'")
       .all()
@@ -154,6 +181,7 @@ describe("durable Ad Center stores (sqlite seam, temp dirs)", () => {
       "ad_claims",
       "ad_evidence_edges",
       "ad_identities",
+      "ad_offer_verifications",
       "ad_records",
       "ad_review_signals",
     ]);
@@ -553,10 +581,93 @@ describe("durable Ad Center stores (sqlite seam, temp dirs)", () => {
   });
 
   // -------------------------------------------------------------------------
+  // OfferVerification store (P5-VERIFY row 1, migration 0007)
+  // -------------------------------------------------------------------------
+
+  it("verification append + get round-trips BOTH states verbatim (bare unchecked + full checked)", async () => {
+    const appendedBare = await store.ads.offerVerifications.append(verificationBare);
+    expect(appendedBare.outcome).toBe("appended");
+    const appendedChecked = await store.ads.offerVerifications.append(verificationChecked);
+    expect(appendedChecked.outcome).toBe("appended");
+    expect(await store.ads.offerVerifications.get("verif-1")).toEqual(verificationBare);
+    expect(await store.ads.offerVerifications.get("verif-2")).toEqual(verificationChecked);
+    // A checked record's honest-absent source fields stay absent verbatim.
+    const checked = await store.ads.offerVerifications.get("verif-2");
+    expect(checked.declaredSources?.[0]?.url).toBe("https://acme.example/offer-terms");
+    expect(checked.checkedAt).toBe(ISO_LATER);
+  });
+
+  it("verification append is IDEMPOTENT by id: the stored one wins, never a second row", async () => {
+    await store.ads.offerVerifications.append(verificationChecked);
+    const again = await store.ads.offerVerifications.append({
+      ...verificationChecked,
+      outcome: "contradicted",
+    });
+    expect(again.outcome).toBe("duplicate");
+    if (again.outcome === "duplicate") {
+      expect(again.existing).toEqual(verificationChecked);
+    }
+    const count = store.db
+      .prepare("SELECT COUNT(*) AS n FROM ad_offer_verifications WHERE id = ?")
+      .get("verif-2");
+    expect(Number(count?.["n"])).toBe(1);
+    expect(await store.ads.offerVerifications.get("verif-2")).toEqual(verificationChecked);
+  });
+
+  it("verification get on a missing id rejects with the TYPED ads/verification-absent error", async () => {
+    await expectWebFlixErrorAsync(
+      () => store.ads.offerVerifications.get("verif-never"),
+      ErrorCode.AdsVerificationAbsent,
+    );
+  });
+
+  it("a TAMPERED verification payload fails its checksum on read (typed)", async () => {
+    await store.ads.offerVerifications.append(verificationChecked);
+    store.db
+      .prepare("UPDATE ad_offer_verifications SET verification_json = ? WHERE id = ?")
+      .run(JSON.stringify({ ...verificationChecked, outcome: "unchecked" }), "verif-2");
+    await expectWebFlixErrorAsync(
+      () => store.ads.offerVerifications.get("verif-2"),
+      ErrorCode.AdsVerificationInvalid,
+    );
+  });
+
+  it("listByClaim is the attachment surface: one claim's history, honest empty for others", async () => {
+    await store.ads.offerVerifications.append(verificationBare);
+    await store.ads.offerVerifications.append({
+      ...verificationChecked,
+      id: "verif-3",
+      claimId: "claim-2",
+    });
+    expect(await store.ads.offerVerifications.listByClaim("claim-1")).toEqual([verificationBare]);
+    expect(await store.ads.offerVerifications.listByClaim("claim-2")).toHaveLength(1);
+    expect(await store.ads.offerVerifications.listByClaim("claim-never")).toEqual([]);
+    // The whole-store listing is deterministic: (stored_at, id) with the
+    // pinned clock -> id order.
+    expect((await store.ads.offerVerifications.list()).map((one) => one.id)).toEqual([
+      "verif-1",
+      "verif-3",
+    ]);
+  });
+
+  it("verifications survive a restart; the append idempotency survives too", async () => {
+    await store.ads.offerVerifications.append(verificationChecked);
+    store.close();
+    const reopened = await openStore({ baseDir: dir, now: pinnedClock() });
+    try {
+      expect(await reopened.ads.offerVerifications.get("verif-2")).toEqual(verificationChecked);
+      const again = await reopened.ads.offerVerifications.append(verificationChecked);
+      expect(again.outcome).toBe("duplicate");
+    } finally {
+      reopened.close();
+    }
+  });
+
+  // -------------------------------------------------------------------------
   // Pre-0006 migration regression (additive-only, forward application)
   // -------------------------------------------------------------------------
 
-  it("a PRE-0006 store file (0001–0005) applies 0006 forward with all prior data intact", async () => {
+  it("a PRE-0006 store file (0001–0005) applies 0006 + 0007 forward with all prior data intact", async () => {
     store.close();
     rmSync(dir, { recursive: true, force: true });
     dir = mkdtempSync(join(tmpdir(), "webflix-ads-pre0006-"));
@@ -571,11 +682,11 @@ describe("durable Ad Center stores (sqlite seam, temp dirs)", () => {
       checksum: "fnv1a32:373f2325",
     });
     db.close();
-    // Reopen with the FULL list: 0006 applies forward, nothing is lost.
+    // Reopen with the FULL list: 0006 + 0007 apply forward, nothing is lost.
     const reopened = await openStore({ baseDir: dir, now: pinnedClock() });
     try {
       const migrations = reopened.db.prepare("SELECT id FROM schema_migrations ORDER BY id").all();
-      expect(migrations).toHaveLength(6);
+      expect(migrations).toHaveLength(7);
       const payload = await reopened.textPayloads.get("art-pre-0006");
       expect(payload.text).toBe("pre-0006 payload");
       // The ads tables exist and are HONESTLY EMPTY (pre-import state).
@@ -584,10 +695,47 @@ describe("durable Ad Center stores (sqlite seam, temp dirs)", () => {
       expect(await reopened.ads.claims.list()).toEqual([]);
       expect(await reopened.ads.evidenceEdges.list()).toEqual([]);
       expect(await reopened.ads.reviewSignals.list()).toEqual([]);
+      expect(await reopened.ads.offerVerifications.list()).toEqual([]);
       await expectWebFlixErrorAsync(
         () => reopened.ads.records.get("anything"),
         ErrorCode.AdsRecordAbsent,
       );
+    } finally {
+      reopened.close();
+    }
+  });
+
+  it("a REAL 0006-era store file (claims + evidence edges live) applies 0007 forward with all prior data intact", async () => {
+    store.close();
+    rmSync(dir, { recursive: true, force: true });
+    dir = mkdtempSync(join(tmpdir(), "webflix-ads-pre0007-"));
+    // Build a store file that stopped at 0006 (the real P5-CLAIMS-era
+    // state: imported records + extracted claims + evidence edges).
+    const db = await createSqliteDatabase(join(dir, "webflix.db"));
+    runMigrations(db, ALL_MIGRATIONS.slice(0, 6));
+    const sqlite = new SqliteClaimStore(db);
+    await sqlite.put(claim);
+    const edgeStore = new SqliteEvidenceEdgeStore(db);
+    await edgeStore.append(edge);
+    db.close();
+    // Reopen with the FULL list: 0007 applies forward, the 0006-era data
+    // survives byte-identically, and the verification table is honestly
+    // empty (no ads.verify run has happened yet).
+    const reopened = await openStore({ baseDir: dir, now: pinnedClock() });
+    try {
+      const migrations = reopened.db.prepare("SELECT id FROM schema_migrations ORDER BY id").all();
+      expect(migrations).toHaveLength(7);
+      expect(await reopened.ads.claims.get("claim-1")).toEqual(claim);
+      expect(await reopened.ads.evidenceEdges.get("ev-1")).toEqual(edge);
+      expect(await reopened.ads.offerVerifications.list()).toEqual([]);
+      await expectWebFlixErrorAsync(
+        () => reopened.ads.offerVerifications.get("anything"),
+        ErrorCode.AdsVerificationAbsent,
+      );
+      // And the fresh verification surface is writable post-migration.
+      const appended = await reopened.ads.offerVerifications.append(verificationBare);
+      expect(appended.outcome).toBe("appended");
+      expect(await reopened.ads.offerVerifications.get("verif-1")).toEqual(verificationBare);
     } finally {
       reopened.close();
     }
@@ -603,6 +751,7 @@ describe("durable Ad Center stores (sqlite seam, temp dirs)", () => {
     await store.ads.claims.put(claim);
     await store.ads.evidenceEdges.append(edge);
     await store.ads.reviewSignals.append(signal);
+    await store.ads.offerVerifications.append(verificationChecked);
     const otherDir = mkdtempSync(join(tmpdir(), "webflix-ads-stores-other-"));
     try {
       const other = await openStore({ baseDir: otherDir, now: pinnedClock() });
@@ -627,6 +776,10 @@ describe("durable Ad Center stores (sqlite seam, temp dirs)", () => {
           () => other.ads.reviewSignals.get("rev-1"),
           ErrorCode.AdsReviewSignalAbsent,
         );
+        await expectWebFlixErrorAsync(
+          () => other.ads.offerVerifications.get("verif-2"),
+          ErrorCode.AdsVerificationAbsent,
+        );
       } finally {
         other.close();
       }
@@ -641,11 +794,14 @@ describe("durable Ad Center stores (sqlite seam, temp dirs)", () => {
     const claims: ClaimStorePort = store.ads.claims;
     const evidenceEdges: EvidenceEdgeStorePort = store.ads.evidenceEdges;
     const reviewSignals: ReviewSignalStorePort = store.ads.reviewSignals;
+    const offerVerifications: OfferVerificationStorePort = store.ads.offerVerifications;
     expect(typeof identities.put).toBe("function");
     expect(typeof records.listBySourceAdId).toBe("function");
     expect(typeof records.delete).toBe("function");
     expect(typeof claims.listByAdRecordId).toBe("function");
     expect(typeof evidenceEdges.append).toBe("function");
     expect(typeof reviewSignals.append).toBe("function");
+    expect(typeof offerVerifications.append).toBe("function");
+    expect(typeof offerVerifications.listByClaim).toBe("function");
   });
 });

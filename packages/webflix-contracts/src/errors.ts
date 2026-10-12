@@ -119,22 +119,26 @@ export enum ErrorCode {
   AdsClaimInvalid = "ads/claim-invalid",
   AdsEvidenceInvalid = "ads/evidence-invalid",
   AdsVerificationInvalid = "ads/verification-invalid",
-  // Ad Center absent codes (Phase 5, P5-STORES) — the typed-absent half of
-  // the ads/* vocabulary, appended per the additive-only rule. The durable
-  // ads stores (local-library migration 0006) key rows by id and follow the
-  // house typed-absent rule: `get` on an id with no stored row REJECTS with
+  // Ad Center absent codes (Phase 5, P5-STORES + P5-VERIFY) — the typed-absent
+  // half of the ads/* vocabulary, appended per the additive-only rule. The durable
+  // ads stores (local-library migrations 0006 + 0007) key rows by id and follow
+  // the house typed-absent rule: `get` on an id with no stored row REJECTS with
   // the shape's own `ads/<thing>-absent` code — never null, never an
   // invented substitute (the intelligence/transcript-payload-absent
-  // precedent). Five codes, one per store family this order persists;
-  // `ads/verification-invalid` has no absent sibling because no
-  // verification store exists yet (P5-VERIFY). Absence is never invalidity:
-  // an absent row is the honest pre-import state, surfaced with re-import
-  // as the recovery.
+  // precedent). Six codes, one per store family (P5-VERIFY added the
+  // verification store's `ads/verification-absent`, pre-announced by the
+  // 0.9.0 entry when no verification store existed yet). Absence is never
+  // invalidity: an absent row is the honest pre-import state, surfaced with
+  // re-import (or, for verifications, running ads.verify) as the recovery.
   AdsIdentityAbsent = "ads/identity-absent",
   AdsRecordAbsent = "ads/record-absent",
   AdsClaimAbsent = "ads/claim-absent",
   AdsEvidenceAbsent = "ads/evidence-absent",
   AdsReviewSignalAbsent = "ads/review-signal-absent",
+  // (P5-VERIFY) the OfferVerification store's typed absence — an id no
+  // ads.verify run ever appended; the recovery is running ads.verify over
+  // the claim, never an invented read-out.
+  AdsVerificationAbsent = "ads/verification-absent",
   // cross-cutting
   RateLimited = "common/rate-limited",
   Network = "common/network",

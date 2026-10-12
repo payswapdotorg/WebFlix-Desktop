@@ -129,13 +129,14 @@ describe("ads contract schemas", () => {
     expect(ErrorCode.AdsVerificationInvalid).toBe("ads/verification-invalid");
   });
 
-  it("the ads/*-absent codes (P5-STORES) are part of the ErrorCode vocabulary", () => {
+  it("the ads/*-absent codes (P5-STORES + P5-VERIFY) are part of the ErrorCode vocabulary", () => {
     for (const code of [
       "ads/identity-absent",
       "ads/record-absent",
       "ads/claim-absent",
       "ads/evidence-absent",
       "ads/review-signal-absent",
+      "ads/verification-absent",
     ]) {
       expect(ErrorCodeSchema.safeParse(code).success).toBe(true);
     }
@@ -144,6 +145,7 @@ describe("ads contract schemas", () => {
     expect(ErrorCode.AdsClaimAbsent).toBe("ads/claim-absent");
     expect(ErrorCode.AdsEvidenceAbsent).toBe("ads/evidence-absent");
     expect(ErrorCode.AdsReviewSignalAbsent).toBe("ads/review-signal-absent");
+    expect(ErrorCode.AdsVerificationAbsent).toBe("ads/verification-absent");
   });
 
   describe("AdProvenance", () => {

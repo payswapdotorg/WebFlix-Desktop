@@ -49,6 +49,7 @@ export { migration0003RankerAdapterSelection } from "./db/migrations/0003_ranker
 export { migration0004TranscriptPayloads } from "./db/migrations/0004_transcript_payloads";
 export { migration0005TextAndAudioPayloads } from "./db/migrations/0005_text_and_audio_payloads";
 export { migration0006AdCenterStores } from "./db/migrations/0006_ad_center_stores";
+export { migration0007AdOfferVerificationStore } from "./db/migrations/0007_ad_offer_verification_store";
 
 // Durable Ad Center stores (P5-STORES row 2, Phase-5 row 2): every ads shape
 // this order persists gets its OWN ad_* table (additive migration 0006) and
@@ -88,6 +89,19 @@ export type {
   ReviewSignalStoreOptions,
   ReviewSignalStorePort,
 } from "./ads-review-signal-store";
+// Durable OfferVerification store (P5-VERIFY row 1, Phase-5 row 4): the
+// ads.verify engine's append-only read-outs in their OWN `ad_offer_verifications`
+// table (additive migration 0007) — append-only by verification id (an
+// OfferVerification is an immutable read-out of ONE check instant; the
+// domain state machine forbids re-checking a record), typed
+// ads/verification-absent on get, and the FNV-1a identity checksum
+// re-verified on every read. Same separation rules as the 0006 families.
+export { SqliteOfferVerificationStore } from "./ads-offer-verification-store";
+export type {
+  OfferVerificationAppendResult,
+  OfferVerificationStoreOptions,
+  OfferVerificationStorePort,
+} from "./ads-offer-verification-store";
 
 // Durable transcript payload store (P4-SUMMARIZE row 1): the transcript
 // segment payloads keyed by their transcript artifact id, on this package's
