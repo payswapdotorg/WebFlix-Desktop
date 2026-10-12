@@ -49,7 +49,7 @@ Only the evidence in the final columns may justify advancing a status. A require
 | WF-029 | Ad personal memory               | Save/forget and user-reported observations with explicit opt-in scopes                                                                | planned        | No ambient observation or cross-source linking without consent                                                                                                                                            |
 | WF-030 | Account isolation                | Provider accounts, tokens and writes are scoped to the connecting user/profile                                                        | audit-pending  | Cross-profile and disconnect/revoke tests; no operator-session leakage                                                                                                                                    |
 | WF-031 | Optional sync                    | Explicitly opted-in sync of user-owned records only, with conflict/deletion semantics                                                 | planned        | Sync pause, offline conflict, tombstone and data export tests                                                                                                                                             |
-| WF-032 | Future web/mobile                | Reuse platform-neutral contracts and application layer                                                                                | planned        | Separate clients call same use cases; not a Phase 1 blocker                                                                                                                                               |
+| WF-032 | Future web/mobile                | Reuse platform-neutral contracts and application layer                                                                                | tested         | Separate clients call same use cases; not a Phase 1 blocker                                                                                                                                               |
 | WF-033 | Architecture enforcement         | New modules managed in architecture policy; no cycles/deep imports                                                                    | tested         | Changed-file architecture gate blocks new violations                                                                                                                                                      |
 | WF-034 | Release safety                   | Reproducible package identity, signed/verified update path and notices                                                                | audit-pending  | Distribution/identity audit and target-platform smoke tests                                                                                                                                               |
 
@@ -94,3 +94,23 @@ surface claim. Old -> new, per row, with the proving ledger rows:
 - WF-028: Reconciled 2026-10-12: planned -> tested (ledger: P5-VERIFY @ 2d906e9; P5-QUALIFY @ 8356dc4; DESKTOP-COMPOSITION-1 @ e74963a).
 - WF-033: Reconciled 2026-10-12: audit-pending -> tested (ledger: contract freeze @ 5549208; DESKTOP-ACCEPTANCE-1 2026-10-10; P5-CONTRACTS @ 94739f8; DESKTOP-COMPOSITION-1 @ e74963a).
 - WF-035: Reconciled 2026-10-12: planned -> implemented (ledger: D3-YOUTUBE 2026-10-10; YOUTUBE-EXPAND @ 85897bd; DESKTOP-ACCEPTANCE-1 2026-10-10).
+
+## Mobile ruling reconciliation 2026-10-12 (P6-MOBILE-RULING)
+
+One status advance, web half only, recorded by the P6-MOBILE-RULING
+decision doc (docs/plans/phase6-mobile-ruling.md). Requirement text, the
+row set and the "Initial status" header are unchanged; rows not listed
+keep their prior status verbatim. Old -> new, per row, with the proving
+ledger rows:
+
+- WF-032: Reconciled 2026-10-12: planned -> tested, WEB HALF ONLY
+  (ledger: P6-WEB-HOST-1 @ 7aa43a3, merged b7242ea — a separate web
+  client composes webflix-shell's AppShell over the real
+  webflix-application use cases, web-client tests 12/12 + shell
+  components 80/80 + build emitted, gates reproduced at the merge;
+  P6-DURABLE-WEB-1 @ 8392a30, ruling 862e452 — the same client gained
+  the typed durable seam, web-client tests 41/41 + build emitted). The
+  mobile half is explicitly NOT claimed: the ruling queues
+  P6-MOBILE-AUDIT-1 (mobile-viewport verification) as the only path to
+  a mobile claim. WF-020/029/031 were evaluated and stay verbatim —
+  reasons recorded in the ruling doc §4.
