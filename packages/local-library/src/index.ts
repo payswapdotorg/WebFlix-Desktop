@@ -48,6 +48,46 @@ export { migration0002MediaIntelligence } from "./db/migrations/0002_media_intel
 export { migration0003RankerAdapterSelection } from "./db/migrations/0003_ranker_adapter_selection";
 export { migration0004TranscriptPayloads } from "./db/migrations/0004_transcript_payloads";
 export { migration0005TextAndAudioPayloads } from "./db/migrations/0005_text_and_audio_payloads";
+export { migration0006AdCenterStores } from "./db/migrations/0006_ad_center_stores";
+
+// Durable Ad Center stores (P5-STORES row 2, Phase-5 row 2): every ads shape
+// this order persists gets its OWN ad_* table (additive migration 0006) and
+// one store module per table family on this package's storage seam —
+// put-replaces by id where the shape is a record (identities, records,
+// claims), append-only idempotent-by-id where the shape is append-only
+// (evidence edges, review signals), typed ads/*-absent errors on get, and
+// the FNV-1a identity checksum re-verified on every read (tampering
+// surfaces typed). Structurally separated from every catalog/intelligence
+// table: the stores import ONLY the contracts package's ads schemas and
+// this lane's own db adapter + checksum helper — never any
+// intelligence/ranking module, in either direction (phase5-ad-plan §3,
+// pinned by the architecture rule + the schema itself). Exported for the
+// composition root (a later order wires them — the ports are structural
+// mirrors of the application layer's ads stores, per the LocalStorePort
+// precedent).
+export { createAdsStores } from "./ads-stores";
+export type { AdsStores, AdsStoreOptions } from "./ads-stores";
+export { SqliteAdvertiserIdentityStore } from "./ads-identity-store";
+export type {
+  AdvertiserIdentityStoreOptions,
+  AdvertiserIdentityStorePort,
+} from "./ads-identity-store";
+export { SqliteAdRecordStore } from "./ads-record-store";
+export type { AdRecordStoreOptions, AdRecordStorePort } from "./ads-record-store";
+export { SqliteClaimStore } from "./ads-claim-store";
+export type { ClaimStoreOptions, ClaimStorePort } from "./ads-claim-store";
+export { SqliteEvidenceEdgeStore } from "./ads-evidence-edge-store";
+export type {
+  EvidenceEdgeAppendResult,
+  EvidenceEdgeStoreOptions,
+  EvidenceEdgeStorePort,
+} from "./ads-evidence-edge-store";
+export { SqliteReviewSignalStore } from "./ads-review-signal-store";
+export type {
+  ReviewSignalAppendResult,
+  ReviewSignalStoreOptions,
+  ReviewSignalStorePort,
+} from "./ads-review-signal-store";
 
 // Durable transcript payload store (P4-SUMMARIZE row 1): the transcript
 // segment payloads keyed by their transcript artifact id, on this package's

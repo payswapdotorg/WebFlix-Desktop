@@ -129,6 +129,23 @@ describe("ads contract schemas", () => {
     expect(ErrorCode.AdsVerificationInvalid).toBe("ads/verification-invalid");
   });
 
+  it("the ads/*-absent codes (P5-STORES) are part of the ErrorCode vocabulary", () => {
+    for (const code of [
+      "ads/identity-absent",
+      "ads/record-absent",
+      "ads/claim-absent",
+      "ads/evidence-absent",
+      "ads/review-signal-absent",
+    ]) {
+      expect(ErrorCodeSchema.safeParse(code).success).toBe(true);
+    }
+    expect(ErrorCode.AdsIdentityAbsent).toBe("ads/identity-absent");
+    expect(ErrorCode.AdsRecordAbsent).toBe("ads/record-absent");
+    expect(ErrorCode.AdsClaimAbsent).toBe("ads/claim-absent");
+    expect(ErrorCode.AdsEvidenceAbsent).toBe("ads/evidence-absent");
+    expect(ErrorCode.AdsReviewSignalAbsent).toBe("ads/review-signal-absent");
+  });
+
   describe("AdProvenance", () => {
     it("round-trips a full provenance and an honest-absent observation", () => {
       expectRoundTrip(AdProvenanceSchema, provenance);

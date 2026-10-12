@@ -94,3 +94,22 @@ export * from "./evaluation-metrics";
 export * from "./evaluation-replay";
 export * from "./mi-evaluate";
 export * from "./fixture-replay-ranker";
+
+// P5-STORES (Phase-5 row 2): the Ad Center store ports (five ads-lane seams
+// structurally separate from every intelligence/ranking port — phase5-ad-
+// plan §3), their IN-MEMORY doubles for hermetic tests, and ads.import —
+// the IMPORT SEAM, the honest path ad data enters the system until
+// transparency connectors are authorized (P5-SOURCES). ads.import rides the
+// frozen §2.6 wrapper (boundary + per-item cooperative cancellation),
+// validates each item through the 0.8.0 schemas + the domain invariants
+// (the extractive discipline), persists atomically PER RECORD with honest
+// per-item outcomes (accepted-with-disposition / rejected-with-reason),
+// and makes the charter's version rule literal: same source id + same
+// batch = replace; different batch = a NEW version appended with
+// provenance; NEVER a silent overwrite of history. The DURABLE stores live
+// on the local-library seam (migration 0006 ad_* tables) — a later order
+// wires the composition root.
+export * from "./in-memory-ads-stores";
+export * from "./ads-import";
+export * from "./ads-import-rules";
+export * from "./ads-import-items";

@@ -8,8 +8,10 @@ import { migration0002MediaIntelligence } from "./db/migrations/0002_media_intel
 import { migration0003RankerAdapterSelection } from "./db/migrations/0003_ranker_adapter_selection";
 import { migration0004TranscriptPayloads } from "./db/migrations/0004_transcript_payloads";
 import { migration0005TextAndAudioPayloads } from "./db/migrations/0005_text_and_audio_payloads";
+import { migration0006AdCenterStores } from "./db/migrations/0006_ad_center_stores";
 import type { Migration } from "./db/migrate";
 import { createIntelligenceStores, type IntelligenceStores } from "./intelligence-stores";
+import { createAdsStores, type AdsStores } from "./ads-stores";
 import { SqliteRankerSelectionStore } from "./ranker-selection-store";
 import { SqliteTranscriptPayloadStore } from "./transcript-payload-store";
 import { SqliteTextPayloadStore } from "./text-payload-store";
@@ -24,6 +26,7 @@ export const ALL_MIGRATIONS: readonly Migration[] = [
   migration0003RankerAdapterSelection,
   migration0004TranscriptPayloads,
   migration0005TextAndAudioPayloads,
+  migration0006AdCenterStores,
 ];
 
 export interface OpenStoreOptions {
@@ -38,17 +41,23 @@ export interface OpenStoreOptions {
 
 export class WebFlixStore {
   private miStores: IntelligenceStores | undefined;
+  private adsStores: AdsStores | undefined;
   private rankerSelectionStore: SqliteRankerSelectionStore | undefined;
   private transcriptPayloadStore: SqliteTranscriptPayloadStore | undefined;
   private textPayloadStore: SqliteTextPayloadStore | undefined;
   private audioRenditionStore: SqliteAudioRenditionStore | undefined;
+  /** The caller-injected clock (tests pin it); threads into the ads bundle. */
+  private readonly now: (() => number) | undefined;
 
   constructor(
     public readonly baseDir: string,
     public readonly dbPath: string,
     public readonly db: SqliteDatabase,
     public readonly local: LocalStore,
-  ) {}
+    now?: () => number,
+  ) {
+    this.now = now;
+  }
 
   get engine(): SqliteDatabase["engine"] {
     return this.db.engine;
@@ -68,6 +77,20 @@ export class WebFlixStore {
   get intelligence(): IntelligenceStores {
     this.miStores ??= createIntelligenceStores(this.db);
     return this.miStores;
+  }
+
+  /**
+   * Durable Ad Center stores (P5-STORES row 2) over this profile's
+   * database — per-profile by construction (ADR-0003): the five `ad_*`
+   * table families (identities, records, claims, evidence edges, review
+   * signals), structurally separated from every catalog/intelligence
+   * table. Lazy and stateless: the adapters only wrap the db handle. NOT
+   * composition-root wiring — connecting them to the application layer's
+   * ads.import use case is a later order.
+   */
+  get ads(): AdsStores {
+    this.adsStores ??= createAdsStores(this.db, this.now !== undefined ? { now: this.now } : {});
+    return this.adsStores;
   }
 
   /**
@@ -143,5 +166,5 @@ export async function openStore(options: OpenStoreOptions): Promise<WebFlixStore
     throw error;
   }
   const storeOptions: LocalStoreOptions = options.now ? { now: options.now } : {};
-  return new WebFlixStore(baseDir, dbPath, db, new LocalStore(db, storeOptions));
+  return new WebFlixStore(baseDir, dbPath, db, new LocalStore(db, storeOptions), options.now);
 }

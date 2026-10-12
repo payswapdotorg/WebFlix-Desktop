@@ -25,6 +25,13 @@ import type {
   TrackProbe,
 } from "./types";
 import type { DerivedArtifact, FeedbackEvent, UserObjective } from "webflix-contracts";
+import type {
+  AdRecord,
+  AdvertiserIdentity,
+  Claim,
+  EvidenceLink,
+  ReviewSignal,
+} from "webflix-contracts";
 import type { TranscriptPayload } from "./transcript-payload";
 import type { AudioRendition } from "./audio-rendition";
 import type { TextPayload } from "./text-payload";
@@ -297,4 +304,201 @@ export interface AudioRenditionStore {
   deleteBySource(sourceArtifactId: string): Promise<number>;
   /** Clear-all per profile; returns the number of renditions removed (retention surface). */
   clearAll(): Promise<number>;
+}
+
+// ---------------------------------------------------------------------------
+// Ad Center stores (P5-STORES row 2, Phase-5 row 2) — the ads lane's OWN
+// store seams, structurally separate from every intelligence/ranking port
+// above (phase5-ad-plan §3: separation is structural; the architecture rule
+// pins the import direction, and these ports import ONLY the ads shapes
+// from webflix-contracts).
+// ---------------------------------------------------------------------------
+
+/** Idempotent-append outcome for review signals (append-only facts). */
+export type ReviewSignalAppendResult =
+  | { readonly outcome: "appended"; readonly signal: ReviewSignal }
+  /** Same id as a stored signal: the store returns the stored one. */
+  | { readonly outcome: "duplicate"; readonly existing: ReviewSignal };
+
+/** Idempotent-append outcome for evidence edges (append-only facts). */
+export type EvidenceEdgeAppendResult =
+  | { readonly outcome: "appended"; readonly edge: EvidenceLink }
+  /** Same id as a stored edge: the store returns the stored one. */
+  | { readonly outcome: "duplicate"; readonly existing: EvidenceLink };
+
+/**
+ * Per-profile AdvertiserIdentity store: the source-reported identity
+ * REFERENCE TARGETS (the 0.8.0 shape). `put` replaces wholesale for the
+ * identity's own id (the put-replaces house semantic — a source re-reporting
+ * an identity updates it; the import seam's id-stability check keeps an id
+ * from silently migrating between sources).
+ *
+ * ABSENCE IS TYPED, never null: `get` on an id with no stored row rejects
+ * with the typed `ads/identity-absent` WebFlixError — the honest pre-import
+ * state surfaced with re-import as the recovery, never hidden and never
+ * substituted. Listing order is deterministic (stored order then id). The
+ * durable implementation is local-library migration 0006 (`ad_identities`,
+ * the 0002–0005 rules); the in-memory default serves hermetic tests.
+ */
+export interface AdvertiserIdentityStore {
+  /** Persists (or replaces wholesale) the identity for its id. */
+  put(identity: AdvertiserIdentity): Promise<void>;
+  /**
+   * The stored identity; rejects with the typed `ads/identity-absent` error
+   * when none was persisted (never null — absence is typed and surfaced).
+   */
+  get(id: string): Promise<AdvertiserIdentity>;
+  /** All stored identities, deterministic order. */
+  list(): Promise<readonly AdvertiserIdentity[]>;
+}
+
+/**
+ * Per-profile AdRecord store: one observed ad per row (the 0.8.0 shape —
+ * NO ranking signals, NO user data), keyed by the record's own id.
+ *
+ * `put` replaces wholesale for the same id (the put-replaces house
+ * semantic); `delete` removes one row explicitly — together they are the
+ * import seam's REPLACE building blocks, and the VERSION DECISION lives in
+ * the ads.import use case (never in the store: same source id + same batch
+ * = replace; same source id + different batch = a NEW version appended
+ * with provenance — never overwrite history silently). `listBySourceAdId`
+ * is that decision's read surface: the version history of ONE source-
+ * reported ad, deterministic order, honest-empty when the source never
+ * reported that ad id. A record with NO sourceAdId carries no matchable
+ * source identity — the seam performs NO dedup magic on it.
+ *
+ * ABSENCE IS TYPED, never null: `get` rejects with the typed
+ * `ads/record-absent` WebFlixError. The durable implementation is
+ * local-library migration 0006 (`ad_records`); the in-memory default serves
+ * hermetic tests.
+ */
+export interface AdRecordStore {
+  /** Persists (or replaces wholesale) the record for its id. */
+  put(record: AdRecord): Promise<void>;
+  /**
+   * The stored record; rejects with the typed `ads/record-absent` error
+   * when none was persisted (never null — absence is typed and surfaced).
+   */
+  get(id: string): Promise<AdRecord>;
+  /** All stored records, deterministic order. */
+  list(): Promise<readonly AdRecord[]>;
+  /**
+   * The version history of one source-reported ad (every stored record the
+   * given source reports under the given source ad id), deterministic
+   * order; empty when none (honest empty — the pre-import state).
+   */
+  listBySourceAdId(source: string, sourceAdId: string): Promise<readonly AdRecord[]>;
+  /**
+   * Deletes one record by id; true when it existed. The import seam's
+   * same-batch replace path uses it EXPLICITLY (the superseded row goes
+   * only when the seam says so — never a silent cascade: claims of a
+   * deleted record stay stored and readable).
+   */
+  delete(id: string): Promise<boolean>;
+}
+
+/**
+ * Per-profile Claim store: the EXTRACTIVE claim spans (the 0.8.0 shape —
+ * a verbatim quoted span of an ad record's own creative text with its
+ * UTF-16 offsets), keyed by the claim's own id.
+ *
+ * `put` replaces wholesale for the same id (claims are records, not
+ * append-only facts: the id is the idempotency key, and the import seam's
+ * adRecordId-stability check keeps an id from silently re-pointing at a
+ * different record). The EXTRACTIVE discipline itself (offsets within the
+ * referenced record's creative text, quote byte-equal to the offset
+ * window) is the domain invariant `validateClaimOffsets`, which the
+ * ads.import seam runs BEFORE persisting — stores persist claims AS DATA.
+ * `listByAdRecordId` is the attachment surface (one record's claims, for
+ * the P5-CLAIMS evidence-graph construction over imported records).
+ *
+ * ABSENCE IS TYPED, never null: `get` rejects with the typed
+ * `ads/claim-absent` WebFlixError. The durable implementation is
+ * local-library migration 0006 (`ad_claims`); the in-memory default serves
+ * hermetic tests.
+ */
+export interface ClaimStore {
+  /** Persists (or replaces wholesale) the claim for its id. */
+  put(claim: Claim): Promise<void>;
+  /**
+   * The stored claim; rejects with the typed `ads/claim-absent` error when
+   * none was persisted (never null — absence is typed and surfaced).
+   */
+  get(id: string): Promise<Claim>;
+  /** All stored claims, deterministic order. */
+  list(): Promise<readonly Claim[]>;
+  /**
+   * The claims extracted from ONE ad record, deterministic order; empty
+   * when the record has none (honest empty).
+   */
+  listByAdRecordId(adRecordId: string): Promise<readonly Claim[]>;
+}
+
+/**
+ * Per-profile EvidenceEdge store: the evidence-graph edges (the 0.8.0
+ * EvidenceLink union — a claim linked to a source-reported fact / an
+ * independent review / offer terms / a user-imported document, with the
+ * relationship and import provenance).
+ *
+ * APPEND-ONLY by design: `append` is idempotent-by-id (a stored id
+ * re-appends as a duplicate returning the STORED edge — never a second
+ * row, idempotency surviving restarts); there is no put, no delete, no
+ * clearAll — correcting an edge means appending a new edge with a new id
+ * (history is the point of an evidence graph). The REFERENTIAL checks (the
+ * edge's claim resolves; an independent-review edge's review signal
+ * resolves) are the domain invariant `validateEvidenceLinkReferential`,
+ * run at the application's boundaries — stores persist edges AS DATA.
+ * NOTE: the ads.import seam does NOT import edges this order (the charter's
+ * batch is records + identities + claims + optional review signals);
+ * P5-CLAIMS constructs evidence graphs on this store.
+ *
+ * ABSENCE IS TYPED, never null: `get` rejects with the typed
+ * `ads/evidence-absent` WebFlixError. The durable implementation is
+ * local-library migration 0006 (`ad_evidence_edges`); the in-memory default
+ * serves hermetic tests.
+ */
+export interface EvidenceEdgeStore {
+  /** Appends one edge; a stored id re-appends as a duplicate (idempotent). */
+  append(edge: EvidenceLink): Promise<EvidenceEdgeAppendResult>;
+  /**
+   * The stored edge; rejects with the typed `ads/evidence-absent` error
+   * when none was appended (never null — absence is typed and surfaced).
+   */
+  get(id: string): Promise<EvidenceLink>;
+  /** All stored edges, deterministic order. */
+  list(): Promise<readonly EvidenceLink[]>;
+  /**
+   * The evidence edges attached to ONE claim, deterministic order; empty
+   * when the claim has none (honest empty).
+   */
+  listByClaim(claimId: string): Promise<readonly EvidenceLink[]>;
+}
+
+/**
+ * Per-profile ReviewSignal store: the AS-REPORTED independent review
+ * signals (the 0.8.0 shape — a review source's own rating/classification
+ * vocabulary, verbatim; NO score, NO normalization, NO aggregation
+ * anywhere: the store lists what sources report, nothing more).
+ *
+ * APPEND-ONLY by design: `append` is idempotent-by-id (a stored id
+ * re-appends as a duplicate returning the STORED signal); a re-reported
+ * signal is a NEW signal with a NEW id. There is no put, no delete, no
+ * clearAll.
+ *
+ * ABSENCE IS TYPED, never null: `get` rejects with the typed
+ * `ads/review-signal-absent` WebFlixError. The durable implementation is
+ * local-library migration 0006 (`ad_review_signals`); the in-memory default
+ * serves hermetic tests.
+ */
+export interface ReviewSignalStore {
+  /** Appends one signal; a stored id re-appends as a duplicate (idempotent). */
+  append(signal: ReviewSignal): Promise<ReviewSignalAppendResult>;
+  /**
+   * The stored signal; rejects with the typed `ads/review-signal-absent`
+   * error when none was appended (never null — absence is typed and
+   * surfaced).
+   */
+  get(id: string): Promise<ReviewSignal>;
+  /** All stored signals, deterministic order. */
+  list(): Promise<readonly ReviewSignal[]>;
 }

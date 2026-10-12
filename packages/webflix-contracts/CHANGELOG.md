@@ -5,6 +5,35 @@ TL2 approval + migration notes; additive changes bump minor with a consumer
 impact note. No CHANGELOG existed before 0.2.0 — the 0.1.0 history is the git
 log of this package (frozen §2 shapes, D2-LOCAL lane).
 
+## 0.9.0 — 2026-10-12 — the Ad Center absent error codes (P5-STORES)
+
+Phase-5 row 2 (the durable Ad Center stores). Adds the typed-ABSENT half of
+the ads-lane error vocabulary: the durable ads stores (local-library
+migration 0006, this order) key their rows by id and follow the house
+typed-absent rule — a get on an id with no stored row rejects with the
+shape's own absent code, never null and never an invented substitute (the
+intelligence transcript-payload-absent precedent, carried into the ads
+lane). Absence is never invalidity: an absent row is the honest pre-import
+state, and the error's reason names re-import as the recovery. Five codes,
+one per store family this order persists; no verification-absent code
+exists because no verification store exists yet (P5-VERIFY builds the
+verification machinery). The 0.8.0 shapes and the four 0.8.0 invalid codes
+are untouched. Consumer impact: none on existing consumers (purely
+additive; no existing export changed shape).
+
+### Added
+
+- `ErrorCode.AdsIdentityAbsent` = `ads/identity-absent` — the
+  AdvertiserIdentityStore's typed absence.
+- `ErrorCode.AdsRecordAbsent` = `ads/record-absent` — the AdRecordStore's
+  typed absence.
+- `ErrorCode.AdsClaimAbsent` = `ads/claim-absent` — the ClaimStore's typed
+  absence.
+- `ErrorCode.AdsEvidenceAbsent` = `ads/evidence-absent` — the
+  EvidenceEdgeStore's typed absence.
+- `ErrorCode.AdsReviewSignalAbsent` = `ads/review-signal-absent` — the
+  ReviewSignalStore's typed absence.
+
 ## 0.8.0 — 2026-10-12 — the Ad Center contract module (P5-CONTRACTS)
 
 Phase-5 row 1 (the Ad Center opener). Adds the ads lane's own contract

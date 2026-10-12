@@ -119,6 +119,22 @@ export enum ErrorCode {
   AdsClaimInvalid = "ads/claim-invalid",
   AdsEvidenceInvalid = "ads/evidence-invalid",
   AdsVerificationInvalid = "ads/verification-invalid",
+  // Ad Center absent codes (Phase 5, P5-STORES) — the typed-absent half of
+  // the ads/* vocabulary, appended per the additive-only rule. The durable
+  // ads stores (local-library migration 0006) key rows by id and follow the
+  // house typed-absent rule: `get` on an id with no stored row REJECTS with
+  // the shape's own `ads/<thing>-absent` code — never null, never an
+  // invented substitute (the intelligence/transcript-payload-absent
+  // precedent). Five codes, one per store family this order persists;
+  // `ads/verification-invalid` has no absent sibling because no
+  // verification store exists yet (P5-VERIFY). Absence is never invalidity:
+  // an absent row is the honest pre-import state, surfaced with re-import
+  // as the recovery.
+  AdsIdentityAbsent = "ads/identity-absent",
+  AdsRecordAbsent = "ads/record-absent",
+  AdsClaimAbsent = "ads/claim-absent",
+  AdsEvidenceAbsent = "ads/evidence-absent",
+  AdsReviewSignalAbsent = "ads/review-signal-absent",
   // cross-cutting
   RateLimited = "common/rate-limited",
   Network = "common/network",
