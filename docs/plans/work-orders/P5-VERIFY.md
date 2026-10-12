@@ -20,7 +20,7 @@ provenance-carrying, NO aggregation).
 Scope rows:
 
 1. **Verification store (local-library, migration 0007)**: the
-   OfferVerification records table (own ad_* family table, the 0006
+   OfferVerification records table (own ad\_\* family table, the 0006
    rules — canonical JSON, per-profile isolation, no cross-boundary
    FKs); put/get/list, append-only by verification id, deterministic
    listing.
