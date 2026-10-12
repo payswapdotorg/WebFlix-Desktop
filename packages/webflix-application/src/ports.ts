@@ -502,3 +502,47 @@ export interface ReviewSignalStore {
   /** All stored signals, deterministic order. */
   list(): Promise<readonly ReviewSignal[]>;
 }
+
+// ---------------------------------------------------------------------------
+// AdsClaimExtractor — the deterministic EXTRACTIVE engine seam (P5-CLAIMS)
+// ---------------------------------------------------------------------------
+
+/**
+ * The claim-extraction engine seam (P5-CLAIMS): a PURE, DETERMINISTIC,
+ * pattern-based extractor over ONE ad record's creative text — no I/O, no
+ * clock, no randomness, no LLM, no network. The same record produces the
+ * BYTE-IDENTICAL claim set on every run, forever.
+ *
+ * The contract, stated as binding rules for every implementation:
+ * - EXTRACTIVE ONLY: every returned Claim's `quote` is the verbatim
+ *   `creativeText.slice(startOffset, endOffset)` of the record it was
+ *   extracted from (the P5-CONTRACTS discipline; the use case re-validates
+ *   through the domain invariant `validateClaimOffsets` before persisting —
+ *   a claim the source did not state is a defect).
+ * - HONEST EMPTY: a record whose text matches no pattern (or carries no
+ *   creative text) yields an empty list — never a forced claim.
+ * - ID DISCIPLINE: the minted claim ids are a deterministic function of
+ *   the extractor's own `id` + `version` + the matched span, so the same
+ *   version + the same record re-produces the same ids (the claim store's
+ *   put-replaces semantics then make re-runs idempotent) while a DIFFERENT
+ *   version mints different ids (a new provenance append — prior claims
+ *   are never silently overwritten). The extractor's identity/version
+ *   rides the minted ids and the §2.6 job provenance (the Claim shape
+ *   itself carries no provenance fields — 0.9.0).
+ *
+ * The real implementation is the documented fixed-pattern engine
+ * (`./ads-claim-extractor.ts`, the built-in-summary-engine house style);
+ * the labeled test double is `./fixture-replay-ads-claim-extractor.ts`.
+ */
+export interface AdsClaimExtractor {
+  /** The extractor's identity (rides the minted claim ids + job provenance). */
+  readonly id: string;
+  /** The extractor's version (same version + same record = idempotent replace). */
+  readonly version: string;
+  /**
+   * Extracts the claim spans of ONE ad record's creative text. Pure and
+   * synchronous — cancellation is the USE CASE's concern (cooperative
+   * checkpoints between records, §2.6), never the extractor's.
+   */
+  extract(record: AdRecord): readonly Claim[];
+}

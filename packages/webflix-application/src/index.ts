@@ -113,3 +113,19 @@ export * from "./in-memory-ads-stores";
 export * from "./ads-import";
 export * from "./ads-import-rules";
 export * from "./ads-import-items";
+
+// P5-CLAIMS (Phase-5 row 3): the deterministic EXTRACTIVE claim engine —
+// the built-in pattern extractor (a documented, fixed, lexical parameter
+// set in the module docblock, the built-in-summary-engine house style) +
+// its labeled TEST DOUBLE (the fixture-replay pattern) + the two §2.6 use
+// cases riding the P5-STORES claim/evidence stores: ads.extractClaims
+// (per-record honest outcomes, the version rule literal through the
+// minted claim ids, the source record never mutated) and ads.linkEvidence
+// (explicit-input-only evidence-graph construction — NO inference: the
+// engine links exactly what the input batch carries, idempotent by edge
+// identity). No verification (P5-VERIFY), no qualification (P5-QUALIFY),
+// no connectors (P5-SOURCES), no LLM, no network — recall is not promised.
+export * from "./ads-claim-extractor";
+export * from "./ads-extract-claims";
+export * from "./ads-link-evidence";
+export * from "./fixture-replay-ads-claim-extractor";
