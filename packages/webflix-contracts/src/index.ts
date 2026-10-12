@@ -53,5 +53,13 @@ export * from "./intelligence-evaluation";
 // organic ranking path away from these shapes.
 export * from "./ads";
 
+// Ad Center transparency-source seam (Phase 5, P5-SOURCES — the FINAL row;
+// 0.10.0 -> 0.11.0 additive sibling, same separation discipline): the
+// TransparencySourcePort (interface only), the per-source manifest with
+// its coverage declarations (AS the source's own terms state them), the
+// query/observation/result shapes (the access states are DATA, never
+// thrown), and the one genuinely-rejecting error code ads/source-invalid.
+export * from "./ads-sources";
+
 // Errors: ErrorCode, WebFlixError.
 export * from "./errors";

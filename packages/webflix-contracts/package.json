@@ -1,6 +1,6 @@
 {
   "name": "webflix-contracts",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "private": true,
   "description": "Locked D2-LOCAL contract-freeze §2 shapes: zod schemas + TS types shared across all WebFlix-Desktop packages.",
   "type": "module",

@@ -217,6 +217,21 @@ forbiddenImports:
       - QualificationReason
       - QualificationExplanationSchema
       - QualificationExplanation
+      - TransparencySourceAccessStateSchema
+      - TransparencySourceAccessState
+      - TransparencySourceManifestSchema
+      - TransparencySourceManifest
+      - TransparencyQuerySchema
+      - TransparencyQuery
+      - TransparencyAdvertiserReportSchema
+      - TransparencyAdvertiserReport
+      - TransparencyObservationSchema
+      - TransparencyObservation
+      - TransparencyQueryResultSchema
+      - TransparencyQueryResult
+      - TransparencySourceDescriptor
+      - TransparencySourceOptions
+      - TransparencySourcePort
   - id: ads-separation-reverse
     description: >-
       The ads contract module imports nothing from the ranking/intelligence

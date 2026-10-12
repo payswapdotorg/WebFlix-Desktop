@@ -167,3 +167,26 @@ export * from "./ads-review-signals";
 // facts, never merged ratings), no connectors (P5-SOURCES), no network.
 export * from "./ads-qualify-policy";
 export * from "./ads-qualify";
+
+// P5-SOURCES (Phase-5 row 6 — the FINAL row): the transparency-source
+// seam. The three honest-state adapters (transparency-source-adapters.ts:
+// GATC blocked — no official API; Meta + TikTok pending-authorization
+// naming their application paths — ZERO network, rg-provable) + the
+// static registry (transparency-source-registry.ts: the
+// ranker-registry pattern, manifest schema-validated at construction) +
+// ads.querySources (ads-query-sources.ts: the §2.6 query use case — the
+// unavailable/pending/blocked states are DATA, surfaced never hidden)
+// + ads.sourceManifests (ads-source-manifests.ts: the §2.6 manifest
+// listing read for the Ad Center's honest display) + the import bridge
+// (transparency-source-bridge.ts: ok-result observations map into the
+// ads.import seam unchanged — our ids + import stamps minted there
+// only) + the LABELED fixture-replay double
+// (fixture-replay-transparency-source.ts — TEST DOUBLE, no real source
+// access, for the contract/cancellation tests). No scraping, no
+// transport, no coverage promises beyond the manifests' own terms.
+export * from "./transparency-source-adapters";
+export * from "./transparency-source-registry";
+export * from "./ads-query-sources";
+export * from "./ads-source-manifests";
+export * from "./transparency-source-bridge";
+export * from "./fixture-replay-transparency-source";

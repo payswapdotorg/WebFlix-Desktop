@@ -139,6 +139,21 @@ export enum ErrorCode {
   // ads.verify run ever appended; the recovery is running ads.verify over
   // the claim, never an invented read-out.
   AdsVerificationAbsent = "ads/verification-absent",
+  // Transparency-source seam (Phase 5, P5-SOURCES) — the ads/source-*
+  // vocabulary, appended per the additive-only rule and TRIMMED to what
+  // the shapes genuinely reject: ONE code this order. The seam's access
+  // states are DATA (the charter's product-feature rule): a
+  // pending-authorization, blocked or unavailable source ANSWERS with
+  // its typed state in TransparencyQueryResult — surfaced with the
+  // honest reason, never thrown — so no `ads/source-unavailable` or
+  // `ads/source-not-authorized` ERROR code exists (if a later transport
+  // order needs error forms, they land additively then, the 0.9.0 ->
+  // 0.10.0 pre-announcement precedent). What genuinely rejects is the
+  // CALLER-DEFECT surface: a blank or unknown source id at the
+  // registry-backed use cases, a malformed TransparencyQuery, a
+  // malformed observation handed to the import bridge, a malformed
+  // manifest/adapter seed at registry construction.
+  AdsSourceInvalid = "ads/source-invalid",
   // cross-cutting
   RateLimited = "common/rate-limited",
   Network = "common/network",

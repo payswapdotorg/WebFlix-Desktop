@@ -5,6 +5,60 @@ TL2 approval + migration notes; additive changes bump minor with a consumer
 impact note. No CHANGELOG existed before 0.2.0 — the 0.1.0 history is the git
 log of this package (frozen §2 shapes, D2-LOCAL lane).
 
+## 0.11.0 — 2026-10-12 — the transparency-source seam (P5-SOURCES)
+
+Phase-5 row 6 (the FINAL row). Adds the transparency-source seam that closes
+Phase 5's shape: the `TransparencySourcePort` (INTERFACE ONLY, the
+TranscriptionEnginePort pattern), the `TransparencySourceManifest` (the
+per-source coverage declaration — regions/categories AS DECLARED by the
+source's own terms, honest-absent when the terms do not enumerate them; the
+access state enum available | pending-authorization | blocked; the
+authorization path note REQUIRED for pending/blocked — a pending state
+without its application path is an unactionable dead end; the termsUrl from
+AUDIT-SOURCES §11), the `TransparencyQuery` / `TransparencyAdvertiserReport`
+/ `TransparencyObservation` shapes (the ad-record-shaped data a source
+reports, mapped onto the AdRecord fields with source-reported-only honesty
+— the Ad Center's own ids and import stamps are minted by the import
+bridge, never here), and the `TransparencyQueryResult` union whose access
+states are DATA (ok-with-observations | unavailable |
+pending-authorization | blocked, each non-ok state carrying its honest
+reason; the states are surfaced, never thrown — the charter's
+product-feature rule). The 0.10.0 shapes and codes are otherwise untouched.
+Consumer impact: none on existing consumers (purely additive; no existing
+export changed shape; the architecture-policy ads-separation symbol list
+extends in lockstep with the new exports, per its own standing comment).
+
+### Added
+
+- `TransparencySourceAccessStateSchema` / `TransparencySourceAccessState` —
+  the access-state enum (available | pending-authorization | blocked).
+- `TransparencySourceManifestSchema` / `TransparencySourceManifest` — the
+  per-source coverage declaration (declaredRegions / declaredCategories
+  honest-absent; coverageNote; authorizationPathNote required for
+  pending/blocked; termsUrl).
+- `TransparencyQuerySchema` / `TransparencyQuery` — the search-terms +
+  optional-region query shape (deliberately minimal; extends additively
+  when real transport lands).
+- `TransparencyAdvertiserReportSchema` / `TransparencyAdvertiserReport` —
+  the observation's inline advertiser identity report (at least one of
+  sourceAdvertiserId / names).
+- `TransparencyObservationSchema` / `TransparencyObservation` — one
+  observed ad, source-reported only.
+- `TransparencyQueryResultSchema` / `TransparencyQueryResult` — the typed
+  honest-state query result union (the states are DATA, never failures).
+- `TransparencySourceDescriptor` / `TransparencySourceOptions` /
+  `TransparencySourcePort` — the seam interfaces (port is interface only).
+- `ErrorCode.AdsSourceInvalid` = `ads/source-invalid` — the ONE code the
+  shapes genuinely reject this order (caller defects: blank/unknown source
+  id, malformed query, malformed observation at the import bridge,
+  malformed registry seed). The work order's candidate codes
+  `ads/source-unavailable` / `ads/source-not-authorized` are TRIMMED: the
+  unavailable/pending/blocked states are DATA in
+  TransparencyQueryResult — surfaced, never thrown — so no error form
+  exists for them (a later transport order lands error forms additively
+  if it genuinely needs them, the 0.9.0 -> 0.10.0 pre-announcement
+  precedent).
+
 ## 0.10.0 — 2026-10-12 — the verification store's absent code (P5-VERIFY)
 
 Phase-5 row 4 (offer verification + review signals). Adds the ONE code this
