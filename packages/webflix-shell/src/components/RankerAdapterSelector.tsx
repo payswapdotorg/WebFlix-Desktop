@@ -97,7 +97,9 @@ const styles: Record<string, React.CSSProperties> = {
     gap: theme.spacing.sm,
   },
   input: { accentColor: theme.colors.accent, width: 16, height: 16 },
-  optionLabel: { fontSize: theme.typography.sizes.md, fontWeight: 600 },
+  // P6-SHELL-RESPONSIVE-1: the 44px touch-target bar on the option labels
+  // (previously host-composed; additive prop only).
+  optionLabel: { fontSize: theme.typography.sizes.md, fontWeight: 600, minHeight: 44 },
   caps: { margin: 0, color: theme.colors.textMuted, fontSize: theme.typography.sizes.sm },
   idHint: {
     margin: 0,

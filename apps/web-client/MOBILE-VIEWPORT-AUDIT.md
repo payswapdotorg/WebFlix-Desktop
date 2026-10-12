@@ -108,7 +108,25 @@ in place. Every future host that composes the shell onto a phone will
 meet the same debt — which is why this audit doc drafts the follow-up
 below.
 
-## Queued follow-up order (DRAFTED — NOT dispatched; TL2 owns dispatch)
+**DEBT PAID — P6-SHELL-RESPONSIVE-1 (2026-10-12, delivered → merged).**
+The follow-up drafted below was executed and merged: the shell now
+carries its own responsive truth — `flexWrap: "wrap"` on the primary
+nav plus `minHeight: 44` on its buttons (AppShell.tsx), `minHeight: 44`
+on the search form's input and submit (SearchScreen.tsx), and
+`minHeight: 44` on the ranker option labels (RankerAdapterSelector.tsx)
+— all additive inline props, zero component-API changes. The geometry
+is pinned by 4 new tests in the shell's own suite
+(`packages/webflix-shell/tests/app-shell.test.tsx`: nav wrapping
+container; every nav button 44; search input+submit 44; ranker option
+labels 44). The web host's composition CSS in `index.html` shrank to
+the one-line font-family core — the host no longer compensates for any
+shell geometry (the host's OWN controls keep their host-owned
+`minHeight: 44` in App.tsx hostStyles; they were never shell debt).
+The device-emulated audit harness re-ran green against the rebuilt host
+(98/98), and the shell component suite grew 80 → 84. The per-surface
+matrix above stands unchanged as THIS row's historical record.
+
+## Queued follow-up order (DRAFTED here, then EXECUTED as P6-SHELL-RESPONSIVE-1 — see the debt-payment record above; the draft stands unchanged as the charter of what landed)
 
 ### Draft order — P6-SHELL-RESPONSIVE-1 (the shell's own responsive pass)
 
