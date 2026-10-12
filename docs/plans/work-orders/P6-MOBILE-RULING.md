@@ -27,12 +27,12 @@ Scope rows:
    strategies evaluated against the binding constraints (phase6 §1-§8):
    (a) responsive-web-only (the merged web host on mobile browsers —
    zero new code, what it honestly covers vs not), (b) PWA (the web host
-   + installability/offline shell — what becomes possible, what stays
-   dishonest to claim), (c) Capacitor-style native shell wrapping the
-   same packages, (d) full React Native/Expo client (new runtime,
-   contract-reuse test). Each option: reuse surface (contracts/
-   application/shell consumption), honesty seams (session-only vs
-   durable, unavailable engines), cost/risk, policy exposure.
+   - installability/offline shell — what becomes possible, what stays
+     dishonest to claim), (c) Capacitor-style native shell wrapping the
+     same packages, (d) full React Native/Expo client (new runtime,
+     contract-reuse test). Each option: reuse surface (contracts/
+     application/shell consumption), honesty seams (session-only vs
+     durable, unavailable engines), cost/risk, policy exposure.
 2. **The ruling**: which option (or none) proceeds NOW vs LATER, with
    the reasoning; what must be true before any mobile claim (e.g. the
    durable-web row landing first, or a specific adapter existing).
