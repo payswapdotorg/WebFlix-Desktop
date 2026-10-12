@@ -1,5 +1,6 @@
 packages:
   - packages/*
+  - apps/web-client
   - apps/zcode-cli
   - apps/zcode-cli/packages/*
   - apps/zcode-cli/tools/*
