@@ -132,6 +132,14 @@ modules:
     layers: { clients: clients }
     layerOrder: [clients]
     owner: worker-1
+  - id: web-client # P6-WEB-HOST-1 host module (TL2 registration 2026-10-12; the worker's scratch check proved it clean, registration honestly deferred to TL2)
+    roots: [apps/web-client/src]
+    managed: false
+    requires: [webflix-contracts, webflix-application]
+    publicEntrypoints: [apps/web-client/src/main.tsx]
+    layers: { clients: clients }
+    layerOrder: [clients]
+    owner: worker-1
   - id: desktop # promote per AUDIT-DESKTOP §7 (host module; inward direction)
     roots: [packages/desktop/src]
     managed: false
