@@ -21,3 +21,12 @@ export { LibraryScreen } from "./components/LibraryScreen";
 export type { LibraryScreenProps } from "./components/LibraryScreen";
 export { AccountsScreen } from "./components/AccountsScreen";
 export type { AccountsScreenProps } from "./components/AccountsScreen";
+// DESKTOP-COMPOSITION-1: the three P4/P5 surfaces mount in the shell's screen
+// set (ads / evaluation) and ship as public exports — props-driven, honest
+// never-run null/[] defaults; host-app wiring is Phase 6.
+export { AdCenterPanel } from "./components/AdCenterPanel";
+export type { AdCenterPanelProps } from "./components/AdCenterPanel";
+export { EvaluationPanel } from "./components/EvaluationPanel";
+export type { EvaluationPanelProps } from "./components/EvaluationPanel";
+export { RankerAdapterSelector } from "./components/RankerAdapterSelector";
+export type { RankerAdapterSelectorProps } from "./components/RankerAdapterSelector";

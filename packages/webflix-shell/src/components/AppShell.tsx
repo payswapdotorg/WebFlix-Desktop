@@ -1,19 +1,30 @@
 import React, { useState } from "react";
 import { theme } from "../theme";
-import type { CatalogItem, Collection, ProviderAccountRecord } from "webflix-contracts";
+import type {
+  CatalogItem,
+  Collection,
+  EvaluationResult,
+  ProviderAccountRecord,
+} from "webflix-contracts";
+import type { AdsQualificationItemOutcome, RankerAdapterDescriptor } from "webflix-application";
 import type { SearchState } from "../states";
 import { HomeScreen } from "./HomeScreen";
 import { SearchScreen } from "./SearchScreen";
 import { LibraryScreen } from "./LibraryScreen";
 import { AccountsScreen } from "./AccountsScreen";
+import { AdCenterPanel } from "./AdCenterPanel";
+import { EvaluationPanel } from "./EvaluationPanel";
+import { RankerAdapterSelector } from "./RankerAdapterSelector";
 
-export type ScreenId = "home" | "search" | "library" | "accounts";
+export type ScreenId = "home" | "search" | "library" | "accounts" | "ads" | "evaluation";
 
 export const NAV_ITEMS: readonly { id: ScreenId; label: string }[] = [
   { id: "home", label: "Home" },
   { id: "search", label: "Search" },
   { id: "library", label: "Library" },
   { id: "accounts", label: "Accounts" },
+  { id: "ads", label: "Ad Center" },
+  { id: "evaluation", label: "MI Evaluation" },
 ];
 
 export interface AppShellProps {
@@ -29,6 +40,23 @@ export interface AppShellProps {
   readonly onSearchQuery?: (query: string) => void;
   readonly onSearchSubmit?: (query: string) => void;
   readonly onRetrySearch?: () => void;
+  // DESKTOP-COMPOSITION-1 (the composition row the P4/P5 ledger rows
+  // promised): the Ad Center + MI Evaluation surfaces mount props-driven,
+  // flat-optional like every other screen prop. Defaults are the honest
+  // never-run states — null / [] — NO faked data, NO invented defaults that
+  // look like real results; the Phase-6 host app passes real data.
+  /** Ad Center qualification read-outs; null = no qualification run yet. */
+  readonly adCenterResults?: readonly AdsQualificationItemOutcome[] | null;
+  /** The MI evaluation read-out; null = no evaluation run yet. */
+  readonly evaluationResult?: EvaluationResult | null;
+  /** The ranker adapter registry to offer; [] = none available (honest). */
+  readonly rankerAdapterEntries?: readonly RankerAdapterDescriptor[];
+  /** The stored adapter selection; null = never set (the default stays unselected). */
+  readonly rankerSelectedAdapterId?: string | null;
+  /** Fires with the adapter id when the user selects one (host wiring is Phase 6). */
+  readonly onRankerAdapterSelectionChange?: (adapterId: string) => void;
+  /** Optional honest status line; null = nothing rendered (nothing invented). */
+  readonly rankerStatusNote?: string | null;
 }
 
 const styles: Record<string, React.CSSProperties> = {
@@ -68,6 +96,12 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 600,
   },
   main: { display: "block" },
+  // The evaluation screen stack: RankerAdapterSelector above EvaluationPanel.
+  screenStack: {
+    display: "flex",
+    flexDirection: "column",
+    gap: theme.spacing.md,
+  },
   footer: {
     borderTop: `1px solid ${theme.colors.border}`,
     paddingTop: theme.spacing.sm,
@@ -84,6 +118,15 @@ export function AppShell(props: AppShellProps) {
     collections = [],
     localEntries = [],
     searchState = { phase: "idle" },
+    // Honest never-run defaults (DESKTOP-COMPOSITION-1): null results, an
+    // empty registry, no stored selection, no status line — the panels'
+    // own factual empty states render until a host app passes real data.
+    adCenterResults = null,
+    evaluationResult = null,
+    rankerAdapterEntries = [],
+    rankerSelectedAdapterId = null,
+    onRankerAdapterSelectionChange,
+    rankerStatusNote = null,
     onPlay,
     onConnect,
     onDisconnect,
@@ -144,6 +187,18 @@ export function AppShell(props: AppShellProps) {
         )}
         {screen === "accounts" && (
           <AccountsScreen accounts={accounts} onConnect={onConnect} onDisconnect={onDisconnect} />
+        )}
+        {screen === "ads" && <AdCenterPanel results={adCenterResults} />}
+        {screen === "evaluation" && (
+          <div style={styles.screenStack} data-testid="screen-evaluation">
+            <RankerAdapterSelector
+              entries={rankerAdapterEntries}
+              selectedAdapterId={rankerSelectedAdapterId}
+              onSelectionChange={(adapterId) => onRankerAdapterSelectionChange?.(adapterId)}
+              statusNote={rankerStatusNote}
+            />
+            <EvaluationPanel result={evaluationResult} />
+          </div>
         )}
       </main>
 
