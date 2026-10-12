@@ -61,10 +61,8 @@ describe("P6-SHELL-RESPONSIVE-1 — the shell's own geometry guarantee", () => {
   });
 
   it("ranker option labels meet the 44px touch-target bar", () => {
-    render(
-      <AppShell initialScreen="evaluation" rankerAdapterEntries={[BUILT_IN_ADAPTER]} />,
-    );
-    const labels = document.querySelectorAll('label[for^="ranker-adapter-option-"]');
+    render(<AppShell initialScreen="evaluation" rankerAdapterEntries={[BUILT_IN_ADAPTER]} />);
+    const labels = document.querySelectorAll<HTMLElement>('label[for^="ranker-adapter-option-"]');
     expect(labels.length).toBeGreaterThan(0);
     labels.forEach((label) => {
       expect(label.style.minHeight).toBe("44px");
