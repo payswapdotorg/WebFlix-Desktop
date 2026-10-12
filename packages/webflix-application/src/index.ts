@@ -149,3 +149,21 @@ export * from "./fixture-replay-ads-claim-extractor";
 export * from "./ads-verify";
 export * from "./ads-verify-comparison";
 export * from "./ads-review-signals";
+
+// P5-QUALIFY (Phase-5 row 5): the explainable qualification engine. The
+// deterministic v1 policy (ads-qualify-policy.ts: fixed documented
+// parameters — populations from the stores' own listing orders, the
+// standing rule, the fixed reason mint order — the built-in-ranker house
+// style) + ads.qualify, the §2.6 READ use case: per-record
+// QualificationExplanation (reasons[] with evidence pointers into the
+// stored claim/verification/signal data) + the raw counted facts
+// (AdQualificationFacts — NO score, NO weights: the output IS the reasons
+// list + the counted populations), the honest typed no-data outcome for
+// claimless records (never a zero-dressed-as-signal — the 0.10.0 shape's
+// min(1) makes it structural), nothing stored (recomputed from current
+// data), nothing mutated. Qualification is DISPLAY-STANDING in the Ad
+// Center view — never an organic-ranking input (the architecture rule
+// pins the separation). No signal aggregation (per-source counts are
+// facts, never merged ratings), no connectors (P5-SOURCES), no network.
+export * from "./ads-qualify-policy";
+export * from "./ads-qualify";
