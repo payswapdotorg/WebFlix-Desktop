@@ -11,42 +11,15 @@
     <title>WebFlix</title>
     <style>
       /*
-       * P6-MOBILE-AUDIT-1 — the host's responsive composition CSS.
+       * P6-SHELL-RESPONSIVE-1 — the honest core.
        *
-       * This is HOST-LEVEL CSS (apps/web-client only): the frozen
-       * webflix-shell components style themselves inline
-       * (packages/webflix-shell is NOT touched — phase6-clients-plan §2/§8
-       * and this order's non-goals). The host composes mobile-viewport
-       * overrides on top, exactly like any host composes chrome around a
-       * shell. Only properties the shell leaves UNSET are composed here
-       * (no !important fights against inline styles):
-       *
-       * - nav wrapping: the shell's primary nav is a flex row that never
-       *   wraps (flexWrap unset inline) — at ~375-430px its six buttons
-       *   overflow the document by 126-186px. Wrapping collapses the grid
-       *   column's min-content to the viewport.
-       * - touch targets (>= 44px): the shell's nav buttons (35px at tablet
-       *   widths), search input + submit (39px) and ranker option labels
-       *   (18px) render below the touch-target bar; min-height composes
-       *   cleanly because the shell never sets it inline.
+       * The shell now carries its own responsive truth (nav flexWrap wrap
+       * + 44px touch targets on nav buttons, search controls and ranker
+       * labels — pinned by webflix-shell's own geometry tests). The host
+       * composes NOTHING for shell geometry anymore; this is the document
+       * font only.
        */
-      nav[aria-label="Primary"] {
-        flex-wrap: wrap;
-      }
-      nav[aria-label="Primary"] button {
-        min-height: 44px;
-      }
-      section[aria-label="Search"] input[type="search"] {
-        min-height: 44px;
-      }
-      section[aria-label="Search"] form button[type="submit"] {
-        min-height: 44px;
-      }
-      label[for^="ranker-adapter-option-"] {
-        display: flex;
-        align-items: center;
-        min-height: 44px;
-      }
+      html { font-family: "Inter", "Segoe UI", system-ui, sans-serif; }
     </style>
   </head>
   <body>

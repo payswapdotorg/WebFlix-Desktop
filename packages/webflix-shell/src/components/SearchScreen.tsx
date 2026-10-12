@@ -29,6 +29,8 @@ const styles: Record<string, React.CSSProperties> = {
     border: `1px solid ${theme.colors.border}`,
     borderRadius: theme.radii.md,
     padding: "10px 12px",
+    // P6-SHELL-RESPONSIVE-1: the 44px touch-target bar (additive prop only).
+    minHeight: 44,
     fontSize: theme.typography.sizes.md,
   },
   button: {
@@ -37,6 +39,8 @@ const styles: Record<string, React.CSSProperties> = {
     border: "none",
     borderRadius: theme.radii.sm,
     padding: "10px 16px",
+    // P6-SHELL-RESPONSIVE-1: the 44px touch-target bar (additive prop only).
+    minHeight: 44,
     fontWeight: 600,
     cursor: "pointer",
   },

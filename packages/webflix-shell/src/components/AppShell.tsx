@@ -79,13 +79,19 @@ const styles: Record<string, React.CSSProperties> = {
     color: theme.colors.accent,
   },
   tagline: { color: theme.colors.textMuted },
-  nav: { display: "flex", gap: theme.spacing.sm },
+  // P6-SHELL-RESPONSIVE-1: the nav carries its own responsive truth —
+  // it wraps on narrow viewports (flexWrap was previously unset; the
+  // host composed it in apps/web-client — that debt is now paid here).
+  nav: { display: "flex", flexWrap: "wrap", gap: theme.spacing.sm },
   navButton: {
     background: "transparent",
     color: theme.colors.textMuted,
     border: `1px solid ${theme.colors.border}`,
     borderRadius: theme.radii.sm,
     padding: "8px 14px",
+    // P6-SHELL-RESPONSIVE-1: the 44px touch-target bar is the shell's own
+    // guarantee now (previously host-composed; additive prop only).
+    minHeight: 44,
     cursor: "pointer",
     fontSize: theme.typography.sizes.md,
   },
