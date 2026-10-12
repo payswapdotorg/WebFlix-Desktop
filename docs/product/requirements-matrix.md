@@ -114,3 +114,20 @@ ledger rows:
   P6-MOBILE-AUDIT-1 (mobile-viewport verification) as the only path to
   a mobile claim. WF-020/029/031 were evaluated and stay verbatim —
   reasons recorded in the ruling doc §4.
+
+### P6-MOBILE-AUDIT-1 mobile-half advance (2026-10-12)
+
+- WF-032 mobile half: Reconciled 2026-10-12: not-claimed ->
+  device-emulated-tested (ledger: P6-MOBILE-AUDIT-1 @ 4b6c9ae, ledger row
+  7b5053f, pure-ff merged at 7b5053f — the BUILT web host audited at
+  phone-375/390/430 + tablet-768 by a 57-test Chromium harness, 98/98
+  web-client suite green at the merge: zero horizontal overflow post-fix
+  (pre-fix 126-186px on every screen — the nowrap nav), every measured
+  touch target 44px (host-level composition), nav usable at every width,
+  persistence control + durable opt-in verified per width, degraded path
+  - unavailable-surface registry exercised per width). Scope honesty:
+    device EMULATION, not physical handsets; iOS-Safari-specific storage
+    behaviors remain open (P6-MOBILE-RULING §3 condition 2); the shell's
+    own responsive debt is recorded with P6-SHELL-RESPONSIVE-1 queued. The
+    row-level status stays "tested" (set by the web half); this advance is
+    scoped to the mobile half per the ruling's two-half accounting.
