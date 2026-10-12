@@ -17,7 +17,7 @@ are authorized (P5-SOURCES).
 
 Scope rows:
 
-1. **Migration 0006** (the 0002-0005 rules): OWN ad_* tables —
+1. **Migration 0006** (the 0002-0005 rules): OWN ad\_\* tables —
    ad_records, ad_identities, ad_claims, ad_evidence_edges,
    ad_review_signals — canonical JSON columns for the shape payloads,
    per-profile structural isolation (one profile-scoped db handle per
@@ -26,7 +26,7 @@ Scope rows:
    needed, e.g. claims -> records).
 2. **Stores (local-library)**: one store module per table family with
    the house pattern — put/get/list with typed absent errors
-   (ads/*-absent codes as genuinely needed), append-only where the
+   (ads/\*-absent codes as genuinely needed), append-only where the
    shape is append-only (review signals, evidence edges), put-replaces
    where the shape is a record (ad records by source id — re-import
    REPLACES with the new batch provenance), deterministic listing
