@@ -105,6 +105,9 @@ importers:
       webflix-application:
         specifier: workspace:*
         version: link:../../packages/webflix-application
+      webflix-contracts:
+        specifier: workspace:*
+        version: link:../../packages/webflix-contracts
       webflix-shell:
         specifier: workspace:*
         version: link:../../packages/webflix-shell
@@ -121,6 +124,9 @@ importers:
       '@vitejs/plugin-react':
         specifier: ^6.0.1
         version: 6.0.1(vite@8.0.8(@types/node@25.6.0)(esbuild@0.27.7)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.9.0))
+      fake-indexeddb:
+        specifier: ^6.2.5
+        version: 6.2.5
       jsdom:
         specifier: ^27.4.0
         version: 27.4.0(@noble/hashes@1.8.0)
@@ -7050,6 +7056,10 @@ packages:
   extsprintf@1.4.1:
     resolution: {integrity: sha512-Wrk35e8ydCKDj/ArClo1VrPVmN8zph5V4AtHwIuHhvMXsKf73UT3BOD+azBIW+3wOJ4FhEH7zyaJCFvChjYvMA==}
     engines: {'0': node >=0.6.0}
+
+  fake-indexeddb@6.2.5:
+    resolution: {integrity: sha512-CGnyrvbhPlWYMngksqrSSUT1BAVP49dZocrHuK0SvtR0D5TMs5wP0o3j7jexDJW01KSadjBp1M/71o/KR3nD1w==}
+    engines: {node: '>=18'}
 
   fast-content-type-parse@3.0.0:
     resolution: {integrity: sha512-ZvLdcY8P+N8mGQJahJV5G4U88CSvT1rP8ApL6uETe88MBXrBHAkZlSEySdUlyztF7ccb+Znos3TFqaepHxdhBg==}
@@ -14785,14 +14795,14 @@ snapshots:
       msw: 2.13.3(@types/node@25.6.0)(typescript@5.9.3)
       vite: 5.4.21(@types/node@25.6.0)(lightningcss@1.32.0)
 
-  '@vitest/mocker@3.2.7(msw@2.13.3(@types/node@22.20.5)(typescript@5.9.3))(vite@7.3.3(@types/node@22.20.5)(jiti@2.6.1)(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.9.0))':
+  '@vitest/mocker@3.2.7(msw@2.13.3(@types/node@22.20.5)(typescript@5.9.3))(vite@7.3.3(@types/node@25.6.0)(jiti@2.6.1)(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.9.0))':
     dependencies:
       '@vitest/spy': 3.2.7
       estree-walker: 3.0.3
       magic-string: 0.30.21
     optionalDependencies:
       msw: 2.13.3(@types/node@22.20.5)(typescript@5.9.3)
-      vite: 7.3.3(@types/node@22.20.5)(jiti@2.6.1)(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.9.0)
+      vite: 7.3.3(@types/node@25.6.0)(jiti@2.6.1)(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.9.0)
 
   '@vitest/mocker@3.2.7(msw@2.13.3(@types/node@25.6.0)(typescript@6.0.2))(vite@7.3.3(@types/node@25.6.0)(jiti@2.6.1)(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.9.0))':
     dependencies:
@@ -16490,6 +16500,8 @@ snapshots:
 
   extsprintf@1.4.1:
     optional: true
+
+  fake-indexeddb@6.2.5: {}
 
   fast-content-type-parse@3.0.0: {}
 
@@ -20796,7 +20808,7 @@ snapshots:
     dependencies:
       '@types/chai': 5.2.3
       '@vitest/expect': 3.2.7
-      '@vitest/mocker': 3.2.7(msw@2.13.3(@types/node@22.20.5)(typescript@5.9.3))(vite@7.3.3(@types/node@22.20.5)(jiti@2.6.1)(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.9.0))
+      '@vitest/mocker': 3.2.7(msw@2.13.3(@types/node@22.20.5)(typescript@5.9.3))(vite@7.3.3(@types/node@25.6.0)(jiti@2.6.1)(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.9.0))
       '@vitest/pretty-format': 3.2.7
       '@vitest/runner': 3.2.7
       '@vitest/snapshot': 3.2.7

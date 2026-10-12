@@ -1,22 +1,28 @@
 /**
- * P6-WEB-HOST-1 — the web client's composition root: the browser-safe
- * application layer, wired (phase6-clients-plan §2 + §8: a client is a
- * composition, not a product fork).
+ * The web client's composition root: the browser-safe application layer,
+ * wired (phase6-clients-plan §2 + §8: a client is a composition, not a
+ * product fork).
  *
  * Everything here is reused AS-IS from webflix-application — no parallel use
  * cases, no re-declared stores, no forked shapes (contracts stay 0.11.0):
  *  - the IN-MEMORY doubles (the ads stores + the intelligence stores + the
  *    ranker selection store) — session-only by construction, exactly what
- *    the sqlite law (§4) prescribes for the web runtime;
+ *    the sqlite law (§4) prescribes as the DEFAULT web runtime;
  *  - the DEFAULT ranker adapter registry (the built-in deterministic v1);
  *  - the real use cases the mounted surfaces serve: SetRankerAdapterSelection
  *    + ResolveSelectedRanker (the MI Evaluation selector), QualifyAdsRecords
  *    (the Ad Center read), ReadTransparencySourceManifests (the honest
  *    source-coverage declaration).
  *
- * NO durable store is constructed, NO connector is imported, NO network
- * token exists in this file (rg-provable). One session = one tab session;
- * createWebClientSession() is called once per App mount.
+ * P6-DURABLE-WEB-1: the ranker-selection STORE is now injectable — the host
+ * passes its mode-routing store (in-memory double OR the IndexedDB-backed
+ * durable adapter behind the SAME RankerSelectionStore interface) so the
+ * durable mode rides the existing seam with ZERO application-layer changes.
+ * The default remains the in-memory double (session-only honesty).
+ *
+ * NO connector is imported, NO network token exists in this file
+ * (rg-provable). One session = one tab session; createWebClientSession()
+ * is called once per App mount.
  */
 
 import {
@@ -38,6 +44,7 @@ import type {
   ResolvedRanker,
 } from "webflix-application";
 import type { TransparencySourceManifest } from "webflix-shell";
+import type { PersistenceMode } from "./persistence";
 
 /** A plain injectable clock — the application layer never reads the wall clock directly. */
 const sessionClock = (): { now(): Date } => ({ now: () => new Date() });
@@ -67,8 +74,18 @@ export interface WebClientSession {
   readonly storedAdRecordIds: () => Promise<readonly string[]>;
 }
 
+/** Optional session wiring (P6-DURABLE-WEB-1): the ranker-selection store to route the selection use cases through. */
+export interface WebClientSessionOptions {
+  /**
+   * The selection store behind the SetRankerAdapterSelection / ResolveSelectedRanker
+   * seams. Default: the in-memory double (session-only). The durable host passes its
+   * mode-routing store — the interface is UNCHANGED, so this is pure composition.
+   */
+  readonly rankerSelectionStore?: RankerSelectionStore;
+}
+
 /** Creates one browser-safe session: in-memory stores + wired use cases. */
-export function createWebClientSession(): WebClientSession {
+export function createWebClientSession(options: WebClientSessionOptions = {}): WebClientSession {
   const clock = sessionClock();
   const generateId = createSessionIdGenerator();
 
@@ -79,8 +96,11 @@ export function createWebClientSession(): WebClientSession {
   const rankerRegistry = DEFAULT_RANKER_ADAPTER_REGISTRY;
   const sourceRegistry = DEFAULT_TRANSPARENCY_SOURCE_REGISTRY;
 
+  // The selection seam: the injected store when the host routes one in
+  // (durable mode), else the in-memory double (session-only default).
+  const rankerSelectionStore = options.rankerSelectionStore ?? new InMemoryRankerSelectionStore();
+
   // The live use cases the mounted surfaces serve.
-  const rankerSelectionStore = new InMemoryRankerSelectionStore();
   const setRankerSelection = new SetRankerAdapterSelection({
     registry: rankerRegistry,
     store: rankerSelectionStore,
@@ -138,8 +158,18 @@ export function createWebClientSession(): WebClientSession {
 // (never invented). Plain functions over the use cases' outputs.
 // ---------------------------------------------------------------------------
 
-/** The selector status note after a real selection: resolution metadata, verbatim. */
-export function rankerStatusNoteFor(resolved: ResolvedRanker): string {
+/** The selector status note after a real selection — the wording follows the ACTIVE persistence mode (durable: "saved" is TRUE and said; session-only: never "saved"). */
+export function rankerStatusNoteFor(resolved: ResolvedRanker, mode: PersistenceMode): string {
+  if (mode === "durable") {
+    if (resolved.resolution.kind === "selected") {
+      return `Selected ${resolved.adapter.label} — saved to this browser's durable storage.`;
+    }
+    if (resolved.resolution.kind === "default") {
+      return `${resolved.resolution.note} Durable mode: no selection is stored, so the default applies.`;
+    }
+    // Fail-soft registry drift: the typed error's own reason, surfaced verbatim.
+    return `${resolved.resolution.error.reason} Durable mode — the default applies.`;
+  }
   if (resolved.resolution.kind === "selected") {
     return `Selected ${resolved.adapter.label} — session only (this choice resets with the tab).`;
   }
