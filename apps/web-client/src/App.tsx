@@ -89,6 +89,9 @@ const hostStyles: Record<string, React.CSSProperties> = {
     padding: "6px 12px",
     fontSize: 13,
     maxWidth: "100%",
+    // P6-MOBILE-AUDIT-1: the touch-target bar (>= 44px) for the host's own
+    // persistence control — a host-level style fix (this file is the host).
+    minHeight: 44,
   },
   runButton: {
     alignSelf: "flex-start",
@@ -99,6 +102,9 @@ const hostStyles: Record<string, React.CSSProperties> = {
     padding: "6px 12px",
     cursor: "pointer",
     fontSize: 13,
+    // P6-MOBILE-AUDIT-1: the touch-target bar (>= 44px) for the host's own
+    // run/forget buttons — host-level style fixes (this file is the host).
+    minHeight: 44,
   },
 };
 
