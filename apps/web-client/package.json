@@ -1,0 +1,27 @@
+{
+  "name": "web-client",
+  "version": "0.1.0",
+  "private": true,
+  "description": "WebFlix web client host (Phase-6 row 2, P6-WEB-HOST-1): a NEW thin Vite + React 19 composition of webflix-shell + webflix-application — session-only, honest unavailable surfaces, zero network.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "test": "vitest run --config ./vitest.config.ts"
+  },
+  "dependencies": {
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "webflix-application": "workspace:*",
+    "webflix-shell": "workspace:*"
+  },
+  "devDependencies": {
+    "@testing-library/react": "^16.3.3",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "jsdom": "^27.4.0",
+    "typescript": "^6.0.2",
+    "vite": "^8.0.2"
+  }
+}
