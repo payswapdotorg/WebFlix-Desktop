@@ -44,5 +44,14 @@ export * from "./intelligence-translate-tts";
 // and kind enum stay closed; evaluations are NOT DerivedArtifacts.
 export * from "./intelligence-evaluation";
 
+// Ad Center (Phase 5, P5-CONTRACTS): the ads lane's own contract shapes —
+// AdvertiserIdentity, AdRecord, Claim, EvidenceLink, ReviewSignal,
+// OfferVerification, QualificationExplanation (0.7.0 -> 0.8.0 additive
+// section). Separation starts here: this module imports only the shared
+// primitives — nothing from the intelligence/ranking modules, either
+// direction — and the architecture-check `ads-separation` rule pins the
+// organic ranking path away from these shapes.
+export * from "./ads";
+
 // Errors: ErrorCode, WebFlixError.
 export * from "./errors";

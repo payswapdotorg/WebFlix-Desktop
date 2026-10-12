@@ -1,8 +1,8 @@
 import { gitFileNames } from "./git-file-names.mjs";
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import { createHash } from "node:crypto";
 
+import { checkForbiddenImports } from "./forbidden-imports.mjs";
 import {
   countPublicMethods,
   discoverFiles,
@@ -15,23 +15,8 @@ import {
   posix,
   publicEntrypointMatches,
   resolveImport,
+  violation,
 } from "./policy.mjs";
-
-function fingerprint(rule, file, detail = "") {
-  return createHash("sha256").update(`${rule}\0${file}\0${detail}`).digest("hex").slice(0, 16);
-}
-
-function violation({ rule, file, detail, message, module, global = false }) {
-  return {
-    rule,
-    file: posix(file),
-    module: module?.id ?? null,
-    detail,
-    message,
-    fingerprint: fingerprint(rule, posix(file), detail),
-    global,
-  };
-}
 
 function cycleViolations(edges, policy, modulesByFile) {
   const state = new Map();
@@ -277,6 +262,11 @@ export async function checkArchitecture({ cwd = process.cwd(), changedFiles = nu
       );
     }
   }
+
+  // forbiddenImports — the import-separation rules (P5-CONTRACTS),
+  // applied to every discovered file (managed or not) by the dedicated
+  // pass in ./forbidden-imports.mjs.
+  violations.push(...(await checkForbiddenImports({ cwd, files, policy, modulesByFile })));
 
   if (policy.global.forbidCycles) violations.push(...cycleViolations(edges, policy, modulesByFile));
   const baseline = await readBaseline(cwd);

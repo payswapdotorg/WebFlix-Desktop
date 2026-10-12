@@ -99,6 +99,26 @@ export enum ErrorCode {
   // comparison never throws away the other sides), and typed cancellation
   // reuses the existing cross-cutting `common/cancelled`.
   IntelligenceEvaluationInvalid = "intelligence/evaluation-invalid",
+  // Ad Center (Phase 5, P5-CONTRACTS) — the ads/* lane's own codes,
+  // appended per the additive-only rule. Four codes, one per distinct
+  // typed failure the ads contract + domain invariants genuinely
+  // produce (the work order's "trim to what the schemas genuinely
+  // reject"): `record-invalid` carries AdRecord / AdvertiserIdentity /
+  // provenance defects at import/store boundaries; `claim-invalid`
+  // carries Claim defects — malformed shape OR the extractive
+  // discipline violations the domain invariant rejects (offsets outside
+  // the source text, quote not byte-equal to the offset window);
+  // `evidence-invalid` carries EvidenceLink referential violations
+  // (unknown claim, an independent-review edge whose review signal does
+  // not resolve); `verification-invalid` carries OfferVerification
+  // state-machine violations (an unchecked record carrying check
+  // evidence, a checked record without its evidence list, an illegal
+  // transition). No machinery exists this order — the codes are the
+  // typed vocabulary the shapes and invariants reject through.
+  AdsRecordInvalid = "ads/record-invalid",
+  AdsClaimInvalid = "ads/claim-invalid",
+  AdsEvidenceInvalid = "ads/evidence-invalid",
+  AdsVerificationInvalid = "ads/verification-invalid",
   // cross-cutting
   RateLimited = "common/rate-limited",
   Network = "common/network",

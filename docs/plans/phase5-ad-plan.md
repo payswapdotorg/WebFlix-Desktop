@@ -48,14 +48,14 @@ coverage; keep Ad Center separate from organic recommendations."
 
 ## Sequencing (TL2 ruling)
 
-| Order | Work ID       | Lane     | Scope                                                                        |
-| ----- | ------------- | -------- | ---------------------------------------------------------------------------- |
-| 1     | P5-CONTRACTS  | D2       | Ad Center contract module (additive sibling): AdRecord, AdvertiserIdentity, Claim, EvidenceLink, ReviewSignal, OfferVerification, QualificationExplanation + separation-pinning architecture rule + stores-ready shapes |
-| 2     | P5-STORES     | D2       | Durable Ad Center stores (migration 0006: records, identities, claims, evidence edges, review signals — own ad_* tables, per-profile isolation) + the import seam |
-| 3     | P5-CLAIMS     | D2       | Deterministic claim extraction (extractive, cited spans) + evidence-graph construction over imported ad records |
-| 4     | P5-VERIFY     | D2       | Offer verification (checks against declared sources — states WHAT was checked) + independent review signals (local, provenance-carrying) |
-| 5     | P5-QUALIFY    | D2+shell | Explainable qualification (deterministic, reasons[] + evidence pointers, §4 pattern) + the Ad Center shell panel (scoped grant, tested, unmounted) |
-| 6     | P5-SOURCES    | D2       | Transparency-source port + honest adapters: Meta/TikTok TYPED pending-authorization (application path named), Google TYPED blocked; the manifest declares per-source coverage; the import path serves until authorizations clear |
+| Order | Work ID      | Lane     | Scope                                                                                                                                                                                                                            |
+| ----- | ------------ | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1     | P5-CONTRACTS | D2       | Ad Center contract module (additive sibling): AdRecord, AdvertiserIdentity, Claim, EvidenceLink, ReviewSignal, OfferVerification, QualificationExplanation + separation-pinning architecture rule + stores-ready shapes          |
+| 2     | P5-STORES    | D2       | Durable Ad Center stores (migration 0006: records, identities, claims, evidence edges, review signals — own ad\_\* tables, per-profile isolation) + the import seam                                                              |
+| 3     | P5-CLAIMS    | D2       | Deterministic claim extraction (extractive, cited spans) + evidence-graph construction over imported ad records                                                                                                                  |
+| 4     | P5-VERIFY    | D2       | Offer verification (checks against declared sources — states WHAT was checked) + independent review signals (local, provenance-carrying)                                                                                         |
+| 5     | P5-QUALIFY   | D2+shell | Explainable qualification (deterministic, reasons[] + evidence pointers, §4 pattern) + the Ad Center shell panel (scoped grant, tested, unmounted)                                                                               |
+| 6     | P5-SOURCES   | D2       | Transparency-source port + honest adapters: Meta/TikTok TYPED pending-authorization (application path named), Google TYPED blocked; the manifest declares per-source coverage; the import path serves until authorizations clear |
 
 Each order lands with the full gate battery + ledger row. Later-phase
 platform writes remain parked (not Phase-5).

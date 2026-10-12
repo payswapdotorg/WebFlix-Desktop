@@ -153,3 +153,79 @@ global:
   managedOnly: true
 
 exceptions: []
+
+# Import-separation rules (P5-CONTRACTS, phase5-ad-plan §3): the Ad Center
+# lane and the organic ranking path are structurally separate — ad shapes
+# never enter the ranking path, pinned as architecture, not convention.
+# Evaluated for every discovered file (managed or not — see the engine).
+# `symbols` lists the ads contract surface exactly; additive ads orders
+# extend the list in lockstep with the module's exports.
+forbiddenImports:
+  - id: ads-separation
+    description: >-
+      The organic ranking path (the ranking use cases, their ranker seam,
+      and the ranking domain invariants) never imports Ad Center shapes —
+      phase5-ad-plan §3. Covers the charter's enumeration
+      (built-in-ranker, record-feedback, set-objectives, mi-*) plus
+      generate-recommendations (the ranking use case itself), the
+      ranker-adapter seam, and the domain's ranking invariants.
+      Type-only imports included.
+    from:
+      - packages/webflix-application/src/built-in-ranker.ts
+      - packages/webflix-application/src/generate-recommendations.ts
+      - packages/webflix-application/src/record-feedback.ts
+      - packages/webflix-application/src/set-objectives.ts
+      - packages/webflix-application/src/mi-*.ts
+      - packages/webflix-application/src/ranker-adapter-registry.ts
+      - packages/webflix-application/src/ranker-adapter-selection.ts
+      - packages/webflix-domain/src/intelligence.ts
+    specifier:
+      - webflix-contracts
+      - "**/webflix-contracts/src/ads*.js"
+    symbols:
+      - AdProvenanceSchema
+      - AdProvenance
+      - AdvertiserVerificationStateSchema
+      - AdvertiserVerificationState
+      - AdvertiserIdentitySchema
+      - AdvertiserIdentity
+      - AdServingPeriodSchema
+      - AdServingPeriod
+      - AdRecordSchema
+      - AdRecord
+      - ClaimSchema
+      - Claim
+      - EvidenceNodeKindSchema
+      - EvidenceNodeKind
+      - EvidenceRelationshipSchema
+      - EvidenceRelationship
+      - EvidenceLinkSchema
+      - EvidenceLink
+      - ReviewSignalSchema
+      - ReviewSignal
+      - OfferVerificationStateSchema
+      - OfferVerificationState
+      - VerificationSourceSchema
+      - VerificationSource
+      - OfferVerificationSchema
+      - OfferVerification
+      - AdQualificationPolicyVersionSchema
+      - AdQualificationPolicyVersion
+      - AdEvidencePointerSchema
+      - AdEvidencePointer
+      - QualificationReasonSchema
+      - QualificationReason
+      - QualificationExplanationSchema
+      - QualificationExplanation
+  - id: ads-separation-reverse
+    description: >-
+      The ads contract module imports nothing from the ranking/intelligence
+      modules and no package that depends on contracts — separation is
+      bidirectional where senseless (the ads sibling builds only on the
+      shared primitives).
+    from:
+      - packages/webflix-contracts/src/ads*.ts
+    specifier:
+      - ./intelligence*.js
+      - webflix-domain
+      - webflix-application

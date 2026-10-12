@@ -1,7 +1,27 @@
 import { promises as fs } from "node:fs";
+import { createHash } from "node:crypto";
 import path from "node:path";
 import ts from "typescript";
 import { parse as parseYaml } from "yaml";
+
+// Violation construction (P5-CONTRACTS: moved here from index.mjs as the
+// single source of truth so the forbidden-imports rule module shares the
+// exact fingerprint/violation shape the report pipeline consumes).
+export function fingerprint(rule, file, detail = "") {
+  return createHash("sha256").update(`${rule}\0${file}\0${detail}`).digest("hex").slice(0, 16);
+}
+
+export function violation({ rule, file, detail, message, module, global = false }) {
+  return {
+    rule,
+    file: posix(file),
+    module: module?.id ?? null,
+    detail,
+    message,
+    fingerprint: fingerprint(rule, posix(file), detail),
+    global,
+  };
+}
 
 const SOURCE_EXTENSIONS = [".ts", ".tsx", ".mts", ".cts", ".js", ".jsx", ".mjs", ".cjs"];
 
@@ -70,7 +90,40 @@ function validatePolicy(raw, cwd) {
     ...exception,
     paths: exception.paths ?? [],
   }));
-  return { version: 1, modules, global, exceptions };
+  // forbiddenImports (P5-CONTRACTS): path-glob -> specifier-glob -> symbol
+  // rules that pin import separation the package-level `requires` edges
+  // cannot express (e.g. "the organic ranking path never imports the Ad
+  // Center shapes" — a symbol-level rule over the contracts entrypoint).
+  // `symbols` null/absent = ANY import from a matching specifier is
+  // forbidden; otherwise at least one imported binding must be listed.
+  // These rules are evaluated for EVERY discovered file (managed or not):
+  // the webflix modules are managed: false by the 2026-10-10 correction,
+  // so a managed-only guard would silently disable the separation pin.
+  const forbiddenIds = new Set();
+  const forbiddenImports = (raw.forbiddenImports ?? []).map((rule) => {
+    if (!rule?.id || forbiddenIds.has(rule.id)) {
+      throw new Error(`forbiddenImports 规则 id 重复或为空: ${rule?.id ?? ""}`);
+    }
+    forbiddenIds.add(rule.id);
+    if (!Array.isArray(rule.from) || rule.from.length === 0) {
+      throw new Error(`forbiddenImports 规则 ${rule.id} 必须声明 from 路径模式`);
+    }
+    if (!Array.isArray(rule.specifier) || rule.specifier.length === 0) {
+      throw new Error(`forbiddenImports 规则 ${rule.id} 必须声明 specifier 模式`);
+    }
+    const symbols = rule.symbols ?? null;
+    if (symbols !== null && (!Array.isArray(symbols) || symbols.length === 0)) {
+      throw new Error(`forbiddenImports 规则 ${rule.id} 的 symbols 必须是非空数组或省略`);
+    }
+    return {
+      id: rule.id,
+      description: rule.description ?? "",
+      from: [...new Set(rule.from)].map(posix),
+      specifier: [...new Set(rule.specifier)],
+      symbols: symbols === null ? null : [...new Set(symbols)],
+    };
+  });
+  return { version: 1, modules, global, exceptions, forbiddenImports };
 }
 
 export function layerForFile(file, module) {
@@ -162,20 +215,84 @@ export function resolveImport(from, specifier, knownFiles) {
 }
 
 export function importsOf(file, source) {
+  return importDeclarationsOf(file, source).map((declaration) => declaration.specifier);
+}
+
+/**
+ * Import/export declarations with their IMPORTED BINDING NAMES (the
+ * separation rules are symbol-level: which names a file pulls from which
+ * specifier). Named imports/export re-exports contribute their names
+ * (`propertyName` when aliased — the name ON the target module); a
+ * namespace import (`import * as x`) contributes "*" (any symbol could be
+ * reached through it); a default import contributes "default"; a
+ * star re-export (`export * from`) contributes "*". Type-only imports
+ * (`import type { X }`) are ordinary declarations here — a type entering
+ * the forbidden path is as much a separation violation as a value.
+ */
+export function importDeclarationsOf(file, source) {
   const sourceFile = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true);
-  const imports = [];
+  const declarations = [];
+  function bindingsOfImportClause(clause) {
+    if (!clause) return [];
+    if (clause.name) return ["default"];
+    const named = clause.namedBindings;
+    if (!named) return [];
+    if (ts.isNamespaceImport(named)) return ["*"];
+    return named.elements.map((element) =>
+      element.propertyName ? element.propertyName.text : element.name.text,
+    );
+  }
   function visit(node) {
-    if ((ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) && node.moduleSpecifier) {
-      imports.push(node.moduleSpecifier.text);
+    if (
+      (ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) &&
+      node.moduleSpecifier &&
+      ts.isStringLiteral(node.moduleSpecifier)
+    ) {
+      let bindings;
+      if (ts.isImportDeclaration(node)) {
+        bindings = bindingsOfImportClause(node.importClause);
+      } else {
+        const clause = node.exportClause;
+        bindings =
+          clause && ts.isNamedExports(clause)
+            ? clause.elements.map((element) =>
+                element.propertyName ? element.propertyName.text : element.name.text,
+              )
+            : ["*"];
+      }
+      declarations.push({ specifier: node.moduleSpecifier.text, bindings });
     }
     if (ts.isImportEqualsDeclaration(node) && ts.isExternalModuleReference(node.moduleReference)) {
       if (ts.isStringLiteral(node.moduleReference.expression))
-        imports.push(node.moduleReference.expression.text);
+        declarations.push({ specifier: node.moduleReference.expression.text, bindings: ["*"] });
     }
     ts.forEachChild(node, visit);
   }
   visit(sourceFile);
-  return imports;
+  return declarations;
+}
+
+/**
+ * Glob matcher for forbiddenImport patterns: `**` matches any characters
+ * (including path separators), `*` matches any characters EXCEPT the
+ * path separator; everything else matches literally.
+ */
+export function globMatches(pattern, value) {
+  let regex = "^";
+  for (let i = 0; i < pattern.length; i += 1) {
+    const character = pattern[i];
+    if (character === "*") {
+      if (pattern[i + 1] === "*") {
+        regex += ".*";
+        i += 1;
+      } else {
+        regex += "[^/]*";
+      }
+    } else {
+      regex += character.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    }
+  }
+  return new RegExp(`${regex}$`).test(value);
 }
 
 export function isException(policy, rule, file, cwd) {

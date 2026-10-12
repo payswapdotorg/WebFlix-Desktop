@@ -53,12 +53,12 @@ Scope rows:
      policy)
    - Error codes genuinely needed (e.g. ads/record-invalid,
      ads/claim-invalid — trim to what the schemas genuinely reject;
-     naming follows the existing intelligence/* conventions but the
-     ads/* lane is its own)
+     naming follows the existing intelligence/_ conventions but the
+     ads/_ lane is its own)
 2. **Separation architecture rule**: extend the architecture-check
    configuration so that packages/webflix-application ranking use
    cases (the organic path: built-in-ranker, record-feedback,
-   set-objectives, mi-*) CANNOT import the new ads module (and vice
+   set-objectives, mi-\*) CANNOT import the new ads module (and vice
    versa where senseless) — the rule PINS phase5-ad-plan §3. Wire it
    as a real arch violation with a test that proves it fires (a
    deliberate bad-import fixture in the arch test suite).

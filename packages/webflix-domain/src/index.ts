@@ -21,3 +21,10 @@ export { parseOrThrow } from "./internal/parse";
 // shared invariants (objective rules, lineage checks, policy resolution,
 // reasons-mandatory guard) that application enforces through imports.
 export * from "./intelligence";
+// Ad Center (Phase 5, P5-CONTRACTS): the ads lane's invariants — the
+// extractive-claim discipline (offsets + quote byte-equality), the
+// evidence-edge referential checks, and the offer-verification state
+// machine. Pure validators over the ads contract shapes; the ads lane
+// is separate from the organic ranking path (phase5-ad-plan §3, pinned
+// by the architecture-check ads-separation rule).
+export * from "./ads-invariants";

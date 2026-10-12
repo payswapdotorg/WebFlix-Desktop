@@ -5,6 +5,84 @@ TL2 approval + migration notes; additive changes bump minor with a consumer
 impact note. No CHANGELOG existed before 0.2.0 — the 0.1.0 history is the git
 log of this package (frozen §2 shapes, D2-LOCAL lane).
 
+## 0.8.0 — 2026-10-12 — the Ad Center contract module (P5-CONTRACTS)
+
+Phase-5 row 1 (the Ad Center opener). Adds the ads lane's own contract
+module `src/ads.ts` — a NEW additive sibling importing ONLY the shared
+primitives (`internal/primitives`): nothing from the intelligence/ranking
+modules, in either direction. Separation is structural (phase5-ad-plan
+§3): the shapes carry NO ranking signals and NO user data, and the
+architecture-check `ads-separation` rule added in this order PINS the
+organic ranking path (the ranking use cases, their ranker seam, and the
+ranking domain invariants) away from every ads symbol — type-only
+imports included, and the reverse direction too. Every identity and
+verification fact is SOURCE-REPORTED (the access truths of
+AUDIT-SOURCES §6 finding 13 + §11 encoded as shapes): absent means
+absent throughout (honest-absent optionals; present arrays are
+non-empty), no aggregation of review signals, no bare "verified"
+badges. Frozen §2.1–2.6, the intelligence modules and every earlier
+additive sibling are untouched. Consumer impact: none on existing
+consumers (purely additive; no existing export changed shape).
+
+### Added
+
+- `src/ads.ts` (NEW sibling module):
+  - `AdProvenance` (+ schema) — the shared import provenance: source /
+    observedAt? / importedAt / importBatchId.
+  - `AdvertiserIdentity` (+ `AdvertiserVerificationState` enum) —
+    source-reported identity facts; the verification state is the
+    SOURCE's verdict (source-reported-verified / -unverified /
+    -revoked), never our own judgment.
+  - `AdRecord` (+ `AdServingPeriod`) — one observed ad: the creative
+    text/urls the source exposed, regions/periods as reported, the
+    advertiser identity ref, the import provenance. NO ranking signals,
+    NO user data.
+  - `Claim` — an EXTRACTIVE claim: a verbatim quoted span of an ad's
+    own text with UTF-16 character offsets + the AdRecord id it came
+    from; a claim the source did not state is a defect (the Phase-4
+    Q&A-span discipline; offset bounds + quote byte-equality are domain
+    invariants).
+  - `EvidenceLink` (+ `EvidenceNodeKind` + `EvidenceRelationship`
+    enums) — one evidence-graph edge off a claim, a discriminated union
+    over the four node kinds (source-reported-fact with its url,
+    independent-review pointing at the ReviewSignal that IS the node,
+    offer-terms with its declared url, user-imported-document with the
+    user's document reference), each carrying provenance + the
+    relationship (supports / contradicts / contextualizes).
+  - `ReviewSignal` — an independent review AS REPORTED ONLY: the
+    source, its verbatim rating and/or classification (at least one
+    required), region/scope, provenance. NO score, NO aggregation.
+  - `OfferVerification` (+ `OfferVerificationState` enum +
+    `VerificationSource`) — the honest verification record: WHAT was
+    checked (the claim), against WHICH declared sources (the evidence
+    list), WHEN, and the typed outcome (unchecked /
+    verified-against-declared-source / not-verifiable / contradicted);
+    the state-machine legality (unchecked records are bare; checked
+    records carry the full evidence list) is a domain invariant.
+  - `QualificationExplanation` (+ `AdQualificationPolicyVersion` closed
+    enum `["v1"]` + `AdEvidencePointer` union + `QualificationReason`) —
+    the §4 explainability pattern in the ads lane: reasons[] with
+    evidence pointers, mandatory in both outcome directions, pinned to
+    the deterministic policy version.
+- Error codes: `ads/record-invalid`, `ads/claim-invalid`,
+  `ads/evidence-invalid`, `ads/verification-invalid` — the four distinct
+  typed failures the shapes + domain invariants genuinely reject
+  through (the work order's trim directive honored: one code per
+  invariant family; no machinery exists this order — the codes are the
+  typed vocabulary).
+- Domain invariants (webflix-domain `src/ads-invariants.ts`, re-exported
+  from that package's entrypoint): `validateClaimOffsets` (offsets
+  within the source text + quote byte-equal to the offset window),
+  `validateEvidenceLinkReferential` (the edge's claim resolves; an
+  independent-review edge's review signal resolves),
+  `validateOfferVerificationState` (the bare-unchecked / full-evidence
+  pairing), `validateOfferVerificationTransition` (unchecked -> checked
+  states only).
+- Architecture: the `forbiddenImports` rule type (engine + policy) and
+  the `ads-separation` / `ads-separation-reverse` rules with a firing
+  test proving the rule detects a deliberate bad import through the
+  real checker over the real policy.
+
 ## 0.7.0 — 2026-10-11 — the experiment/evaluation loop shapes (P4-EVALLOOP)
 
 Phase-4 row 7 (the FINAL Phase-4 row). Adds the offline-replay contract
