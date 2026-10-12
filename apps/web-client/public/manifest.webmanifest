@@ -1,0 +1,24 @@
+{
+  "name": "WebFlix",
+  "short_name": "WebFlix",
+  "description": "WebFlix web client — a composition of the WebFlix application layer with explicit persistence modes: session-only by default, durable by opt-in. Independent value, honestly presented.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0f1420",
+  "theme_color": "#0f1420",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

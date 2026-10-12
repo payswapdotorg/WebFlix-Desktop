@@ -17,6 +17,7 @@ import type {
   PersistenceSettingStatus,
 } from "./persistence";
 import { UNAVAILABLE_SURFACES } from "./unavailable-surfaces";
+import { InstallAffordance } from "./install-affordance";
 import {
   createWebClientSession,
   qualificationItemOutcomes,
@@ -362,6 +363,10 @@ export function App({ persistence }: AppProps) {
             </li>
           ))}
         </ul>
+
+        {/* P6-PWA-1: the install affordance — the pinned honest claim. */}
+        <h3 style={hostStyles.chromeHeading}>Install</h3>
+        <InstallAffordance />
 
         <h3 style={hostStyles.chromeHeading}>
           Ad transparency sources (as their manifests declare)
