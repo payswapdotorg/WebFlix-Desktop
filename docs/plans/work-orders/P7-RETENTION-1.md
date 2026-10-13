@@ -34,7 +34,7 @@ fixture-testable use cases:
      WebFlix-local scope.
    - `in-memory-retention-stores.ts` — the fixture in-memory stores for
      the retention preference + the scoped records (history/progress/
-     feedback), following the in-memory-*-stores.ts precedents.
+     feedback), following the in-memory-\*-stores.ts precedents.
    - The existing progress/feedback/history use cases (e.g.
      `track-playback-progress.ts`, `record-feedback.ts`) gain a
      pause-aware guard ONLY if it composes additively via the store (no

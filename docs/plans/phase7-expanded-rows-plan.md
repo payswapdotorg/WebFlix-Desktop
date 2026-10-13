@@ -31,20 +31,20 @@ phase descriptions and the worker protocol govern.
 
 ## Wave 1 (parallel, three disjoint lanes)
 
-| Row | Work ID | Requirement | Owner lane | Owned paths (summary) |
-|-----|---------|-------------|------------|------------------------|
-| 1 | P7-SEARCH-1 | WF-009 federated search | D3 | contracts/src/search.ts (NEW, 0.12.0) + entrypoint export; webflix-application federated-search use case + tests |
-| 2 | P7-PLAYER-1 | WF-006 player controls | D1 | packages/playback/src/controls.ts (NEW) + entrypoint export + tests; typed against frozen PlaybackPlan |
-| 3 | P7-RETENTION-1 | WF-021 history/retention controls | D2 | webflix-application history-retention use cases + retention stores (NEW files) + tests |
+| Row | Work ID        | Requirement                       | Owner lane | Owned paths (summary)                                                                                            |
+| --- | -------------- | --------------------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------- |
+| 1   | P7-SEARCH-1    | WF-009 federated search           | D3         | contracts/src/search.ts (NEW, 0.12.0) + entrypoint export; webflix-application federated-search use case + tests |
+| 2   | P7-PLAYER-1    | WF-006 player controls            | D1         | packages/playback/src/controls.ts (NEW) + entrypoint export + tests; typed against frozen PlaybackPlan           |
+| 3   | P7-RETENTION-1 | WF-021 history/retention controls | D2         | webflix-application history-retention use cases + retention stores (NEW files) + tests                           |
 
 All three base on main @ 61c37a4 (or later; record HEAD as BASE).
 
 ## Wave 2 (after wave-1 merges)
 
-| Row | Work ID | Requirement | Notes |
-|-----|---------|-------------|-------|
-| 4 | P7-COMPOSE-1 | (mount) WF-006/009/021 surfaces | Single-owner shell composition row: SearchScreen federated states + WatchScreen controls surface + retention/settings surface; states.ts/index.ts/AppShell edits live HERE |
-| 5 | P7-AD-MEMORY-1 | WF-029 ad personal memory | ads package + application additive; explicit opt-in scopes; no ambient observation |
+| Row | Work ID        | Requirement                     | Notes                                                                                                                                                                      |
+| --- | -------------- | ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 4   | P7-COMPOSE-1   | (mount) WF-006/009/021 surfaces | Single-owner shell composition row: SearchScreen federated states + WatchScreen controls surface + retention/settings surface; states.ts/index.ts/AppShell edits live HERE |
+| 5   | P7-AD-MEMORY-1 | WF-029 ad personal memory       | ads package + application additive; explicit opt-in scopes; no ambient observation                                                                                         |
 
 ## Wave 3 (candidates, time permitting)
 

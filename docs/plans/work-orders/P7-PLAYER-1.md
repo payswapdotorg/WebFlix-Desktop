@@ -41,10 +41,10 @@ A capability-aware player-controls layer — pure, typed, fixture-testable:
 2. **Tests (fixture-only)** — NEW `packages/playback/src/__tests__/`
    (or the repo's existing playback test location — follow the local
    convention): the per-plan-kind control matrix (all five plan variants
-   + unavailable), refusal reasons for commands against plans that don't
-   support them, seek bound correctness for local-file plans, queue-add
-   applicability, mini-player/PiP default-unavailable honesty, and the
-   no-dead-control invariant (every control surfaces a typed state).
+   - unavailable), refusal reasons for commands against plans that don't
+     support them, seek bound correctness for local-file plans, queue-add
+     applicability, mini-player/PiP default-unavailable honesty, and the
+     no-dead-control invariant (every control surfaces a typed state).
 
 ## Honest non-goals
 
