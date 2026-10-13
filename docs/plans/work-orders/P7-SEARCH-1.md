@@ -79,11 +79,12 @@ groups:
   ledger-row update commit (P7-SEARCH-1 row -> delivered in
   docs/plans/work-claims.md).
 - git bundle create /tmp/p7-search-1-bundle.txt <base>..p7-search-1,
-  upload to tmpfiles.org (rename .txt), verify GET + cmp, URL + sha256 in
-  the report. Upload EARLY, re-verify at the end. ALSO: if the upload
-  fails or the entry dies, paste the bundle's base64 between
-  BUNDLE_B64_BEGIN / BUNDLE_B64_END marker lines in the report as the
-  fallback transport.
+  then print the bundle's base64 between BUNDLE_B64_BEGIN /
+  BUNDLE_B64_END marker lines in your final reply (one continuous
+  base64 -w0 run; SHA256 + SIZE on a separate line right after the END
+  marker). B64-in-chat is the PRIMARY transport — the tmpfiles relay is
+  UNREACHABLE from the TL2 station (verified 2026-10-13); do NOT upload
+  to tmpfiles.
 - Final report with VERBATIM ENGLISH markers:
   === P7-SEARCH-1 REPORT BEGIN === (BASE / BRANCH / GATES / TEST RESULTS /
   MATRIX IMPACT / FOLLOW-UP ORDERS / HONEST LIMITS / BUNDLE)

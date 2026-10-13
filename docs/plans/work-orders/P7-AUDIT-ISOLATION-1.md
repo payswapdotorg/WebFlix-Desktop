@@ -57,7 +57,7 @@ user/profile:
 ## Transport (NO push)
 
 Same as the wave-1 orders: branch commits + separate delivered-status
-ledger commit; git bundle → tmpfiles.org + verify + URL + sha256 (with
+ledger commit; git bundle → base64 in-chat between BUNDLE_B64_BEGIN / BUNDLE_B64_END markers + sha256 + size (PRIMARY — tmpfiles unreachable from station; with
 the BUNDLE_B64 fallback); verbatim ENGLISH markers:
 === P7-AUDIT-ISOLATION-1 REPORT BEGIN === (BASE / BRANCH / GATES /
 AUDIT VERDICTS / EVIDENCE INDEX / FOLLOW-UP ORDERS / HONEST LIMITS /
