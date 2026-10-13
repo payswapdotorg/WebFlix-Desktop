@@ -53,12 +53,28 @@ Guest exploration with honest auth gates — fixture-testable:
 - pnpm lint — zero NEW vs base; pnpm fmt:check — PASS
 - pnpm architecture:check — 0 violations / 0 baseline / 0 new
 
-## Transport (NO push)
+## Transport (git push delivery — v2 doctrine 2026-10-13)
 
-Same as the wave-1 orders: branch commits + separate delivered-status
-ledger commit; git bundle → base64 in the report between BUNDLE_B64_BEGIN / BUNDLE_B64_END markers (PRIMARY transport — tmpfiles is unreachable from the station; sha256 + size lines); verbatim ENGLISH markers:
-=== P7-GUEST-1 REPORT BEGIN === (BASE / BRANCH / GATES / TEST RESULTS /
-MATRIX IMPACT / FOLLOW-UP ORDERS / HONEST LIMITS / BUNDLE)
-=== P7-GUEST-1 REPORT END ===
+- Commits on branch p7-guest-1: code/docs commit(s) + SEPARATE
+  ledger-row update commit (P7-GUEST-1 row -> delivered in
+  docs/plans/work-claims.md).
+- DELIVER BY PUSHING YOUR BRANCH TO ORIGIN (the TL2 station pulls and
+  runs ALL gates itself on your branch — you do NOT need to run gates
+  worker-side; cite any numbers you have, never block on them):
+    git push $PUSH_URL
+  ($PUSH_URL is provided VERBATIM in your dispatch directive —
+  the token is redacted from this repo file by GitHub push
+  protection; use the full URL from the directive as-is) p7-guest-1:refs/heads/p7-guest-1
+- Final reply with VERBATIM ENGLISH markers:
+  === P7-GUEST-1 REPORT BEGIN === (BASE / BRANCH / PUSHED <head-sha> /
+  WORK SUMMARY / HONEST LIMITS)
+  === P7-GUEST-1 REPORT END ===
+  The PUSH is the delivery: no git bundle, no base64 block, no tmpfiles.
+  If push is rejected, run git pull --rebase origin main once and re-push.
+  If a tool call serializes into the function-name field, pause and emit
+  it again as ONE separate properly-formed call — that cure is proven.
 
+Reminder: report numbers must come from the gates you ACTUALLY ran. If a
+gate cannot run, say so plainly with the reason — an honest failure beats
+a fabricated pass. ENGLISH report markers, verbatim.
 Reminder: an honest failure beats a fabricated pass. ENGLISH markers.

@@ -76,23 +76,30 @@ Explicit opt-in personal memory for the Ad Center — three groups:
 - pnpm fmt:check — PASS
 - pnpm architecture:check — 0 violations / 0 baseline / 0 new
 
-## Transport (NO push)
+## Transport (git push delivery — v2 doctrine 2026-10-13)
 
 - Commits on branch p7-ad-memory-1: code/docs commit(s) + SEPARATE
   ledger-row update commit (P7-AD-MEMORY-1 row -> delivered in
   docs/plans/work-claims.md).
-- git bundle create /tmp/p7-ad-memory-1-bundle.txt <base>..p7-ad-memory-1,
-  then print the bundle's base64 between BUNDLE_B64_BEGIN /
-  BUNDLE_B64_END marker lines in your final reply (one continuous
-  base64 -w0 run; SHA256 + SIZE on a separate line right after the END
-  marker). B64-in-chat is the PRIMARY transport — the tmpfiles relay is
-  UNREACHABLE from the TL2 station (verified 2026-10-13); do NOT upload
-  to tmpfiles.
-- Final report with VERBATIM ENGLISH markers:
-  === P7-AD-MEMORY-1 REPORT BEGIN === (BASE / BRANCH / GATES / TEST
-  RESULTS / MATRIX IMPACT / FOLLOW-UP ORDERS / HONEST LIMITS / BUNDLE)
+- DELIVER BY PUSHING YOUR BRANCH TO ORIGIN (the TL2 station pulls and
+  runs ALL gates itself on your branch — you do NOT need to run gates
+  worker-side; cite any numbers you have, never block on them):
+    git push $PUSH_URL
+  ($PUSH_URL is provided VERBATIM in your dispatch directive —
+  the token is redacted from this repo file by GitHub push
+  protection; use the full URL from the directive as-is) p7-ad-memory-1:refs/heads/p7-ad-memory-1
+- Final reply with VERBATIM ENGLISH markers:
+  === P7-AD-MEMORY-1 REPORT BEGIN === (BASE / BRANCH / PUSHED <head-sha> /
+  WORK SUMMARY / HONEST LIMITS)
   === P7-AD-MEMORY-1 REPORT END ===
+  The PUSH is the delivery: no git bundle, no base64 block, no tmpfiles.
+  If push is rejected, run git pull --rebase origin main once and re-push.
+  If a tool call serializes into the function-name field, pause and emit
+  it again as ONE separate properly-formed call — that cure is proven.
 
+Reminder: report numbers must come from the gates you ACTUALLY ran. If a
+gate cannot run, say so plainly with the reason — an honest failure beats
+a fabricated pass. ENGLISH report markers, verbatim.
 Reminder: report numbers must come from the gates you ACTUALLY ran. If a
 gate cannot run, say so plainly with the reason — an honest failure beats
 a fabricated pass. ENGLISH report markers, verbatim.
