@@ -190,3 +190,16 @@ export * from "./ads-query-sources";
 export * from "./ads-source-manifests";
 export * from "./transparency-source-bridge";
 export * from "./fixture-replay-transparency-source";
+
+// P7-SEARCH-1 (Phase-7 wave-1 row 1, WF-009 federated search): the
+// search-source seam — the SearchSourcePort itself lives in ./ports.ts
+// (additive); here land the static registry + the FederatedSearch use
+// case (concurrent fan-out across every registered source, per-source
+// timeout budget, aggregation into FederatedSearchResult with coverage
+// that NEVER hides a failed source, and the MatchEvidence-driven merged
+// item view over the frozen catalog shapes) and the LABELED fixture
+// adapter set (YouTube-like + Reddit-like + unsupported + auth-gated —
+// TEST DOUBLES, no network, no credentials; real transport is a later
+// order behind the same port).
+export * from "./federated-search";
+export * from "./fixture-search-sources";
