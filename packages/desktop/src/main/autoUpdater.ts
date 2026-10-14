@@ -8,6 +8,7 @@ import {
   getDesktopMenuMessage,
   PlatformChannels,
   resolveRuntimeZCodeEndpointOrigin,
+  ZCODE_PRODUCT_FLAVOR,
   ZCODE_VERSION,
   type ElectronReleaseChannel,
   type Locale,
@@ -22,6 +23,8 @@ import semver from "semver";
 import { logger } from "./logger.js";
 import { getElectronReleasePlatform, ManifestUpdateProvider } from "./manifestUpdateProvider.js";
 import { initializeAutoUpdater } from "./webflix/updater-guard.js";
+import { resolveWebFlixUpdaterRefusal } from "./webflix/updater-product-guard.js";
+import { webFlixDataRootName } from "./desktopRuntimeEnv.js";
 
 /*
  * AUDIT-DESKTOP finding 7 fix (desktop-fixes.patch.md §1.a, integration-time
@@ -156,6 +159,11 @@ interface InitAutoUpdaterOptions {
   updateFeedSource?: RuntimeUpdateFeedSource;
   deviceMid?: string;
   resolveEndpointOrigin?: () => string | Promise<string>;
+  /**
+   * P8-RELEASE-DRIFT-1（H1）：调用方显式传入的运行时产品 flavor（默认取烤入的
+   * ZCODE_PRODUCT_FLAVOR 常量）。仅供测试/未来调用方注入，不改变闸门语义。
+   */
+  productFlavor?: string;
 }
 
 let quitAndInstallInFlight = false;
@@ -838,7 +846,7 @@ function pickFallbackReleaseNotesMarkdown(
   );
 }
 
-function normalizeReleaseDate(
+export function normalizeReleaseDate(
   releaseDate: UpdateDownloadedInfoLike["releaseDate"],
 ): string | undefined {
   if (releaseDate instanceof Date && !Number.isNaN(releaseDate.getTime())) {
@@ -851,7 +859,7 @@ function normalizeReleaseDate(
   return trimmed.length > 0 ? trimmed : undefined;
 }
 
-function toPostUpdateReleaseNotesPayload(
+export function toPostUpdateReleaseNotesPayload(
   info: UpdateDownloadedInfoLike,
 ): PostUpdateReleaseNotesPayload | null {
   const releaseNotesByLocale = normalizeLocalizedReleaseNotes(
@@ -902,7 +910,7 @@ async function persistPendingPostUpdateReleaseNotes(
  * 若用户跳过自动更新链路（官网安装包等）直接升到更高版本，磁盘里可能仍残留更早一次下载写入的 pending，
  * 此时待展示版本低于已安装版本，应在启动时丢弃，否则会弹出旧版更新说明。
  */
-function shouldDiscardStalePendingReleaseNotes(
+export function shouldDiscardStalePendingReleaseNotes(
   pendingVersion: string,
   appVersion: string,
 ): boolean {
@@ -1537,6 +1545,31 @@ export async function acknowledgePostUpdateReleaseNotes(
 }
 
 export async function initAutoUpdater(options: InitAutoUpdaterOptions = {}): Promise<void> {
+  /*
+   * P8-RELEASE-DRIFT-1（H1，审计 §2.2 hazard）：更新链内部的产品闸——运行时产品
+   * 身份为 WebFlix（烤入 flavor 为 "webflix"，或解析出 WebFlix 数据根）时拒绝
+   * 启用，无论调用方传入的 enabled 是什么。freeze §6.1 将 WebFlix feed 判为
+   * DEFERRED，ZCode manifest feed 绝不能服务 WebFlix 构建（跨产品更新污染、
+   * device_mid 外发到 zcode.z.ai 的遥测隔离问题一并封死）。这是调用点 flavor
+   * 闸（index.ts）之后的纵深防御，防未来重构把 enabled:true 传进来。
+   */
+  const webFlixRefusal = resolveWebFlixUpdaterRefusal({
+    flavor: options.productFlavor ?? ZCODE_PRODUCT_FLAVOR,
+    webFlixIdentityActive: Boolean(webFlixDataRootName),
+  });
+  if (webFlixRefusal.refuse) {
+    autoUpdaterDisabledForProductFlavor = true;
+    if (autoUpdatePollTimer) {
+      clearInterval(autoUpdatePollTimer);
+      autoUpdatePollTimer = null;
+    }
+    // 保留 "disabled for this desktop product flavor" 字样：webflix-smoke.mjs
+    // 的 updater:guard 断言按该短语识别禁用态（改写会破坏已记录的 e2e 证据面）。
+    logger.info(
+      `[auto-update] refused (disabled for this desktop product flavor): ${webFlixRefusal.reason}`,
+    );
+    return;
+  }
   if (options.enabled === false) {
     autoUpdaterDisabledForProductFlavor = true;
     if (autoUpdatePollTimer) {

@@ -21,6 +21,7 @@ import {
   resolveZCodeEndpointOrigin,
 } from "@zcode/shared";
 import { readZCodeStdioTapDevState, setZCodeStdioTapDevEnabled } from "@zcode/services/node";
+import { isZCodeUpdaterSurfaceEnabledForFlavor } from "./webflix/updater-product-guard.js";
 import { showAboutDialog } from "./about.js";
 import { checkForUpdateMenuClick } from "./autoUpdater.js";
 import { exportLogs } from "./exportLogs.js";
@@ -590,10 +591,14 @@ export async function executeDesktopCommand(options: {
       return;
     case DesktopCommandIds.CheckForUpdates:
       // 按产品身份而不是后端环境放行：生产后端的 Preview 同样没有更新器。
-      if (ZCODE_PRODUCT_FLAVOR === "production") {
+      // P8-RELEASE-DRIFT-1（R1）：`"webflix"` 显式无更新面（freeze §6.1 feed
+      // DEFERRED），闸门模块逐成员处理，不静默落入 ZCode 分支。
+      if (isZCodeUpdaterSurfaceEnabledForFlavor(ZCODE_PRODUCT_FLAVOR)) {
         checkForUpdateMenuClick(targetWindow);
       } else {
-        options.logger.info("[auto-update] Preview 已禁用手动更新检查");
+        options.logger.info(
+          `[auto-update] 当前产品身份（${ZCODE_PRODUCT_FLAVOR}）已禁用手动更新检查`,
+        );
       }
       return;
     case DesktopCommandIds.RelaunchApp:

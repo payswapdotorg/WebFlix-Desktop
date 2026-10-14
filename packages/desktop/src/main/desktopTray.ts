@@ -8,6 +8,7 @@ import {
   type DesktopCommandId,
   type Locale,
 } from "@zcode/shared";
+import { isZCodeUpdaterSurfaceEnabledForFlavor } from "./webflix/updater-product-guard.js";
 
 let desktopTray: Tray | null = null;
 let rebuildDesktopTrayContextMenu: (() => void) | null = null;
@@ -72,8 +73,10 @@ export function createWindowsDesktopTray(options: {
           click: () => executeTrayCommand(DesktopCommandIds.OpenWorkspace),
         },
         { type: "separator" },
-        // 更新入口跟随产品身份：Preview（含生产后端的 Preview）禁用更新器，托盘也不能露出入口。
-        ...(ZCODE_PRODUCT_FLAVOR === "production"
+        // 更新入口跟随产品身份：Preview（含生产后端的 Preview）禁用更新器，托盘也不能露出入口；
+        // P8-RELEASE-DRIFT-1（R1）：`"webflix"` 同样显式无更新面（freeze §6.1 feed DEFERRED），
+        // 闸门模块逐成员处理，不静默落入 ZCode 分支。
+        ...(isZCodeUpdaterSurfaceEnabledForFlavor(ZCODE_PRODUCT_FLAVOR)
           ? [
               {
                 label: getLabel(desktopMenuMessageIds.helpCheckForUpdates),

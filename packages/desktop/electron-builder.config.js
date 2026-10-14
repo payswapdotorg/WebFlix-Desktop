@@ -167,7 +167,9 @@ const PACMAN_RUNTIME_DEPENDENCIES = [
   "xdg-utils",
 ];
 
-const WINDOWS_INSTALL_MANIFEST_NAME = ".zcode-install-manifest";
+// P8-RELEASE-DRIFT-1（R4）：Windows 安装清单文件名跟随产品身份（WebFlix 产物不再
+// 携带 `.zcode-install-manifest`）；值集中在 desktop-product-identity.mjs。
+const WINDOWS_INSTALL_MANIFEST_NAME = desktopProductIdentity.installManifestName;
 
 async function writeWindowsInstallManifest(context) {
   if (context.electronPlatformName !== "win32") return;
@@ -456,13 +458,15 @@ export default {
   appId: desktopProductIdentity.appId,
   // Linux deb 打包（fpm）会校验 package metadata 中的 homepage、author.email、maintainer。
   // CI 环境下若这些字段缺失会在产物阶段直接失败。这里统一在构建配置补齐，避免依赖外部注入。
+  // P8-RELEASE-DRIFT-1（R4）：homepage/author 随产品身份切换（WebFlix 值为 PROPOSED，
+  // 见 desktop-product-identity.mjs 内标记与交付说明，待 TL2 复核）。
   extraMetadata: {
     version: buildMetadata.appVersion,
     zcodeProductFlavor: desktopProductIdentity.flavor,
-    homepage: "https://zcode.z.ai",
+    homepage: desktopProductIdentity.homepage,
     author: {
-      name: "ZCode",
-      email: "dev@zcode.z.ai",
+      name: desktopProductIdentity.authorName,
+      email: desktopProductIdentity.authorEmail,
     },
   },
   // macOS 签名阶段会对 Electron Framework 下每个语言包逐个 codesign。
@@ -651,10 +655,11 @@ export default {
   // OAuth deep link 协议注册（macOS 打包后需要 Info.plist 中声明 CFBundleURLTypes）
   protocols: [
     {
-      // 协议处理器的展示名之前使用小写 scheme，打包产物里的协议描述无法体现产品名。
-      // 展示名跟随安装包身份；scheme 仍保持 zcode，因此两个应用中最后注册者会成为默认 handler。
+      // 协议处理器的展示名跟随安装包身份；P8-RELEASE-DRIFT-1（R3，审计 §1.6）：
+      // scheme 同样跟随身份——WebFlix 安装包注册 `webflix://`，绝不与真实 ZCode
+      // 安装抢注 `zcode://`（freeze §6.1 coexistence）。值来自身份模块，无新字面量。
       name: desktopProductIdentity.productName,
-      schemes: ["zcode"],
+      schemes: [desktopProductIdentity.scheme],
     },
   ],
   mac: {
@@ -703,7 +708,9 @@ export default {
     // 与 /usr/share/icons/hicolor/*/apps/zcode.png 保持一致。
     executableName: desktopProductIdentity.linuxExecutableName,
     category: "Development",
-    maintainer: "ZCode <dev@zcode.z.ai>",
+    // P8-RELEASE-DRIFT-1（R4）：deb maintainer 随产品身份（WebFlix 值 PROPOSED，待 TL2 复核）；
+    // fpm 的非空校验由身份模块的字段保证（authorName/authorEmail 恒非空）。
+    maintainer: `${desktopProductIdentity.authorName} <${desktopProductIdentity.authorEmail}>`,
   },
   deb: {
     // 生产版与 Preview 必须是两个 dpkg package；只改可执行名仍会让安装器把另一版本当成升级替换。

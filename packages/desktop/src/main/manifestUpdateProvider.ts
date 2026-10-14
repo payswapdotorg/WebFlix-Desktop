@@ -74,7 +74,7 @@ export function getElectronReleasePlatform(
   return `${mapElectronReleasePlatform(platform)}-${mapElectronReleaseArch(arch)}`;
 }
 
-function buildElectronManifestUrl(options: {
+export function buildElectronManifestUrl(options: {
   endpointOrigin: string;
   manifestUrl?: string;
   platform: string;
@@ -133,7 +133,47 @@ function getLinuxUpdateExtensions(updater: AppUpdater): readonly string[] | null
   return null;
 }
 
-function resolveManifestFiles(
+/*
+ * P8-RELEASE-DRIFT-1（T-5，AUDIT-DESKTOP :130 建议 + 审计 §2.3）：checksum 不仅要
+ * 「存在」，还必须「格式合法」——存在但被篡改/乱写的 checksum 必须在任何下载
+ * 发生前拒绝，保证 electron-updater 下载后验哈希时永远拿到良构材料。
+ * sha512：base64（88 字符，带 == 填充）或 hex（128）；sha2：hex（64）或 base64（44，带 =）。
+ */
+const SHA512_BASE64_RE = /^[A-Za-z0-9+/]{86}==$/;
+const SHA512_HEX_RE = /^[0-9a-fA-F]{128}$/;
+const SHA256_BASE64_RE = /^[A-Za-z0-9+/]{43}=$/;
+const SHA256_HEX_RE = /^[0-9a-fA-F]{64}$/;
+
+function isValidChecksumValue(algorithm: "sha512" | "sha2", value: string): boolean {
+  const trimmed = value.trim();
+  if (trimmed === "") {
+    return false;
+  }
+  if (algorithm === "sha512") {
+    return SHA512_BASE64_RE.test(trimmed) || SHA512_HEX_RE.test(trimmed);
+  }
+  return SHA256_BASE64_RE.test(trimmed) || SHA256_HEX_RE.test(trimmed);
+}
+
+function assertManifestFileChecksum(fileInfo: UpdateFileInfo): void {
+  const sha512 =
+    typeof fileInfo.sha512 === "string" && fileInfo.sha512.trim() !== "" ? fileInfo.sha512 : null;
+  const sha2 =
+    "sha2" in fileInfo && typeof fileInfo.sha2 === "string" && fileInfo.sha2.trim() !== ""
+      ? fileInfo.sha2
+      : null;
+  if (!sha512 && !sha2) {
+    throw new Error(`Manifest file is missing checksum: ${fileInfo.url}`);
+  }
+  if (sha512 && !isValidChecksumValue("sha512", sha512)) {
+    throw new Error(`Manifest file has an invalid (tampered?) sha512 checksum: ${fileInfo.url}`);
+  }
+  if (sha2 && !isValidChecksumValue("sha2", sha2)) {
+    throw new Error(`Manifest file has an invalid (tampered?) sha2 checksum: ${fileInfo.url}`);
+  }
+}
+
+export function resolveManifestFiles(
   updateInfo: UpdateInfo,
   baseUrl: URL,
   linuxExtensions: readonly string[] | null,
@@ -148,9 +188,8 @@ function resolveManifestFiles(
     throw new Error(`Manifest contains no update file for ${linuxExtensions?.join(" / ")}`);
   }
   const resolved: ResolvedUpdateFileInfo[] = updateFiles.map((fileInfo) => {
-    if (!fileInfo.sha512 && !("sha2" in fileInfo && fileInfo.sha2)) {
-      throw new Error(`Manifest file is missing checksum: ${fileInfo.url}`);
-    }
+    // P8-RELEASE-DRIFT-1（T-5）：缺失/篡改 checksum 在下载前拒绝（含格式校验）。
+    assertManifestFileChecksum(fileInfo);
 
     const url = resolveManifestUrl(fileInfo.url, baseUrl);
     // PacmanUpdater 仍用 .pacman 后缀识别缓存名，.pkg.tar.zst 会退回

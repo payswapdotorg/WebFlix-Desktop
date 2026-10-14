@@ -51,15 +51,24 @@ export const desktopRuntimeEnv: ZCodeRuntimeEnv = isLocalDevelopmentRuntime
  * `WEBFLIX_DATA_ROOT`（services 层的数据根段读取该变量，fail-closed），
  * fork 出的 host/scheduler 进程通过环境继承拿到同一个根。非 WebFlix 身份
  * 返回 undefined，所有路径保持原 ZCode 行为不变（迁移期 ZCODE_* 别名继续生效）。
+ *
+ * P8-RELEASE-DRIFT-1（R2，审计 §1.5）：runtime 现在带上烤入的运行时 flavor
+ * （ZCODE_PRODUCT_FLAVOR）——打包 + `"webflix"` 且 WEBFLIX_IDENTITY 未设置时
+ * 身份默认开启（打包引导链上没有任何东西会设置该环境变量），数据根为
+ * `~/.webflix`；开发态保持默认关闭、显式 opt-in。
  */
 export const webFlixDataRootName = resolveWebFlixDataRootName(process.env, {
   isPackaged: isElectronAppPackaged(),
+  flavor: ZCODE_PRODUCT_FLAVOR,
 });
 // Idempotent with the earliest-import side effect in webflix/identity-env.ts
 // (logger.ts evaluates it before this module); an explicit env value always wins.
 applyWebFlixDataRootEnv();
 // 身份看编译期 flavor 而不是 ZCODE_ENV：ZCODE_PREVIEW_IDENTITY=1 的生产后端构建同样是 Preview，
 // 需要独立的应用名、Electron 数据目录和 Helper 安装子目录才能与正式版并排运行。
+// P8-RELEASE-DRIFT-1（R1）：flavor 新增 `"webflix"` 成员——它既不是 Preview 也不是
+// ZCode 正式身份，WebFlix 打包运行时的应用名/数据目录由 webFlixDataRootName 键控
+// （打包默认开启，见上），不落入任何 ZCode 分支。
 const isPreviewPackagedRuntime = !isLocalDevelopmentRuntime && ZCODE_PRODUCT_FLAVOR === "preview";
 
 function readRuntimeEnvOverride(name: string): string | undefined {

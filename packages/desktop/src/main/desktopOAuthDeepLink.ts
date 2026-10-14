@@ -18,6 +18,12 @@ import {
   isShareImportUrl,
 } from "./desktopDeepLinkUrl.js";
 import { registerLinuxDeepLinkProtocol } from "./desktopLinuxDeepLinkRegistration.js";
+import {
+  LEGACY_ZCODE_IDENTITY,
+  WEBFLIX_IDENTITY,
+  protocolSchemeNameOf,
+} from "./webflix/identity.js";
+import { webFlixDataRootName } from "./desktopRuntimeEnv.js";
 
 interface DeepLinkWorkspaceGateOptions {
   canOpenWorkspace?: (workspacePath: string) => boolean;
@@ -243,9 +249,13 @@ export function handleDeepLink(
   logger: { info: (...args: unknown[]) => void; warn: (...args: unknown[]) => void },
   options: DeepLinkWorkspaceGateOptions = {},
 ): boolean {
+  // P8-RELEASE-DRIFT-1（R3）：WebFlix 运行时接受 `webflix://` 入站（内部别名，见上）。
+  const deepLinkUrl = normalizeIncomingDeepLinkUrl(url, {
+    webFlixIdentityActive: Boolean(webFlixDataRootName),
+  });
   let parsedUrl: URL;
   try {
-    parsedUrl = new URL(url);
+    parsedUrl = new URL(deepLinkUrl);
   } catch {
     logger.warn("[deep-link] 无法解析 URL:", url);
     return false;
@@ -395,6 +405,45 @@ export function handleDeepLink(
   return false;
 }
 
+/*
+ * P8-RELEASE-DRIFT-1（R3，审计 §1.6）：深链 scheme 跟随产品身份——WebFlix 身份
+ * 活跃时注册/接受 `webflix://`，绝不在这份表面上抢注 `zcode://`（与真实 ZCode
+ * 安装的 handler 归属冲突，freeze §6.1 coexistence）。scheme 值一律取自身份模块
+ * （WEBFLIX_IDENTITY.scheme / LEGACY_ZCODE_IDENTITY.scheme，冻结 + 测试钉死），
+ * 注册点不引入新字面量。
+ */
+
+/** 身份驱动的深链 scheme（裸名，无 `://`）：WebFlix → `webflix`，否则 `zcode`。 */
+export function resolveDeepLinkSchemeForIdentity(webFlixIdentityActive: boolean): string {
+  return protocolSchemeNameOf(
+    webFlixIdentityActive ? WEBFLIX_IDENTITY.scheme : LEGACY_ZCODE_IDENTITY.scheme,
+  );
+}
+
+/** 当前运行时的深链 scheme（跟随 webFlixDataRootName 解析出的产品身份）。 */
+export function resolveRuntimeDeepLinkScheme(): string {
+  return resolveDeepLinkSchemeForIdentity(Boolean(webFlixDataRootName));
+}
+
+/**
+ * 入站深链 URL 归一化：WebFlix 身份活跃时把 `webflix://…` 别名成内部的
+ * `zcode://…` 形式，供 desktopDeepLinkUrl.ts 的冻结匹配器（scheme 硬编码
+ * `zcode`，在本单允许路径之外）继续复用；仅内存内别名，任何外部表面
+ * （注册/handler 归属）都不以 `zcode://` 名义声明。非 WebFlix 运行时原样返回。
+ */
+export function normalizeIncomingDeepLinkUrl(
+  url: string,
+  options: { webFlixIdentityActive: boolean },
+): string {
+  if (!options.webFlixIdentityActive) {
+    return url;
+  }
+  return url.replace(
+    /^webflix:(?=\/\/|\/)/iu,
+    `${protocolSchemeNameOf(LEGACY_ZCODE_IDENTITY.scheme)}:`,
+  );
+}
+
 export function registerDeepLinkProtocol(
   logger: {
     info: (...args: unknown[]) => void;
@@ -402,7 +451,8 @@ export function registerDeepLinkProtocol(
   },
   options: { iconPath?: string } = {},
 ) {
-  const scheme = "zcode";
+  // P8-RELEASE-DRIFT-1（R3）：scheme 跟随产品身份，值来自身份模块。
+  const scheme = resolveRuntimeDeepLinkScheme();
 
   if (process.defaultApp && process.argv.length >= 2) {
     const entry = resolve(process.argv[1]!);

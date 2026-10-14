@@ -82,6 +82,10 @@ import {
   HostMessageTypes,
 } from "@zcode/shared";
 import { logger } from "./logger.js";
+import {
+  isZCodeUpdaterSurfaceEnabledForFlavor,
+  shouldSkipForceUpdateGateForFlavor,
+} from "./webflix/updater-product-guard.js";
 import { markMainLaunchAppReady } from "./desktopLaunchMarks.js";
 import { createCuaPipFocusRouter, resolveCuaPipWindowKey } from "./cuaPipFocusRouter.js";
 import { createDesktopTelemetryFetch } from "./desktopTelemetryFetch.js";
@@ -1979,6 +1983,8 @@ app.whenReady().then(async () => {
   if (process.platform === "win32") {
     // 打包态必须与 NSIS 快捷方式使用同一 AUMID，否则 Shell 把它们当成不同应用。
     // 使用构建期产品身份，不依赖用户机器环境；开发态继续保持独立身份。
+    // P8-RELEASE-DRIFT-1（R1）：flavor 修复后 `"webflix"` 分支真正可达——打包
+    // WebFlix 解析 `org.webflix.desktop`（而非 dev.zcode.app*，审计 §1.4 第 1 项）。
     app.setAppUserModelId(
       resolveWindowsAppUserModelIdForFlavor(ZCODE_PRODUCT_FLAVOR, { isPackaged: app.isPackaged }),
     );
@@ -2012,10 +2018,12 @@ app.whenReady().then(async () => {
   logWindowsBundledRuntimeIntegrityDiagnostic();
 
   // 启动自动更新检查（后台执行，不阻塞主界面）
-  // Preview 身份无论连接哪个后端都不自动更新：stable feed 上只分发正式 ZCode 安装包，
-  // 不向 Preview 渠道提供更新。
+  // 更新入口跟随产品身份：Preview（含生产后端的 Preview）没有更新渠道；
+  // P8-RELEASE-DRIFT-1（R1/H1）：`"webflix"` flavor 同样 fail-closed（freeze §6.1
+  // 将 WebFlix feed 判为 DEFERRED）——三成员在闸门模块里逐一显式处理，无静默
+  // 落入 ZCode 分支；更新链内部（autoUpdater.ts）另有 H1 产品闸作纵深防御。
   void initAutoUpdater({
-    enabled: ZCODE_PRODUCT_FLAVOR === "production",
+    enabled: isZCodeUpdaterSurfaceEnabledForFlavor(ZCODE_PRODUCT_FLAVOR),
     onBeforeQuitAndInstall: async () => {
       notifyStabilityLifecycle("update_install");
       await prepareAppQuit("auto-update quitAndInstall", "update-install");
@@ -2256,9 +2264,14 @@ app.whenReady().then(async () => {
   // 分支不 bump 版本），会被 release minimalVersion 误判为"需强制升级"而启动秒退。force-update
   // 是面向打包发布客户端的安全门，对未打包 dev 运行时无意义。打包版 app.isPackaged === true，
   // gate 照常生效，对真实用户零影响。
+  //
+  // P8-RELEASE-DRIFT-1（R1，审计 §1.4 第 3 项/H1）：闸门按 flavor 三成员显式分派——
+  // `"webflix"` 永不查询 ZCode 的 client-configs kill-switch API（那是 ZCode 产品的
+  // 强升门；打包 WebFlix 生产后端构建此前会误命中），未知 flavor fail-closed 跳过。
+  const forceUpdateGateFlavor = shouldSkipForceUpdateGateForFlavor(ZCODE_PRODUCT_FLAVOR);
   const skipForceUpdateForLocalDevRuntime = !app.isPackaged;
   const forceUpdateGuardResult =
-    ZCODE_PRODUCT_FLAVOR === "production" && !skipForceUpdateForLocalDevRuntime
+    !forceUpdateGateFlavor.skip && !skipForceUpdateForLocalDevRuntime
       ? await maybeBlockStartupForForceUpdate({
           locale: currentApplicationLocale,
           logger,
@@ -2268,8 +2281,10 @@ app.whenReady().then(async () => {
           },
         })
       : { blocked: false };
-  if (ZCODE_PRODUCT_FLAVOR !== "production") {
-    logger.info("[force-update] Preview 跳过远端强制升级检查");
+  if (forceUpdateGateFlavor.skip) {
+    logger.info(
+      `[force-update] 当前产品身份（${ZCODE_PRODUCT_FLAVOR}，${forceUpdateGateFlavor.reason}）跳过远端强制升级检查`,
+    );
   } else if (skipForceUpdateForLocalDevRuntime) {
     logger.info("[force-update] 本地 dev 构建（未打包）跳过远端强制升级检查");
   }

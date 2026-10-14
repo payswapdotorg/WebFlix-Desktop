@@ -1,8 +1,14 @@
 import type { ZCodeRuntimeEnv } from "./runtimeEnv.js";
 
 export type ZCodeEnv = "test" | "production";
-/** 安装包身份：决定应用名、app id、Electron 数据目录与更新策略；与后端环境 `ZCodeEnv` 是两个轴。 */
-export type ZCodeProductFlavor = "production" | "preview";
+/**
+ * 安装包身份：决定应用名、app id、Electron 数据目录与更新策略；与后端环境 `ZCodeEnv` 是两个轴。
+ * P8-RELEASE-DRIFT-1（审计 R1 修复，freeze §6.1）：`"webflix"` 是第三个成员——桌面构建
+ * 通过 `WEBFLIX_IDENTITY=1` 把 `"webflix"` 烤进 `__ZCODE_PRODUCT_FLAVOR__` define，
+ * 运行时必须原样保留（不再被归一化成 zcodeEnv 推导值），否则打包 WebFlix 的
+ * AUMID/更新器/强制升级门全部落进 ZCode 分支（release-safety-audit §1.4）。
+ */
+export type ZCodeProductFlavor = "production" | "preview" | "webflix";
 export type ArmsRumEnv = "local" | "prod";
 
 // 非构建环境（如 e2e 测试的 mocha）下 define 不存在，用 typeof 检查 + fallback 避免 ReferenceError
@@ -21,13 +27,16 @@ export const ZCODE_ENV = normalizeZCodeEnv(
  * 身份缺省跟随后端环境（test → preview，production → production）。
  * 桌面构建通过 `ZCODE_PREVIEW_IDENTITY=1` 显式注入 preview，得到连接生产后端的 Preview 包；
  * 未注入 define 的 bundle（web、CLI、测试）沿用旧的单轴语义。
+ *
+ * P8-RELEASE-DRIFT-1（R1）：烤入的 `"webflix"` 原样保留（WebFlix 是产品轴，
+ * 与 ZCodeEnv 后端轴无关）；未知/缺失值保持 fail-closed 的 zcodeEnv 推导。
  */
 export function normalizeZCodeProductFlavor(
   value: string | undefined,
   zcodeEnv: ZCodeEnv,
 ): ZCodeProductFlavor {
   const normalized = value?.trim().toLowerCase();
-  if (normalized === "production" || normalized === "preview") {
+  if (normalized === "production" || normalized === "preview" || normalized === "webflix") {
     return normalized;
   }
   return zcodeEnv === "production" ? "production" : "preview";

@@ -111,6 +111,16 @@ export function isWebflixSchemeUrl(url: string): boolean {
   return url.toLowerCase().startsWith(WEBFLIX_IDENTITY.scheme);
 }
 
+/**
+ * Bare protocol scheme name (without the `://` suffix) for OS-level default-handler
+ * registration (`app.setAsDefaultProtocolClient` / electron-builder `schemes`).
+ * P8-RELEASE-DRIFT-1 (R3): the registration surface must source its value from
+ * the identity module — `webflix://` for WebFlix surfaces, never a new literal.
+ */
+export function protocolSchemeNameOf(scheme: string): string {
+  return scheme.replace(/:\/+$/u, "");
+}
+
 /** Thrown by `assertWebFlixIdentity` when a surface collides with legacy ZCode identity. */
 export class LegacyIdentityCollisionError extends Error {
   constructor(message: string) {
