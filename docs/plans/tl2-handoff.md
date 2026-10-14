@@ -114,6 +114,17 @@ The product must preserve all of these as goals without faking present implement
 
 Use work-claims.md as a concurrency lock. One owner per path, one branch per lane, source-backed handoff packet, contract freeze, serial integration, full acceptance on the exact merge SHA. Workers can independently investigate or build code only after dependencies/contracts are stable. TL2 is the decision and merge authority; there is no routine need to consult this conversation.
 
+## Current continuation priority — Ubuntu desktop
+
+The product owner has explicitly directed TL2 to get a downloadable Ubuntu build ready, and has specified that the visible UI must be WebFlix, not ZCode. This is the immediate continuation after the already-ordered Phase-8 secure-vault work; do not treat the earlier Phase-1 implementation roadmap as evidence that packaging/product UI is already complete.
+
+- Source of truth: `docs/plans/work-orders/P9-UBUNTU-WEBFLIX-1.md`; concurrency lock: `docs/plans/work-claims.md`.
+- `P8-VAULT-1` remains the hard dependency for final real per-user account connection. Start P9's disjoint UI/product shell, Ubuntu packaging/workflow and QA harness work in parallel, but defer account IPC composition and release-candidate acceptance until the vault merge.
+- Dispatch the three child grants to Worker 1 (mount the actual WebFlix shell and remove visible ZCode branding), Worker 2 (Ubuntu 24.04 x86_64 `.deb` + AppImage build artifacts and CI workflow), Worker 3 (packaged launch/E2E verification and evidence). TL2 owns integration, exact-SHA regression gates and merge decisions.
+- Do not mark the app ready because docs/tests/dev mode are green. The package must launch from the packaged Ubuntu artifact, present WebFlix branding throughout, exercise real local-media/UI pathways, and preserve ZCode's separate identity/behavior.
+- Current observed blocker evidence: there were no GitHub releases/assets or Actions workflow runs; the renderer HTML still used a ZCode title/startup mark and the desktop renderer still booted the inherited ZCode root. The new work order contains the detailed requirements and evidence checklist.
+- Provide the operator a direct link to the downloadable workflow artifact plus install/launch instructions. Do not publish a public production release or enable a WebFlix updater feed using the still-proposed identity metadata/feed.
+
 ## Completion report
 
 When Phase 1 is accepted, commit an evidence-backed status update naming:
