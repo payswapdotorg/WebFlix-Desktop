@@ -6,7 +6,13 @@ import type {
   EvaluationResult,
   ProviderAccountRecord,
 } from "webflix-contracts";
-import type { AdsQualificationItemOutcome, RankerAdapterDescriptor } from "webflix-application";
+import type {
+  AdsQualificationItemOutcome,
+  RankerAdapterDescriptor,
+  RetentionScope,
+  RetentionState,
+  ResetLocalDataResult,
+} from "webflix-application";
 import type { SearchState } from "../states";
 import { HomeScreen } from "./HomeScreen";
 import { SearchScreen } from "./SearchScreen";
@@ -15,8 +21,16 @@ import { AccountsScreen } from "./AccountsScreen";
 import { AdCenterPanel } from "./AdCenterPanel";
 import { EvaluationPanel } from "./EvaluationPanel";
 import { RankerAdapterSelector } from "./RankerAdapterSelector";
+import { SettingsScreen } from "./SettingsScreen";
 
-export type ScreenId = "home" | "search" | "library" | "accounts" | "ads" | "evaluation";
+export type ScreenId =
+  | "home"
+  | "search"
+  | "library"
+  | "accounts"
+  | "ads"
+  | "evaluation"
+  | "settings";
 
 export const NAV_ITEMS: readonly { id: ScreenId; label: string }[] = [
   { id: "home", label: "Home" },
@@ -25,6 +39,8 @@ export const NAV_ITEMS: readonly { id: ScreenId; label: string }[] = [
   { id: "accounts", label: "Accounts" },
   { id: "ads", label: "Ad Center" },
   { id: "evaluation", label: "MI Evaluation" },
+  // P7-COMPOSE-1 (WF-021 surface): the retention/settings screen.
+  { id: "settings", label: "Settings" },
 ];
 
 export interface AppShellProps {
@@ -57,6 +73,20 @@ export interface AppShellProps {
   readonly onRankerAdapterSelectionChange?: (adapterId: string) => void;
   /** Optional honest status line; null = nothing rendered (nothing invented). */
   readonly rankerStatusNote?: string | null;
+  // P7-COMPOSE-1 (WF-021 surface): the retention/settings surface mounts
+  // props-driven, flat-optional like every other screen prop. Defaults are
+  // the honest never-loaded states — null / null — NO faked data; the host
+  // app passes the GetRetentionState output and wires the use cases.
+  /** The retention state view model; null = not loaded yet (honest default). */
+  readonly retentionState?: RetentionState | null;
+  /** The last scoped reset's result, rendered verbatim; null = no reset yet. */
+  readonly retentionResetResult?: ResetLocalDataResult | null;
+  /** Fires on the explicit pause action (PauseHistoryTracking use case). */
+  readonly onPauseHistoryTracking?: () => void;
+  /** Fires on the explicit resume action (ResumeHistoryTracking use case). */
+  readonly onResumeHistoryTracking?: () => void;
+  /** Fires with the CONFIRMED scope (ResetLocalData use case). */
+  readonly onResetLocalData?: (scope: RetentionScope) => void;
 }
 
 const styles: Record<string, React.CSSProperties> = {
@@ -133,6 +163,14 @@ export function AppShell(props: AppShellProps) {
     rankerSelectedAdapterId = null,
     onRankerAdapterSelectionChange,
     rankerStatusNote = null,
+    // Honest never-loaded retention defaults (P7-COMPOSE-1): null state,
+    // null reset result — the settings surface's own factual empty states
+    // render until a host app passes real data.
+    retentionState = null,
+    retentionResetResult = null,
+    onPauseHistoryTracking,
+    onResumeHistoryTracking,
+    onResetLocalData,
     onPlay,
     onConnect,
     onDisconnect,
@@ -193,6 +231,15 @@ export function AppShell(props: AppShellProps) {
         )}
         {screen === "accounts" && (
           <AccountsScreen accounts={accounts} onConnect={onConnect} onDisconnect={onDisconnect} />
+        )}
+        {screen === "settings" && (
+          <SettingsScreen
+            retentionState={retentionState}
+            resetResult={retentionResetResult}
+            onPauseHistoryTracking={onPauseHistoryTracking}
+            onResumeHistoryTracking={onResumeHistoryTracking}
+            onResetLocalData={onResetLocalData}
+          />
         )}
         {screen === "ads" && <AdCenterPanel results={adCenterResults} />}
         {screen === "evaluation" && (

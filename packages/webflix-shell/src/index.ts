@@ -30,3 +30,8 @@ export { EvaluationPanel } from "./components/EvaluationPanel";
 export type { EvaluationPanelProps } from "./components/EvaluationPanel";
 export { RankerAdapterSelector } from "./components/RankerAdapterSelector";
 export type { RankerAdapterSelectorProps } from "./components/RankerAdapterSelector";
+// P7-COMPOSE-1 (WF-021 surface): the retention/settings screen mounts in the
+// shell's screen set and ships as a public export — props-driven, honest
+// never-loaded null defaults; host-app wiring is the hosts' own rows.
+export { SettingsScreen } from "./components/SettingsScreen";
+export type { SettingsScreenProps } from "./components/SettingsScreen";
