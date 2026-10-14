@@ -1,7 +1,12 @@
 import React, { useState } from "react";
 import { theme } from "../theme";
 import type { CatalogItem } from "webflix-contracts";
-import { HONEST_COPY, budgetLine } from "../states";
+import {
+  HONEST_COPY,
+  budgetLine,
+  federatedCoverageSummaryLine,
+  federatedSourceRows,
+} from "../states";
 import type { SearchBudgetView, SearchState } from "../states";
 
 export interface SearchScreenProps {
@@ -74,6 +79,26 @@ const styles: Record<string, React.CSSProperties> = {
     borderBottom: `1px solid ${theme.colors.border}`,
   },
   list: { listStyle: "none", margin: 0, padding: 0, width: "100%" },
+  sourceRow: {
+    width: "100%",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "flex-start",
+    gap: 2,
+    padding: `${theme.spacing.xs}px 0`,
+    borderBottom: `1px solid ${theme.colors.border}`,
+  },
+  sourceLine: { display: "flex", flexWrap: "wrap", gap: theme.spacing.xs, alignItems: "baseline" },
+  outcomeOk: { color: theme.colors.ok, fontWeight: 600 },
+  outcomeNotOk: { color: theme.colors.warning, fontWeight: 600 },
+  sourceMeta: { color: theme.colors.textMuted },
+  sourcesHeading: {
+    margin: 0,
+    marginTop: theme.spacing.sm,
+    fontSize: theme.typography.sizes.md,
+    fontWeight: 600,
+  },
+  noItems: { margin: 0, color: theme.colors.textMuted },
 };
 
 function BudgetLine(props: { budget?: SearchBudgetView }) {
@@ -297,5 +322,95 @@ function ResultsArea(props: {
           )}
         </div>
       );
+
+    case "federated":
+      return <FederatedResultsArea state={state} onSelectItem={onSelectItem} />;
   }
+}
+
+/**
+ * The WF-009 federated coverage view (P7-COMPOSE-1): the merged item list
+ * PLUS one honest row per fanned-out source. NEVER hides a failed source —
+ * every coverage row renders with its outcome class, its row tally, its
+ * elapsed time, and (for every non-ok class) the outcome's own reason.
+ * Partial-failure sources keep BOTH their salvaged count and their reason;
+ * a federation with no merged items still shows every source's answer.
+ */
+function FederatedResultsArea(props: {
+  state: Extract<SearchState, { phase: "federated" }>;
+  onSelectItem?: (item: CatalogItem) => void;
+}) {
+  const { state, onSelectItem } = props;
+  const { result } = state;
+  const rows = federatedSourceRows(result);
+
+  return (
+    <div data-testid="search-federated" style={styles.panel}>
+      <p style={styles.panelTitle}>
+        {result.items.length} merged {result.items.length === 1 ? "item" : "items"} for “
+        {state.query}”
+      </p>
+      <BudgetLine budget={state.budget} />
+      <p data-testid="search-federated-summary" style={styles.muted}>
+        {federatedCoverageSummaryLine(result)}
+      </p>
+      {result.items.length === 0 ? (
+        <p data-testid="search-federated-no-items" style={styles.noItems}>
+          The federation returned no merged items — every source’s answer is listed below, failures
+          included.
+        </p>
+      ) : (
+        <ul data-testid="search-federated-items" style={styles.list}>
+          {result.items.map((merged) => (
+            <li key={merged.item.id} style={styles.row}>
+              <span>
+                {merged.item.title}
+                <span style={styles.muted}>
+                  {" "}
+                  · {merged.item.providerId} · {merged.item.mediaKind} · from{" "}
+                  {merged.sources.join(", ")}
+                </span>
+              </span>
+              <button
+                type="button"
+                style={styles.ghostButton}
+                aria-label={`Play ${merged.item.title}`}
+                onClick={() => onSelectItem?.(merged.item)}
+              >
+                Play
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <h3 style={styles.sourcesHeading}>Sources</h3>
+      <ul data-testid="search-federated-coverage" style={styles.list}>
+        {rows.map((row) => (
+          <li
+            key={row.source}
+            style={styles.sourceRow}
+            data-testid={`search-federated-source-${row.source}`}
+          >
+            <span style={styles.sourceLine}>
+              <strong>{row.source}</strong>
+              <span style={row.outcome === "ok" ? styles.outcomeOk : styles.outcomeNotOk}>
+                {row.outcome}
+              </span>
+              <span style={styles.sourceMeta}>
+                {row.returned} {row.returned === 1 ? "row" : "rows"} returned · {row.elapsedMs}ms
+              </span>
+            </span>
+            {row.reason && (
+              <span
+                data-testid={`search-federated-source-reason-${row.source}`}
+                style={styles.muted}
+              >
+                Reason: {row.reason}
+              </span>
+            )}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
 }

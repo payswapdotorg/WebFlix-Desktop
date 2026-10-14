@@ -36,7 +36,15 @@
 //      where nothing can be done, the state says so instead of showing a dead
 //      button.
 
-import type { CatalogItem, CapabilityStatus, OperationCapability } from "webflix-contracts";
+import type {
+  CatalogItem,
+  CapabilityStatus,
+  FederatedSearchResult,
+  OperationCapability,
+  PlaybackPlan,
+  SearchOutcomeClass,
+  UnavailableReason,
+} from "webflix-contracts";
 
 /** The exhaustive honest-state vocabulary (freeze §2.3). */
 export const HONEST_STATES = [
@@ -185,7 +193,10 @@ export type SearchState =
       readonly detail?: string;
       readonly budget?: SearchBudgetView;
     }
-  | { readonly phase: "status-unknown"; readonly query: string; readonly detail?: string };
+  | { readonly phase: "status-unknown"; readonly query: string; readonly detail?: string }
+  // P7-COMPOSE-1 (WF-009 surface): the completed federated search — the
+  // additive union member carrying the merged result verbatim.
+  | FederatedSearchPhase;
 
 /**
  * Shell-local view of the provider search budget (YOUTUBE-EXPAND: "surface
@@ -264,4 +275,203 @@ export function searchStateFromCapability(
     case "unknown":
       return { phase: "status-unknown", query, detail };
   }
+}
+
+// ---------------------------------------------------------------------------
+// Federated search coverage (P7-COMPOSE-1 — the WF-009 surface half, mounting
+// the MERGED P7-SEARCH-1 contract shapes AS-IS: zero engine changes)
+// ---------------------------------------------------------------------------
+
+/**
+ * One per-source honest row of the federated coverage view — the flattened
+ * join of a {@link FederatedSearchResult}'s coverage row with its outcomes
+ * entry. `reason` is the outcome's own honest reason (null only for `ok`,
+ * which carries none); `returned` is the row tally only, never a
+ * completeness claim. Mirrored here as the VIEW the SearchScreen renders;
+ * the shapes it reads are the contract's own (a declared shell dependency).
+ */
+export interface FederatedSourceRowView {
+  /** The source id — the registry id space, verbatim. */
+  readonly source: string;
+  /** The outcome class this source answered with. */
+  readonly outcome: SearchOutcomeClass;
+  /** Row tallies only: the rows the source returned (0 for non-item states). */
+  readonly returned: number;
+  /** How long this source's call took, in milliseconds. */
+  readonly elapsedMs: number;
+  /** The non-ok outcome's own reason, verbatim; null for `ok` (it has none). */
+  readonly reason: string | null;
+}
+
+/**
+ * Flattens a federated result into the per-source coverage rows the screen
+ * renders — one row per coverage entry, in the result's stable fan-out
+ * order. NEVER hides a source: the mapping is total over `coverage` (the
+ * contract's superRefine pins coverage/outcomes agreement; a smuggled-in
+ * result missing an outcomes entry still renders its coverage row, with no
+ * reason rather than a fabricated one).
+ */
+export function federatedSourceRows(
+  result: FederatedSearchResult,
+): readonly FederatedSourceRowView[] {
+  return result.coverage.map((row) => {
+    const outcome = result.outcomes[row.source];
+    const reason = outcome !== undefined && outcome.status !== "ok" ? outcome.reason : null;
+    return {
+      source: row.source,
+      outcome: row.outcome,
+      returned: row.counts.returned,
+      elapsedMs: row.elapsedMs,
+      reason,
+    };
+  });
+}
+
+/** The outcome classes in canonical display order. */
+const OUTCOME_CLASS_ORDER: readonly SearchOutcomeClass[] = [
+  "ok",
+  "partial-failure",
+  "timeout",
+  "auth-required",
+  "unsupported",
+];
+
+/**
+ * The one-line source-coverage summary: how many sources answered, the
+ * tally per outcome class, and the merged-item count. Plain counts only —
+ * never a completeness claim (a source with 0 rows answered honestly too).
+ */
+export function federatedCoverageSummaryLine(result: FederatedSearchResult): string {
+  const tally = new Map<SearchOutcomeClass, number>();
+  for (const row of result.coverage) {
+    tally.set(row.outcome, (tally.get(row.outcome) ?? 0) + 1);
+  }
+  const parts = OUTCOME_CLASS_ORDER.filter((cls) => (tally.get(cls) ?? 0) > 0).map(
+    (cls) => `${tally.get(cls)} ${cls}`,
+  );
+  const total = result.coverage.length;
+  const merged = result.items.length;
+  return `Source coverage: ${total} ${total === 1 ? "source" : "sources"} answered — ${parts.join(", ")} · ${merged} merged ${merged === 1 ? "item" : "items"}.`;
+}
+
+/** Result-area phase for a completed FEDERATED search (WF-009 surface). */
+export interface FederatedSearchPhase {
+  readonly phase: "federated";
+  readonly query: string;
+  /**
+   * The federated result, verbatim as the contract defines it — per-source
+   * outcomes, coverage rows, and the merged item view. The screen composes
+   * from this AS-IS; nothing is recomputed or re-ranked here.
+   */
+  readonly result: FederatedSearchResult;
+  readonly budget?: SearchBudgetView;
+}
+
+/** The search state for a completed federated search (additive union member). */
+export function federatedSearchState(
+  query: string,
+  result: FederatedSearchResult,
+  budget?: SearchBudgetView,
+): SearchState {
+  return { phase: "federated", query, result, budget };
+}
+
+// ---------------------------------------------------------------------------
+// Player-controls view (P7-COMPOSE-1 — the WF-006 surface half, mounting the
+// MERGED P7-PLAYER-1 typed ControlsAvailability matrix AS-IS)
+// ---------------------------------------------------------------------------
+
+/**
+ * The seven WF-006 controls in canonical order — the structural VIEW of the
+ * playback package's PLAYER_CONTROL_IDS (the engine's own ids, mirrored so
+ * this module stays the single rendering vocabulary).
+ */
+export const PLAYER_CONTROL_IDS_VIEW = [
+  "playPause",
+  "seek",
+  "volume",
+  "captions",
+  "queueAdd",
+  "miniPlayer",
+  "pip",
+] as const;
+export type PlayerControlIdView = (typeof PLAYER_CONTROL_IDS_VIEW)[number];
+
+/**
+ * An available control, with the typed capability facts that back it
+ * (STRUCTURAL: the engine's ControlAvailability accepts as-is — the shell
+ * never imports the playback package, per the architecture-policy
+ * dependency rules; the app layer passes the derived matrix directly).
+ */
+export interface PlayerControlAvailableView {
+  readonly state: "available";
+  readonly facts: readonly string[];
+}
+
+/** An unavailable control, with its typed reason and readable explanation. */
+export interface PlayerControlUnavailableView {
+  readonly state: "unavailable";
+  readonly reason: string;
+  readonly detail: string;
+}
+
+/** Per-control availability: available with facts, or unavailable with a reason. */
+export type PlayerControlAvailabilityView =
+  | PlayerControlAvailableView
+  | PlayerControlUnavailableView;
+
+/** An available seek control; the position bound is data, null when unknown. */
+export interface PlayerSeekAvailableView extends PlayerControlAvailableView {
+  readonly boundMs: number | null;
+}
+
+/** Seek-specific availability (adds the position bound to the union). */
+export type PlayerSeekAvailabilityView = PlayerSeekAvailableView | PlayerControlUnavailableView;
+
+/**
+ * The ControlsAvailability-shaped view one plan's controls strip renders:
+ * the plan variant it was derived from plus the seven typed control states.
+ * STRUCTURAL by design (the SearchBudgetView precedent): the playback
+ * package's deriveControls() output satisfies this shape as-is through
+ * TypeScript structural typing — no mapping code, no engine import, no
+ * invented defaults. The host derives and passes; the shell renders.
+ */
+export interface PlayerControlsView {
+  /** The plan variant this availability was derived from. */
+  readonly planKind: PlaybackPlan["kind"];
+  /** Present iff planKind is "unavailable": the frozen plan's own typed reason. */
+  readonly unavailableReason?: UnavailableReason;
+  readonly playPause: PlayerControlAvailabilityView;
+  readonly seek: PlayerSeekAvailabilityView;
+  readonly volume: PlayerControlAvailabilityView;
+  readonly captions: PlayerControlAvailabilityView;
+  readonly queueAdd: PlayerControlAvailabilityView;
+  readonly miniPlayer: PlayerControlAvailabilityView;
+  readonly pip: PlayerControlAvailabilityView;
+}
+
+/** The non-seek control ids (the seek row renders its own honest bound line). */
+export type PlayerNonSeekControlIdView = Exclude<PlayerControlIdView, "seek">;
+
+/** Human labels for the seven controls (display order = canonical order). */
+export const PLAYER_CONTROL_LABELS: Record<PlayerControlIdView, string> = {
+  playPause: "Play / pause",
+  seek: "Seek",
+  volume: "Volume",
+  captions: "Captions",
+  queueAdd: "Add to queue",
+  miniPlayer: "Mini-player",
+  pip: "Picture-in-picture",
+};
+
+/**
+ * The honest seek-bound sentence for an available seek control: the known
+ * duration bound, or the explicit "not known" statement — never a
+ * fabricated bound. Unavailable seek controls render their own typed state
+ * instead (this line is not for them).
+ */
+export function seekBoundLine(seek: PlayerSeekAvailableView): string {
+  return seek.boundMs === null
+    ? "Seek bound: unknown — the item duration is not known, so none is fabricated."
+    : `Seek bound: ${seek.boundMs}ms (the known item duration).`;
 }
