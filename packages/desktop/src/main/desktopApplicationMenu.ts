@@ -10,6 +10,7 @@ import {
   type Locale,
 } from "@zcode/shared";
 import { readZCodeStdioTapDevState } from "@zcode/services/node";
+import { isZCodeUpdaterSurfaceEnabledForFlavor } from "./webflix/updater-product-guard.js";
 import { CHECK_FOR_UPDATE_MENU_ID, setAutoUpdaterMenuLocale } from "./autoUpdater.js";
 import {
   DESKTOP_ZOOM_MAX_LEVEL,
@@ -117,8 +118,10 @@ function buildApplicationMenuTemplate(options: {
                 label: getLabel(desktopMenuMessageIds.helpAbout),
                 click: () => void options.executeDesktopCommand(DesktopCommandIds.ShowAbout),
               },
-              // 更新入口跟随产品身份：Preview 禁用更新器，生产后端的 Preview 也不例外。
-              ...(ZCODE_PRODUCT_FLAVOR === "production"
+              // 更新入口跟随产品身份：Preview 禁用更新器，生产后端的 Preview 也不例外；
+              // P8-RELEASE-DRIFT-1（R1）：`"webflix"` 同样显式无更新面（freeze §6.1
+              // feed DEFERRED），闸门模块逐成员处理，不静默落入 ZCode 分支。
+              ...(isZCodeUpdaterSurfaceEnabledForFlavor(ZCODE_PRODUCT_FLAVOR)
                 ? [
                     {
                       id: CHECK_FOR_UPDATE_MENU_ID,
@@ -259,7 +262,9 @@ function buildApplicationMenuTemplate(options: {
                 label: getLabel(desktopMenuMessageIds.helpAbout),
                 click: () => void options.executeDesktopCommand(DesktopCommandIds.ShowAbout),
               },
-              ...(ZCODE_PRODUCT_FLAVOR === "production"
+              // 更新入口跟随产品身份（P8-RELEASE-DRIFT-1 R1）：仅 ZCode production
+              // 露出；Preview 与 `"webflix"` 显式无更新面（freeze §6.1 feed DEFERRED）。
+              ...(isZCodeUpdaterSurfaceEnabledForFlavor(ZCODE_PRODUCT_FLAVOR)
                 ? [
                     {
                       id: CHECK_FOR_UPDATE_MENU_ID,

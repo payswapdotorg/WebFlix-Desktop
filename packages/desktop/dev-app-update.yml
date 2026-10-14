@@ -1,5 +1,13 @@
 # 修复原因：显式开启开发态自动更新时 electron-updater 会读取 dev-app-update.yml 初始化下载缓存。
 # 服务端 manifest provider 仍负责返回真实安装包 URL；这里的 generic url 只作为本地配置占位。
+#
+# P8-RELEASE-DRIFT-1（R4，审计 §1.7）：updaterCacheDirName 的每个身份的规范值集中维护在
+# packages/desktop/scripts/desktop-product-identity.mjs（zcode 身份用本文件的值；WebFlix
+# 身份使用 webflix 变体，见该模块）。本文件是静态文件、无法在运行时按身份切换，但它只被
+# ZCode 开发态更新实验（ZCODE_AUTO_UPDATE_DEV）读取——WebFlix 身份的更新器在
+# autoUpdater.ts 的 H1 fail-closed 产品闸处被拒绝启用（P8 H1，冻结 §6.1 feed DEFERRED），
+# 永远不会到达本文件；因此保留 ZCode 值即对每个可达状态身份正确。当 freeze §6.1 的
+# WebFlix feed 决议落地时，dev 引导链需要按身份改写本文件（或其拷贝）。
 provider: generic
 url: http://localhost:8081
 useMultipleRangeRequest: false
