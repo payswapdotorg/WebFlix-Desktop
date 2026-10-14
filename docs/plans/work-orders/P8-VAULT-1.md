@@ -100,7 +100,7 @@ Concretely, per the TL2 rulings (BINDING):
 
 - Must land first: P8-ISOLATION-WIRING-1 (merged at 20343f4 — the
   disconnect adapter + the seam pins are its descendants).
-- Can run concurrently with: nothing in flight.
+- Concurrency ruling updated by TL2 on 2026-10-14 after the Ubuntu release priority was ordered: `P9-UBUNTU-WEBFLIX-1` may prepare/build in parallel ONLY on the child-claim path partitions in `docs/plans/work-claims.md`. P9-UI-1 must not touch `packages/desktop/src/main/webflix/**`, `providerDisconnectClear.ts`, or the shell import-absence test granted to this order; P9-LINUX-1 owns only builder/identity-workflow paths; P9-QA-1 owns only e2e/evidence paths. No shared-file writes by workers. P9 account IPC/vault composition and final packaged acceptance remain BLOCKED until this order is merged and reviewed. If actual files/claims overlap, stop that child work and have TL2 repartition it before edits.
 - Merge order: single order; TL2 reviews + merges.
 
 ## Contract and state
