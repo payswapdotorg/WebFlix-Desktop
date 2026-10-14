@@ -282,9 +282,45 @@ jobs:
           set -euo pipefail
           VERSION="$(node -p "require('./package.json').version")"
           DIST="packages/desktop/dist"
-          DEB="${DIST}/WebFlix-${VERSION}-linux-x64.deb"
-          APPIMAGE="${DIST}/WebFlix-${VERSION}-linux-x64.AppImage"
           MIN_BYTES=$((50 * 1024 * 1024))
+
+          # electron-builder normalizes the ${arch} token per Linux target
+          # (observed on run 38655362273 with this exact config):
+          #   deb      → WebFlix-<version>-linux-amd64.deb
+          #   AppImage → WebFlix-<version>-linux-x86_64.AppImage
+          # Discover artifacts by glob (mirrors bundle.mjs findBuiltArtifact's
+          # arch-hint set) and hard-assert the discovered arch token is an
+          # x64 spelling, so an arm64 build can never pass silently.
+          shopt -s nullglob
+          DEBS=("$DIST"/WebFlix-"${VERSION}"-linux-*.deb)
+          APPIMAGES=("$DIST"/WebFlix-"${VERSION}"-linux-*.AppImage)
+          shopt -u nullglob
+          if [ "${#DEBS[@]}" -ne 1 ]; then
+            echo "FAIL: expected exactly one .deb artifact, found: ${DEBS[*]:-none}" >&2
+            exit 1
+          fi
+          if [ "${#APPIMAGES[@]}" -ne 1 ]; then
+            echo "FAIL: expected exactly one .AppImage artifact, found: ${APPIMAGES[*]:-none}" >&2
+            exit 1
+          fi
+          DEB="${DEBS[0]}"
+          APPIMAGE="${APPIMAGES[0]}"
+          DEB_NAME="$(basename "$DEB")"
+          APPIMAGE_NAME="$(basename "$APPIMAGE")"
+          case "$DEB_NAME" in
+            WebFlix-"$VERSION"-linux-amd64.deb|WebFlix-"$VERSION"-linux-x64.deb|WebFlix-"$VERSION"-linux-x86_64.deb) ;;
+            *)
+              echo "FAIL: deb artifact name is not an x64 variant: $DEB_NAME" >&2
+              exit 1
+              ;;
+          esac
+          case "$APPIMAGE_NAME" in
+            WebFlix-"$VERSION"-linux-x86_64.AppImage|WebFlix-"$VERSION"-linux-x64.AppImage|WebFlix-"$VERSION"-linux-amd64.AppImage) ;;
+            *)
+              echo "FAIL: AppImage artifact name is not an x64 variant: $APPIMAGE_NAME" >&2
+              exit 1
+              ;;
+          esac
 
           echo "== required artifacts exist and are not placeholders =="
           for artifact in "$DEB" "$APPIMAGE"; do
@@ -305,12 +341,12 @@ jobs:
           fi
 
           echo "== SHA-256 sidecars =="
-          (cd "$DIST" && sha256sum "WebFlix-${VERSION}-linux-x64.deb" > "WebFlix-${VERSION}-linux-x64.deb.sha256")
-          (cd "$DIST" && sha256sum "WebFlix-${VERSION}-linux-x64.AppImage" > "WebFlix-${VERSION}-linux-x64.AppImage.sha256")
-          DEB_SHA256="$(cut -d' ' -f1 "$DIST/WebFlix-${VERSION}-linux-x64.deb.sha256")"
-          APPIMAGE_SHA256="$(cut -d' ' -f1 "$DIST/WebFlix-${VERSION}-linux-x64.AppImage.sha256")"
-          echo "[sha256] deb=${DEB_SHA256}"
-          echo "[sha256] appimage=${APPIMAGE_SHA256}"
+          (cd "$DIST" && sha256sum "$DEB_NAME" > "${DEB_NAME}.sha256")
+          (cd "$DIST" && sha256sum "$APPIMAGE_NAME" > "${APPIMAGE_NAME}.sha256")
+          DEB_SHA256="$(cut -d' ' -f1 "$DIST/${DEB_NAME}.sha256")"
+          APPIMAGE_SHA256="$(cut -d' ' -f1 "$DIST/${APPIMAGE_NAME}.sha256")"
+          echo "[sha256] ${DEB_NAME}=${DEB_SHA256}"
+          echo "[sha256] ${APPIMAGE_NAME}=${APPIMAGE_SHA256}"
 
           echo "== deb package identity (dpkg fields) =="
           field() { dpkg-deb -f "$DEB" "$1"; }
@@ -399,6 +435,7 @@ jobs:
           RUN_URL="$RUN_URL" SOURCE_SHA="$SOURCE_SHA" VERSION="$VERSION" \
           DEB_SIZE="$DEB_SIZE" APPIMAGE_SIZE="$APPIMAGE_SIZE" \
           DEB_SHA256="$DEB_SHA256" APPIMAGE_SHA256="$APPIMAGE_SHA256" \
+          DEB_NAME="$DEB_NAME" APPIMAGE_NAME="$APPIMAGE_NAME" \
           DEB_DEPENDS="$DEB_DEPENDS" node --input-type=module <<'EOF'
           import { writeFileSync } from "node:fs";
           const manifest = {
@@ -426,12 +463,12 @@ jobs:
             buildCommand: "pnpm bundle:desktop -- --os linux --arch x64",
             artifacts: [
               {
-                name: `WebFlix-${process.env.VERSION}-linux-x64.deb`,
+                name: process.env.DEB_NAME,
                 sizeBytes: Number(process.env.DEB_SIZE),
                 sha256: process.env.DEB_SHA256,
               },
               {
-                name: `WebFlix-${process.env.VERSION}-linux-x64.AppImage`,
+                name: process.env.APPIMAGE_NAME,
                 sizeBytes: Number(process.env.APPIMAGE_SIZE),
                 sha256: process.env.APPIMAGE_SHA256,
               },
@@ -447,8 +484,8 @@ jobs:
               debDepends: process.env.DEB_DEPENDS,
               safeStorage:
                 "Electron safeStorage on Linux requires a libsecret-backed secret service (gnome-keyring/kwallet). The P8-VAULT-1 account vault fails closed (typed refusal) when secure storage is unavailable — no plaintext credential fallback.",
-              installDeb: "sudo apt-get install ./WebFlix-<version>-linux-x64.deb (then: sudo apt-get install -f if deps are missing)",
-              installAppImage: "chmod +x WebFlix-<version>-linux-x64.AppImage && ./WebFlix-<version>-linux-x64.AppImage (no-FUSE fallback: --appimage-extract-and-run)",
+              installDeb: `sudo apt-get install ./${process.env.DEB_NAME} (then: sudo apt-get install -f if deps are missing)`,
+              installAppImage: `chmod +x ${process.env.APPIMAGE_NAME} && ./${process.env.APPIMAGE_NAME} (no-FUSE fallback: --appimage-extract-and-run)`,
               uninstall: "sudo apt-get remove webflix-desktop",
             },
             proposedMetadata: [
@@ -466,8 +503,8 @@ jobs:
         with:
           name: webflix-desktop-deb
           path: |
-            packages/desktop/dist/WebFlix-*-linux-x64.deb
-            packages/desktop/dist/WebFlix-*-linux-x64.deb.sha256
+            packages/desktop/dist/WebFlix-*-linux-*.deb
+            packages/desktop/dist/WebFlix-*-linux-*.deb.sha256
           if-no-files-found: error
           compression-level: 0
           retention-days: 30
@@ -477,8 +514,8 @@ jobs:
         with:
           name: webflix-desktop-appimage
           path: |
-            packages/desktop/dist/WebFlix-*-linux-x64.AppImage
-            packages/desktop/dist/WebFlix-*-linux-x64.AppImage.sha256
+            packages/desktop/dist/WebFlix-*-linux-*.AppImage
+            packages/desktop/dist/WebFlix-*-linux-*.AppImage.sha256
           if-no-files-found: error
           compression-level: 0
           retention-days: 30
