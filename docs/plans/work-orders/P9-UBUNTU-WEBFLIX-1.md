@@ -34,7 +34,7 @@ Read, in order:
 
 ### P9-UI-1 — Worker 1: mount WebFlix as the actual desktop product
 
-Allowed paths: `packages/desktop/src/renderer/**`; `packages/desktop/src/main/desktopWindowChrome.ts` only when required for product window chrome; `packages/desktop/build/webflix-icons/**` (new product-only assets); `packages/webflix-shell/src/components/**` and `packages/webflix-shell/src/theme.ts`. Do not edit the claims ledger, electron-builder config, release workflow, or P8 vault files.
+Allowed paths: `packages/desktop/src/renderer/**`; `packages/desktop/src/main/desktopWindowChrome.ts` only when required for product window chrome; `packages/desktop/build/webflix-icons/**` (new product-only assets); `packages/webflix-shell/src/components/**` and `packages/webflix-shell/src/theme.ts`. **Only after P8-VAULT-1 has merged**, additive account-boundary wiring may also touch `packages/desktop/src/main/index.ts`, `packages/desktop/src/main/desktopMainIpcPlatform.ts`, new `packages/desktop/src/main/webflixAccountIpc.ts`, and `packages/desktop/src/preload/index.ts` (plus a new narrowly scoped preload module if the existing bridge design requires it). It must consume—not modify—the vault implementation. Never edit `packages/desktop/src/main/webflix/**`, `packages/desktop/src/main/providerDisconnectClear.ts`, or any path still actively claimed by P8-VAULT-1. Do not edit the claims ledger, electron-builder config, or release workflow.
 
 Requirements:
 
