@@ -1,0 +1,492 @@
+# WebFlix Ubuntu 24.04 x86_64 packaging workflow — P9-LINUX-1 (Worker 2)
+# Order: docs/plans/work-orders/P9-UBUNTU-WEBFLIX-1.md (P9-LINUX-1 section).
+#
+# What this workflow produces
+# ---------------------------
+# A reproducible WebFlix-flavored desktop build for Ubuntu 24.04 LTS x86_64,
+# uploaded as named, downloadable workflow artifacts:
+#   - webflix-desktop-deb        (the .deb + its .sha256 sidecar)
+#   - webflix-desktop-appimage   (the .AppImage + its .sha256 sidecar)
+#   - webflix-ubuntu-build-manifest (manifest.json + identity evidence files)
+#
+# Product identity (P9-LINUX-1 requirement 4 — values verified against
+# packages/desktop/scripts/desktop-product-identity.mjs, freeze §6.1):
+#   - identity channel env flag: WEBFLIX_IDENTITY=1 (strict spelling; any other
+#     non-empty value fails the build — fail-closed, see
+#     isWebFlixIdentityRequested in desktop-product-identity.mjs)
+#   - appId / AUMID:  org.webflix.desktop
+#   - productName:    WebFlix        (artifact names: WebFlix-<version>-linux-x64.*)
+#   - protocol:       webflix://     (desktop entry MimeType x-scheme-handler/webflix)
+#   - data root:      ~/.webflix     (packaged default-on via baked "webflix" flavor)
+#   - deb/rpm package name: webflix-desktop (glob webflix-desktop*)
+#   - executable/icon: webflix       (/usr/bin/webflix, Icon=webflix)
+#   The WebFlix build never defaults to ZCode's data root/protocol/package.
+#   The inherited ZCode lane is config-level verified in this workflow as well
+#   (WEBFLIX_IDENTITY unset → dev.zcode.app / zcode:// / zcode-desktop lanes).
+#
+# Build entry point (P9-LINUX-1 requirement 2)
+# ---------------------------------------------
+#   pnpm bundle:desktop -- --os linux --arch x64
+# is the existing supported bundler entry (packages/desktop/scripts/bundle.mjs;
+# run by the root workspace script "bundle:desktop"). It runs
+# prepare:runtime-assets → desktop production build (tsup + vite) →
+# electron-builder --config electron-builder.config.js --linux --x64 →
+# app.asar runtime-dependency verification → bundle-size audit (500 MiB cap).
+# Linux targets are converged to "AppImage,deb" via ZCODE_LINUX_TARGETS
+# (fail-closed subset validation in electron-builder.config.js): the GitHub
+# ubuntu-24.04 runner has no rpmbuild/xz, which the default rpm/pacman targets
+# require (see the rpm notes in electron-builder.config.js). ARM64 is out of
+# scope for this work order.
+#
+# Auto-update stays fail-closed (P9-LINUX-1 requirement 5)
+# ---------------------------------------------------------
+# P8-RELEASE-DRIFT-1 H1 guard, cited not modified:
+#   - packages/desktop/src/main/webflix/updater-product-guard.ts:
+#     isZCodeUpdaterSurfaceEnabledForFlavor("webflix") === false — updater
+#     surfaces (auto-update enablement, manual check-for-updates entries,
+#     force-update kill-switch) never fire for the WebFlix flavor;
+#     resolveWebFlixUpdaterRefusal() is a defense-in-depth refusal inside the
+#     updater chain itself.
+#   - packages/desktop/src/main/index.ts passes enabled:false to
+#     initAutoUpdater for flavor "webflix".
+# No WebFlix update feed exists (freeze §6.1 deferral). WebFlix is never
+# pointed at a ZCode feed. On the packaging side this workflow additionally
+# guarantees no publishing can happen:
+#   - permissions are contents:read (+ actions:write solely so upload-artifact
+#     can store workflow artifacts); creating a GitHub Release requires
+#     contents:write, which this workflow never grants;
+#   - no GH_TOKEN/GITHUB_TOKEN is passed into any build step (electron-builder
+#     cannot publish without a token even on a tag);
+#   - builds only run from branch refs / pull requests (never a tag), so
+#     electron-builder's onTagOrDraft publish policy never triggers;
+#   - the electron-builder `publish` config stays the inert localhost
+#     placeholder (P8-RELEASE-DRIFT-1: provably inert).
+# This workflow creates no Release and no tag.
+#
+# Runtime dependencies & secret service (P9-LINUX-1 requirement 6)
+# -----------------------------------------------------------------
+# Documented here and recorded in the uploaded manifest.json (the dedicated
+# docs/operations/ubuntu-release-evidence.md belongs to Worker 3 / P9-QA-1):
+#   - deb Depends: emitted by electron-builder from the packaged ELF closure
+#     (gtk3/nss/libxtst/libxss/alsa-lib/glib2.0 lineage). The exact Depends
+#     line of the produced .deb is captured into the manifest artifact as
+#     evidence (dpkg-deb -f <deb> Depends).
+#   - safeStorage/libsecret: Electron's safeStorage on Linux is backed by
+#     libsecret and needs a running secret service (e.g. gnome-keyring or
+#     kwallet). The P8-VAULT-1 OS account vault uses safeStorage and FAILS
+#     CLOSED (typed refusal) when secure storage is unavailable — there is no
+#     plaintext credential fallback anywhere in the account store chain.
+#   - Install/launch commands for the operator:
+#       deb:      sudo apt-get install ./WebFlix-<version>-linux-x64.deb
+#                 (fix deps if needed: sudo apt-get install -f)
+#                 launch: webflix  (or the "WebFlix" desktop entry)
+#       AppImage: chmod +x WebFlix-<version>-linux-x64.AppImage
+#                 ./WebFlix-<version>-linux-x64.AppImage
+#                 (no-FUSE fallback: ./WebFlix-*.AppImage --appimage-extract-and-run)
+#       uninstall: sudo apt-get remove webflix-desktop
+#
+# Notes on proposed metadata (flagged for TL2/operator review)
+# ------------------------------------------------------------
+# homepage https://webflix.org, author/maintainer "WebFlix <dev@webflix.org>"
+# are PROPOSED identity-consistent values (P8-RELEASE-DRIFT-1 R4; freeze §6.1
+# froze appId/productName/scheme/data-root/package-name but no homepage/author
+# values). They are marked PROPOSED in the manifest and must not be used to
+# publish any public release without operator approval.
+#
+# Icon assets: packages/desktop/build/icon.png + build/icons/** are currently
+# the inherited desktop asset set; WebFlix-branded icon pixels land with
+# P9-UI-1 (allowed paths packages/desktop/build/webflix-icons/**). This
+# workflow packages whatever icons the source tree ships and asserts the
+# identity NAMES (executable/icon/desktop-entry names) match the identity
+# module; pixel-level branding is P9-UI-1/P9-QA-1 scope.
+#
+# Caching (P9-LINUX-1 requirement 2): only the pnpm store is cached
+# (actions/setup-node cache: pnpm). No user credentials, tokens, or built
+# secrets are cached or passed to any step.
+
+name: webflix-ubuntu-build
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - ".github/workflows/webflix-ubuntu-build.yml"
+      - "packages/desktop/electron-builder.config.js"
+      - "packages/desktop/scripts/bundle.mjs"
+      - "packages/desktop/scripts/desktop-product-identity.mjs"
+      - "packages/desktop/package.json"
+
+# contents:read  → checkout + build only; a GitHub Release would need
+#                  contents:write, which is deliberately never granted here.
+# actions:write  → required solely so upload-artifact can store workflow
+#                  artifacts (the downloadable deliverable of this order).
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: webflix-ubuntu-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  webflix-ubuntu-24-04-x64:
+    name: WebFlix Ubuntu 24.04 x86_64 (deb + AppImage)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    env:
+      # WebFlix product identity channel (freeze §6.1). Only "1" enables it;
+      # any other non-empty spelling fails the build (fail-closed).
+      WEBFLIX_IDENTITY: "1"
+      # Backend environment axis (independent of product identity): production
+      # backend config and no "_TEST" artifact-name suffix
+      # (resolveDesktopArtifactSuffix in desktop-product-identity.mjs).
+      ZCODE_ENV: production
+      # Converge the electron-builder Linux target set to exactly what this
+      # order requires. Fail-closed subset validation lives in
+      # electron-builder.config.js (resolveLinuxBuildTargets).
+      ZCODE_LINUX_TARGETS: "AppImage,deb"
+      # The desktop package does not embed the mock-cdn remote (SSH/WSL)
+      # prebuild assets; same skip practice as the inherited Windows CI job
+      # (see packages/desktop/scripts/prepare-runtime-assets.mjs).
+      ZCODE_SKIP_REMOTE_ASSETS: "1"
+    steps:
+      - name: Check out source (no persisted credentials)
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up pnpm (repository pin)
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.2
+
+      - name: Set up Node (repository pin) with pnpm-store cache
+        uses: actions/setup-node@v4
+        with:
+          # mise.toml pins node 24.14.0; packageManager pins pnpm@10.33.2.
+          node-version: 24.14.0
+          cache: pnpm
+
+      - name: Install dependencies (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify product identity configuration (WebFlix + ZCode lanes)
+        working-directory: packages/desktop
+        run: |
+          set -euo pipefail
+          echo "== WebFlix identity lane (WEBFLIX_IDENTITY=1) =="
+          node --input-type=module <<'EOF'
+          const identity = await import("./scripts/desktop-product-identity.mjs");
+          const webflix = identity.resolveDesktopProductIdentity(process.env);
+          const expected = {
+            flavor: "webflix",
+            appId: "org.webflix.desktop",
+            productName: "WebFlix",
+            scheme: "webflix",
+            dataRoot: ".webflix",
+            linuxExecutableName: "webflix",
+            linuxPackageName: "webflix-desktop",
+          };
+          for (const [field, expectedValue] of Object.entries(expected)) {
+            if (webflix[field] !== expectedValue) {
+              throw new Error(
+                `WebFlix identity mismatch on ${field}: expected ${expectedValue}, got ${webflix[field]}`,
+              );
+            }
+          }
+          identity.assertWebFlixIdentityNeverLeaksZCode(webflix);
+          console.log("[identity] WebFlix lane OK:", JSON.stringify(expected));
+          EOF
+
+          echo "== Inherited ZCode identity lane (WEBFLIX_IDENTITY unset) =="
+          env -u WEBFLIX_IDENTITY ZCODE_ENV=production node --input-type=module <<'EOF'
+          const identity = await import("./scripts/desktop-product-identity.mjs");
+          const zcode = identity.resolveDesktopProductIdentity(process.env);
+          const expected = {
+            flavor: "production",
+            appId: "dev.zcode.app",
+            productName: "ZCode",
+            scheme: "zcode",
+            linuxExecutableName: "zcode",
+            linuxPackageName: "zcode",
+          };
+          for (const [field, expectedValue] of Object.entries(expected)) {
+            if (zcode[field] !== expectedValue) {
+              throw new Error(
+                `ZCode identity mismatch on ${field}: expected ${expectedValue}, got ${zcode[field]}`,
+              );
+            }
+          }
+          console.log("[identity] ZCode lane OK:", JSON.stringify(expected));
+          EOF
+
+          echo "== electron-builder config, WebFlix lane =="
+          node --input-type=module <<'EOF'
+          const config = (await import("./electron-builder.config.js")).default;
+          const assertEqual = (label, actual, expected) => {
+            if (actual !== expected) {
+              throw new Error(`builder config mismatch on ${label}: expected ${expected}, got ${actual}`);
+            }
+          };
+          assertEqual("appId", config.appId, "org.webflix.desktop");
+          assertEqual("productName", config.productName, "WebFlix");
+          assertEqual("linux.executableName", config.linux.executableName, "webflix");
+          assertEqual("deb.packageName", config.deb.packageName, "webflix-desktop");
+          assertEqual("linux.maintainer", config.linux.maintainer, "WebFlix <dev@webflix.org>");
+          assertEqual("protocols[0].schemes[0]", config.protocols[0].schemes[0], "webflix");
+          const targets = config.linux.target;
+          if (
+            !Array.isArray(targets) ||
+            targets.length !== 2 ||
+            targets[0] !== "AppImage" ||
+            targets[1] !== "deb"
+          ) {
+            throw new Error(`ZCODE_LINUX_TARGETS convergence failed: ${JSON.stringify(targets)}`);
+          }
+          console.log("[builder-config] WebFlix lane OK: linux.target =", targets.join(","));
+          EOF
+
+          echo "== electron-builder config, default (ZCode) lane =="
+          env -u WEBFLIX_IDENTITY -u ZCODE_LINUX_TARGETS ZCODE_ENV=production node --input-type=module <<'EOF'
+          const config = (await import("./electron-builder.config.js")).default;
+          const expectedDefaultTargets = ["AppImage", "deb", "rpm", "pacman"];
+          const targets = config.linux.target;
+          if (
+            !Array.isArray(targets) ||
+            targets.length !== expectedDefaultTargets.length ||
+            targets.some((target, index) => target !== expectedDefaultTargets[index])
+          ) {
+            throw new Error(`default Linux targets drifted: ${JSON.stringify(targets)}`);
+          }
+          if (config.appId !== "dev.zcode.app" || config.protocols[0].schemes[0] !== "zcode") {
+            throw new Error("default (ZCode) lane identity drifted");
+          }
+          console.log("[builder-config] default lane OK: linux.target =", targets.join(","));
+          EOF
+
+          echo "== fail-closed check: invalid ZCODE_LINUX_TARGETS must abort =="
+          if ZCODE_LINUX_TARGETS="AppImage,not-a-target" node --input-type=module -e 'await import("./electron-builder.config.js");' 2>/dev/null; then
+            echo "ZCODE_LINUX_TARGETS validation did not fail closed" >&2
+            exit 1
+          fi
+          echo "[builder-config] invalid target spelling rejected (fail-closed) OK"
+
+      - name: Build WebFlix desktop (bundle:desktop, linux/x64)
+        run: pnpm bundle:desktop -- --os linux --arch x64
+
+      - name: Verify artifacts, identity surface, and write manifest
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          VERSION="$(node -p "require('./package.json').version")"
+          DIST="packages/desktop/dist"
+          DEB="${DIST}/WebFlix-${VERSION}-linux-x64.deb"
+          APPIMAGE="${DIST}/WebFlix-${VERSION}-linux-x64.AppImage"
+          MIN_BYTES=$((50 * 1024 * 1024))
+
+          echo "== required artifacts exist and are not placeholders =="
+          for artifact in "$DEB" "$APPIMAGE"; do
+            if [ ! -f "$artifact" ]; then
+              echo "FAIL: missing required artifact: $artifact" >&2
+              exit 1
+            fi
+            size="$(stat -c%s "$artifact")"
+            if [ "$size" -lt "$MIN_BYTES" ]; then
+              echo "FAIL: artifact below minimum size (${size} bytes < ${MIN_BYTES}): $artifact" >&2
+              exit 1
+            fi
+            echo "[artifact] $(basename "$artifact") size=${size} bytes"
+          done
+          if [ ! -x "$APPIMAGE" ]; then
+            echo "FAIL: AppImage is not executable: $APPIMAGE" >&2
+            exit 1
+          fi
+
+          echo "== SHA-256 sidecars =="
+          (cd "$DIST" && sha256sum "WebFlix-${VERSION}-linux-x64.deb" > "WebFlix-${VERSION}-linux-x64.deb.sha256")
+          (cd "$DIST" && sha256sum "WebFlix-${VERSION}-linux-x64.AppImage" > "WebFlix-${VERSION}-linux-x64.AppImage.sha256")
+          DEB_SHA256="$(cut -d' ' -f1 "$DIST/WebFlix-${VERSION}-linux-x64.deb.sha256")"
+          APPIMAGE_SHA256="$(cut -d' ' -f1 "$DIST/WebFlix-${VERSION}-linux-x64.AppImage.sha256")"
+          echo "[sha256] deb=${DEB_SHA256}"
+          echo "[sha256] appimage=${APPIMAGE_SHA256}"
+
+          echo "== deb package identity (dpkg fields) =="
+          field() { dpkg-deb -f "$DEB" "$1"; }
+          check_field() {
+            if [ "$(field "$1")" != "$2" ]; then
+              echo "FAIL: deb field $1 expected '$2', got '$(field "$1")'" >&2
+              exit 1
+            fi
+          }
+          check_field Package "webflix-desktop"
+          check_field Version "$VERSION"
+          check_field Homepage "https://webflix.org"
+          check_field Maintainer "WebFlix <dev@webflix.org>"
+          echo "[deb] Package=$(field Package) Version=$(field Version)"
+          echo "[deb] Homepage=$(field Homepage)"
+          echo "[deb] Maintainer=$(field Maintainer)"
+          echo "[deb] Depends=$(field Depends)"
+
+          echo "== deb desktop entry + icon identity =="
+          DEB_EXTRACT="$(mktemp -d)/deb"
+          mkdir -p "$DEB_EXTRACT"
+          dpkg-deb -x "$DEB" "$DEB_EXTRACT"
+          DEB_DESKTOP="$(find "$DEB_EXTRACT" -name "*.desktop" -type f)"
+          if [ -z "$DEB_DESKTOP" ] || [ "$(printf '%s\n' "$DEB_DESKTOP" | wc -l)" -ne 1 ]; then
+            echo "FAIL: expected exactly one .desktop entry in deb, got: $DEB_DESKTOP" >&2
+            exit 1
+          fi
+          assert_desktop_entry() {
+            local entry_file="$1" label="$2"
+            grep -qx "Name=WebFlix" "$entry_file" || { echo "FAIL: $label desktop Name is not WebFlix" >&2; exit 1; }
+            grep -qx "Icon=webflix" "$entry_file" || { echo "FAIL: $label desktop Icon is not webflix" >&2; exit 1; }
+            grep -Eq "^Exec=.*webflix( |$)" "$entry_file" || { echo "FAIL: $label desktop Exec does not run webflix" >&2; exit 1; }
+            grep -q "x-scheme-handler/webflix" "$entry_file" || { echo "FAIL: $label desktop entry missing webflix:// scheme" >&2; exit 1; }
+            echo "[$label] desktop entry identity OK"
+          }
+          assert_desktop_entry "$DEB_DESKTOP" "deb"
+          if ! find "$DEB_EXTRACT" -path "*icons*" -name "webflix.png" | grep -q .; then
+            echo "FAIL: deb does not install a hicolor webflix.png icon" >&2
+            exit 1
+          fi
+          echo "[deb] hicolor webflix.png icon present"
+
+          echo "== AppImage desktop entry identity =="
+          APPIMAGE_EXTRACT_DIR="$(mktemp -d)"
+          (cd "$APPIMAGE_EXTRACT_DIR" && "$GITHUB_WORKSPACE/$APPIMAGE" --appimage-extract "*.desktop")
+          APPIMAGE_DESKTOP="$(find "$APPIMAGE_EXTRACT_DIR" -name "*.desktop" -type f)"
+          if [ -z "$APPIMAGE_DESKTOP" ]; then
+            (cd "$APPIMAGE_EXTRACT_DIR" && "$GITHUB_WORKSPACE/$APPIMAGE" --appimage-extract)
+            APPIMAGE_DESKTOP="$(find "$APPIMAGE_EXTRACT_DIR" -maxdepth 2 -name "*.desktop" -type f)"
+          fi
+          if [ -z "$APPIMAGE_DESKTOP" ]; then
+            echo "FAIL: no .desktop entry found inside AppImage" >&2
+            exit 1
+          fi
+          assert_desktop_entry "$APPIMAGE_DESKTOP" "appimage"
+
+          echo "== baked product flavor inside app.asar =="
+          (cd packages/desktop && VERSION="$VERSION" node --input-type=module <<'EOF'
+          import { createRequire } from "node:module";
+          const require = createRequire(process.cwd() + "/package.json");
+          const asar = require("@electron/asar");
+          const pkg = JSON.parse(
+            asar.extractFile("dist/linux-unpacked/resources/app.asar", "package.json").toString("utf8"),
+          );
+          if (pkg.zcodeProductFlavor !== "webflix") {
+            throw new Error(`baked product flavor mismatch: ${pkg.zcodeProductFlavor}`);
+          }
+          if (pkg.version !== process.env.VERSION) {
+            throw new Error(`packaged version mismatch: ${pkg.version}`);
+          }
+          if (pkg.homepage !== "https://webflix.org" || pkg.author?.name !== "WebFlix") {
+            throw new Error(`packaged identity metadata mismatch: ${JSON.stringify(pkg.author)} ${pkg.homepage}`);
+          }
+          console.log(`[asar] baked zcodeProductFlavor=${pkg.zcodeProductFlavor} version=${pkg.version}`);
+          EOF
+          )
+
+          echo "== manifest + evidence bundle =="
+          mkdir -p evidence
+          dpkg-deb --info "$DEB" > evidence/deb-control.txt
+          cp "$DEB_DESKTOP" evidence/deb-webflix.desktop
+          cp "$APPIMAGE_DESKTOP" evidence/appimage-webflix.desktop
+          DEB_SIZE="$(stat -c%s "$DEB")"
+          APPIMAGE_SIZE="$(stat -c%s "$APPIMAGE")"
+          DEB_DEPENDS="$(field Depends)"
+          RUN_URL="$RUN_URL" SOURCE_SHA="$SOURCE_SHA" VERSION="$VERSION" \
+          DEB_SIZE="$DEB_SIZE" APPIMAGE_SIZE="$APPIMAGE_SIZE" \
+          DEB_SHA256="$DEB_SHA256" APPIMAGE_SHA256="$APPIMAGE_SHA256" \
+          DEB_DEPENDS="$DEB_DEPENDS" node --input-type=module <<'EOF'
+          import { writeFileSync } from "node:fs";
+          const manifest = {
+            schema: "webflix-ubuntu-build-manifest/1",
+            sourceSha: process.env.SOURCE_SHA,
+            productFlavor: "webflix",
+            identityEnv: {
+              WEBFLIX_IDENTITY: "1",
+              ZCODE_ENV: "production",
+              ZCODE_LINUX_TARGETS: "AppImage,deb",
+            },
+            identity: {
+              appId: "org.webflix.desktop",
+              productName: "WebFlix",
+              scheme: "webflix://",
+              dataRoot: "~/.webflix",
+              debPackageName: "webflix-desktop",
+              executableName: "webflix",
+            },
+            target: {
+              os: "linux",
+              arch: "x64",
+              runnerOs: "Ubuntu 24.04 LTS x86_64",
+            },
+            buildCommand: "pnpm bundle:desktop -- --os linux --arch x64",
+            artifacts: [
+              {
+                name: `WebFlix-${process.env.VERSION}-linux-x64.deb`,
+                sizeBytes: Number(process.env.DEB_SIZE),
+                sha256: process.env.DEB_SHA256,
+              },
+              {
+                name: `WebFlix-${process.env.VERSION}-linux-x64.AppImage`,
+                sizeBytes: Number(process.env.APPIMAGE_SIZE),
+                sha256: process.env.APPIMAGE_SHA256,
+              },
+            ],
+            buildTimeUtc: new Date().toISOString(),
+            runUrl: process.env.RUN_URL,
+            updater: {
+              status: "fail-closed",
+              guard: "P8-RELEASE-DRIFT-1 H1 — packages/desktop/src/main/webflix/updater-product-guard.ts (isZCodeUpdaterSurfaceEnabledForFlavor + resolveWebFlixUpdaterRefusal)",
+              feed: "none — WebFlix update feed deferred (freeze §6.1); never pointed at a ZCode feed",
+            },
+            runtimeNotes: {
+              debDepends: process.env.DEB_DEPENDS,
+              safeStorage:
+                "Electron safeStorage on Linux requires a libsecret-backed secret service (gnome-keyring/kwallet). The P8-VAULT-1 account vault fails closed (typed refusal) when secure storage is unavailable — no plaintext credential fallback.",
+              installDeb: "sudo apt-get install ./WebFlix-<version>-linux-x64.deb (then: sudo apt-get install -f if deps are missing)",
+              installAppImage: "chmod +x WebFlix-<version>-linux-x64.AppImage && ./WebFlix-<version>-linux-x64.AppImage (no-FUSE fallback: --appimage-extract-and-run)",
+              uninstall: "sudo apt-get remove webflix-desktop",
+            },
+            proposedMetadata: [
+              "homepage https://webflix.org — PROPOSED (P8-RELEASE-DRIFT-1 R4), pending TL2/operator approval",
+              "author/maintainer WebFlix <dev@webflix.org> — PROPOSED (P8-RELEASE-DRIFT-1 R4), pending TL2/operator approval",
+            ],
+          };
+          writeFileSync("evidence/manifest.json", `${JSON.stringify(manifest, null, 2)}\n`);
+          console.log("[manifest] evidence/manifest.json written");
+          EOF
+          cat evidence/manifest.json
+
+      - name: Upload .deb artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: webflix-desktop-deb
+          path: |
+            packages/desktop/dist/WebFlix-*-linux-x64.deb
+            packages/desktop/dist/WebFlix-*-linux-x64.deb.sha256
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 30
+
+      - name: Upload .AppImage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: webflix-desktop-appimage
+          path: |
+            packages/desktop/dist/WebFlix-*-linux-x64.AppImage
+            packages/desktop/dist/WebFlix-*-linux-x64.AppImage.sha256
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 30
+
+      - name: Upload build manifest + identity evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: webflix-ubuntu-build-manifest
+          path: evidence/
+          if-no-files-found: error
+          retention-days: 30
