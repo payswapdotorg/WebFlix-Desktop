@@ -79,20 +79,31 @@ afterEach(() => {
 });
 
 describe("T-8 / H1 — fail-closed product guard inside the updater chain", () => {
-  it("refuses enablement for the baked webflix flavor even when enabled:true is passed", async () => {
-    // No env vars: the battery define bakes __ZCODE_PRODUCT_FLAVOR__ = "webflix"
-    // (exactly what a packaged WebFlix bundle carries). A future refactor that
-    // passes enabled:true must still not reach the ZCode feed.
-    const mod = await importAutoUpdater();
-    await mod.initAutoUpdater({ enabled: true });
-    const refusal = loggerInfo.mock.calls.find(([message]) =>
-      String(message).includes("[auto-update] refused"),
-    );
-    expect(refusal).toBeDefined();
-    expect(String(refusal![0])).toContain("webflix");
-    // The legacy e2e-recognized phrase rides along (webflix-smoke.mjs updater:guard).
-    expect(String(refusal![0])).toContain("disabled for this desktop product flavor");
-  });
+  it(
+    "refuses enablement for the baked webflix flavor even when enabled:true is passed",
+    { timeout: 30_000 },
+    async () => {
+      // No env vars: the battery define bakes __ZCODE_PRODUCT_FLAVOR__ = "webflix"
+      // (exactly what a packaged WebFlix bundle carries). A future refactor that
+      // passes enabled:true must still not reach the ZCode feed.
+      // Station hardening (TL2, 2026-10-14, post-merge battery finding): the FIRST
+      // cold vi.resetModules()+import of this module chain (electron-updater graph)
+      // measured 5794ms on a loaded 4GB sandbox (the recorded environment class,
+      // audit SS3.6) - the default 5s testTimeout made this pin machine-load-flaky
+      // (passed worker-side and at the 15:15Z branch battery; failed 15:26Z+ under
+      // load at 5006-5009ms, deterministically). 30s keeps the pin hermetic; the
+      // measured warm re-imports stay ~500ms.
+      const mod = await importAutoUpdater();
+      await mod.initAutoUpdater({ enabled: true });
+      const refusal = loggerInfo.mock.calls.find(([message]) =>
+        String(message).includes("[auto-update] refused"),
+      );
+      expect(refusal).toBeDefined();
+      expect(String(refusal![0])).toContain("webflix");
+      // The legacy e2e-recognized phrase rides along (webflix-smoke.mjs updater:guard).
+      expect(String(refusal![0])).toContain("disabled for this desktop product flavor");
+    },
+  );
 
   it("refuses enablement when the WebFlix runtime identity is active, regardless of flavor", async () => {
     process.env.WEBFLIX_IDENTITY = "1";
