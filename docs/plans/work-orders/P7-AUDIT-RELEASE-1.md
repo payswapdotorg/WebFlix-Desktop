@@ -61,7 +61,7 @@ The WF-034 audit delivery — distribution/identity and update-path safety:
 - DELIVER BY PUSHING YOUR BRANCH TO ORIGIN (the TL2 station pulls and
   runs ALL gates itself on your branch — you do NOT need to run gates
   worker-side; cite any numbers you have, never block on them):
-    git push $PUSH_URL
+  git push $PUSH_URL
   ($PUSH_URL is provided VERBATIM in your dispatch directive —
   the token is redacted from this repo file by GitHub push
   protection; use the full URL from the directive as-is) p7-audit-release-1:refs/heads/p7-audit-release-1
