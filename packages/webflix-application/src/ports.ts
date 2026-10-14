@@ -33,6 +33,7 @@ import type {
   OfferVerification,
   ReviewSignal,
 } from "webflix-contracts";
+import type { SearchOutcome, SearchRequest } from "webflix-contracts";
 import type { TranscriptPayload } from "./transcript-payload";
 import type { AudioRendition } from "./audio-rendition";
 import type { TextPayload } from "./text-payload";
@@ -592,4 +593,58 @@ export interface AdsClaimExtractor {
    * checkpoints between records, §2.6), never the extractor's.
    */
   extract(record: AdRecord): readonly Claim[];
+}
+
+// ---------------------------------------------------------------------------
+// Federated search (Phase 7, P7-SEARCH-1 — WF-009)
+// ---------------------------------------------------------------------------
+
+/**
+ * Identity of one federated-search source adapter: `source` is the id of
+ * the SOURCE it serves (the registry id space, e.g. `fixture-youtube-like`
+ * this order); `version` is the WebFlix ADAPTER's own version (OUR code's
+ * — always known, unlike the external service's facts).
+ */
+export interface SearchSourceDescriptor {
+  /** The source id this adapter serves (the registry key). */
+  readonly source: string;
+  /** The WebFlix adapter implementation's version (our code's). */
+  readonly version: string;
+}
+
+/** Per-call adapter options: cooperative cancellation at the boundary. */
+export interface SearchSourceOptions {
+  /** Checked at the adapter boundary; an already-aborted call rejects with the typed `common/cancelled` error. */
+  readonly signal?: AbortSignal;
+}
+
+/**
+ * The federated-search source seam (INTERFACE ONLY, the
+ * TransparencySourcePort pattern). Contract rules for every
+ * implementation, binding as the transparency seam's:
+ * - HONEST STATES, RETURNED AS DATA: `search` on an unsupported,
+ *   auth-gated, over-budget or partially failed source RESOLVES with
+ *   that typed state in its SearchOutcome (the honest reason naming the
+ *   authorization path where applicable) — never a thrown access error,
+ *   never a silent empty result, never fabricated items;
+ * - NO NETWORK this order: the only implementations that exist are the
+ *   LABELED fixtures (./fixture-search-sources); real transport for a
+ *   sanctioned source is a later order's adapter, behind this same port;
+ * - CANCELLATION: `signal` is honoured at the boundary — an
+ *   already-aborted call rejects with the typed `common/cancelled` error
+ *   and produces no outcome;
+ * - SOURCE-REPORTED ONLY: an ok/partial-failure outcome's items carry
+ *   only what the source itself reported; facts the source did not
+ *   report stay absent — never guessed, never defaulted.
+ */
+export interface SearchSourcePort {
+  /** The adapter's identity: which source it serves + our adapter code's version. */
+  readonly descriptor: SearchSourceDescriptor;
+  /**
+   * Searches the source. Resolves with the typed honest state (the
+   * timeout/auth-required/unsupported/partial-failure states are DATA);
+   * rejects with the typed `common/cancelled` error when the call was
+   * aborted at the boundary.
+   */
+  search(request: SearchRequest, options?: SearchSourceOptions): Promise<SearchOutcome>;
 }

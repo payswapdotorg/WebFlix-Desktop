@@ -63,3 +63,12 @@ export * from "./ads-sources";
 
 // Errors: ErrorCode, WebFlixError.
 export * from "./errors";
+
+// Federated search (Phase 7, P7-SEARCH-1): the search lane's own contract
+// sibling (0.11.0 -> 0.12.0 additive, the ads-sources discipline) — the
+// SearchRequest, the per-source SearchOutcome union whose access states
+// are DATA never thrown, the never-hide SourceCoverage rows, the
+// FederatedSearchResult with its MatchEvidence-driven merged item view
+// (the frozen catalog shapes reused verbatim), and the ONE rejecting
+// error code search/source-invalid on the sibling's own vocabulary.
+export * from "./search";
