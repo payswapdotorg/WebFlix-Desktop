@@ -270,6 +270,11 @@ export class TikTokOAuthSession {
    * Resolves an opaque CredentialRef HANDLE for (providerId, internalAccountId)
    * — never a token. Mirrors the YouTube session's port exactly (the frozen
    * seam is provider-neutral).
+   *
+   * P8-ISOLATION-WIRING-1 (audit §1.4/§4.2 #1a): resolve-only-own-account —
+   * a foreign account id on the same store refuses with the typed
+   * `RequiresAuthError` (the session view never mints another account's
+   * handle; the frozen contract seam stays untouched).
    */
   credentialPort(): CredentialPort {
     return {
@@ -277,6 +282,13 @@ export class TikTokOAuthSession {
         if (providerId !== TIKTOK_PROVIDER_ID) {
           throw new RequiresAuthError(
             `tiktok oauth session: providerId "${providerId}" is not "${TIKTOK_PROVIDER_ID}"`,
+          );
+        }
+        if (internalAccountId !== this.internalAccountId) {
+          throw new RequiresAuthError(
+            `tiktok oauth session: account "${internalAccountId}" is not this session's account ` +
+              `"${this.internalAccountId}" (foreign-account refusal — a session port resolves ` +
+              `only its own account; audit §1.4)`,
           );
         }
         const record = await this.store.loadAccount(internalAccountId);

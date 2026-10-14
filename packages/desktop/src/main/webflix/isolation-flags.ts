@@ -21,10 +21,14 @@
  * aliases kept during migration), via `readEnv` from identity.ts.
  *
  * `ISOLATION_FLAG_POLICY` documents, per flag, exactly what is gated and the
- * unreachable-IPC guarantee that must hold while the flag is OFF; the
- * desktop patch spec `docs/plans/patches/desktop-fixes.patch.md` (edits B
- * and C) enforces it in the desktop main process. `requireFlagEnabled` is
- * the defense-in-depth guard used inside IPC handler bodies.
+ * unreachable-IPC guarantee that must hold while the flag is OFF.
+ * P8-ISOLATION-WIRING-1 realigned the policy DATA to the REAL enforcement
+ * sites in the tree (the previously named ipc-router.ts / app-menu.ts /
+ * deep-links.ts never existed — isolation audit §3.4). The flavor-aware
+ * decision the real enforcement sites share is the desktop main-process
+ * module webflix/product-surface-guard.ts (resolveZCodeProductSurfaceForRuntime):
+ * ZCode identity builds are never gated by `webflixProductSurface`, WebFlix
+ * builds follow the flag.
  */
 
 import { readEnv } from "./identity";
@@ -95,7 +99,7 @@ export const ISOLATION_FLAG_POLICY: readonly IsolationFlagPolicy[] = Object.free
       "handler is registered for the chrome-import:* channels, so every renderer invoke fails " +
       'with Electron\'s "No handler registered" error before any import code runs. Reachability ' +
       "is enforced in the main process, never by hiding renderer UI.",
-    enforcedIn: Object.freeze(["packages/desktop/src/main/chrome-import.ts"]),
+    enforcedIn: Object.freeze(["packages/desktop/src/main/desktopBrowserDataIpc.ts"]),
   }),
   Object.freeze({
     name: "webflixProductSurface",
@@ -111,14 +115,22 @@ export const ISOLATION_FLAG_POLICY: readonly IsolationFlagPolicy[] = Object.free
       "force-update flow",
     ]),
     offGuarantee:
-      "While webflixProductSurface is OFF, the product surface is UNREACHABLE: none of the gated " +
-      "IPC channels, menu entries, deep links, or renderer routes are registered, and any message " +
-      "arriving on a gated channel is rejected in the main process before a gated handler body " +
-      "can execute.",
+      "While webflixProductSurface is OFF, the product surface is UNREACHABLE: the gated IPC " +
+      "channels (SSH/Docker/WSL remote sessions, CUA permission onboarding) are not registered " +
+      "in the main process, gated desktop commands (Coding Plan webview storage, CUA OS support) " +
+      "refuse before their handler bodies execute, payment deep links are dropped unrouted, and " +
+      "the Lark CLI binary env is withheld from the host process — any message arriving on a " +
+      "gated channel is rejected before a gated handler body can execute. The desktop " +
+      "application menu carries no gated entries (pinned by test), and the force-update flow is " +
+      "separately fail-closed for WebFlix builds by the updater product guard " +
+      "(P8-RELEASE-DRIFT-1 hazard H1). The gate is flavor-aware: ZCode identity builds are " +
+      "never gated by this flag.",
     enforcedIn: Object.freeze([
-      "packages/desktop/src/main/ipc-router.ts",
-      "packages/desktop/src/main/app-menu.ts",
-      "packages/desktop/src/main/deep-links.ts",
+      "packages/desktop/src/main/desktopMainIpcRemote.ts",
+      "packages/desktop/src/main/desktopCuaPermissionIpc.ts",
+      "packages/desktop/src/main/desktopCommandHandlers.ts",
+      "packages/desktop/src/main/desktopOAuthDeepLink.ts",
+      "packages/desktop/src/main/desktopRuntimeEnv.ts",
     ]),
   }),
 ]);

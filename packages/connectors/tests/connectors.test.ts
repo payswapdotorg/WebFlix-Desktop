@@ -809,6 +809,216 @@ describe("oauth loopback + PKCE state machine", () => {
 });
 
 // ---------------------------------------------------------------------------
+// Cross-account isolation at the OAuth seam (P8-ISOLATION-WIRING-1, audit
+// §4.2 #1 — the core WF-030 acceptance gap; previously NO test anywhere
+// constructed two sessions with DIFFERENT internalAccountIds)
+// ---------------------------------------------------------------------------
+
+describe("cross-account isolation at the OAuth seam (audit §4.2 #1)", () => {
+  function connectSession(
+    store: ReturnType<typeof memoryOAuthStore>,
+    internalAccountId: string,
+    fetcher: OAuthTokenFetcher,
+    displayName: string,
+  ): Promise<ProviderAccountRecord> {
+    const session = new YouTubeOAuthSession({
+      store,
+      internalAccountId,
+      clock: () => NOW,
+      tokenFetcher: fetcher,
+    });
+    const request = session.startAuthorization({ redirectPort: 41073 });
+    return session.completeAuthorization({
+      code: "FIXTURE-CODE",
+      state: request.state,
+      displayName,
+    });
+  }
+
+  it("#1c two YouTube accounts in ONE store: each session sees only its own record and vault entry", async () => {
+    const store = memoryOAuthStore();
+    const { fetcher } = fixtureTokenFetcher();
+    await connectSession(store, "local-user-1", fetcher, "Fixture Channel A");
+    await connectSession(store, "local-user-2", fetcher, "Fixture Channel B");
+
+    // Both records and both vault entries coexist in the one store.
+    expect(store.accounts.get("local-user-1")?.displayName).toBe("Fixture Channel A");
+    expect(store.accounts.get("local-user-2")?.displayName).toBe("Fixture Channel B");
+    expect(store.vault.get("local-user-1")).toBeDefined();
+    expect(store.vault.get("local-user-2")).toBeDefined();
+
+    // Session A reads only account A; session B reads only account B —
+    // every lifecycle method addresses the bound internalAccountId only.
+    const sessionA = new YouTubeOAuthSession({
+      store,
+      internalAccountId: "local-user-1",
+      clock: () => NOW,
+      tokenFetcher: fetcher,
+    });
+    const sessionB = new YouTubeOAuthSession({
+      store,
+      internalAccountId: "local-user-2",
+      clock: () => NOW,
+      tokenFetcher: fetcher,
+    });
+    expect((await sessionA.loadAccount())?.internalAccountId).toBe("local-user-1");
+    expect((await sessionB.loadAccount())?.internalAccountId).toBe("local-user-2");
+    expect(await sessionA.status()).toBe("connected");
+    expect(await sessionB.status()).toBe("connected");
+    await expect(sessionA.getToken()).resolves.toBe("FIXTURE-ACCESS-TOKEN-1");
+    await expect(sessionB.getToken()).resolves.toBe("FIXTURE-ACCESS-TOKEN-1");
+  });
+
+  it("#1a session A's credential port REFUSES a foreign account id (resolve-only-own-account)", async () => {
+    const store = memoryOAuthStore();
+    const { fetcher } = fixtureTokenFetcher();
+    await connectSession(store, "local-user-1", fetcher, "Fixture Channel A");
+    await connectSession(store, "local-user-2", fetcher, "Fixture Channel B");
+    const sessionA = new YouTubeOAuthSession({
+      store,
+      internalAccountId: "local-user-1",
+      clock: () => NOW,
+      tokenFetcher: fetcher,
+    });
+
+    // The session's OWN account still resolves the opaque handle.
+    const ref = await sessionA.credentialPort().getToken("youtube", "local-user-1");
+    expect(ref.handle).toBe("youtube:local-user-1");
+
+    // A FOREIGN account id — existing, connected, same store — refuses with
+    // the typed RequiresAuthError (the pinned #1a choice: the session port
+    // view is resolve-only-own-account; a foreign id resolves nothing).
+    // Contract: CredentialPort.getToken(providerId, internalAccountId) —
+    // webflix-contracts account.ts:44-46 (the frozen seam itself is the
+    // HOST's to implement; this session view never mints another account's
+    // handle).
+    await expect(
+      sessionA.credentialPort().getToken("youtube", "local-user-2"),
+    ).rejects.toThrowError(RequiresAuthError);
+
+    // The refusal leaves the foreign account's record and vault entry intact.
+    expect(store.accounts.get("local-user-2")?.status).toBe("connected");
+    expect(store.vault.get("local-user-2")).toBeDefined();
+  });
+
+  it("#1b account B's disconnect/revoke leaves account A's record AND vault entry untouched", async () => {
+    const store = memoryOAuthStore();
+    const { fetcher, counts } = fixtureTokenFetcher();
+    await connectSession(store, "local-user-1", fetcher, "Fixture Channel A");
+    await connectSession(store, "local-user-2", fetcher, "Fixture Channel B");
+
+    const sessionA = new YouTubeOAuthSession({
+      store,
+      internalAccountId: "local-user-1",
+      clock: () => NOW,
+      tokenFetcher: fetcher,
+    });
+    const sessionB = new YouTubeOAuthSession({
+      store,
+      internalAccountId: "local-user-2",
+      clock: () => NOW,
+      tokenFetcher: fetcher,
+    });
+
+    // B disconnects (revoke at the official endpoint + vault clear + record
+    // transition), then acknowledges the revocation (record removed).
+    const revoked = await sessionB.revoke();
+    expect(revoked.status).toBe("revoked");
+    expect(revoked.internalAccountId).toBe("local-user-2");
+    await sessionB.acknowledgeRevocation();
+
+    // A's record AND vault entry are untouched by B's full disconnect walk.
+    const recordA = await sessionA.loadAccount();
+    expect(recordA?.internalAccountId).toBe("local-user-1");
+    expect(recordA?.status).toBe("connected");
+    expect(store.vault.get("local-user-1")).toBeDefined();
+    expect(store.accounts.get("local-user-2")).toBeUndefined();
+    expect(store.vault.get("local-user-2")).toBeUndefined();
+    await expect(sessionA.getToken()).resolves.toBe("FIXTURE-ACCESS-TOKEN-1");
+    await expect(sessionA.credentialPort().getToken("youtube", "local-user-1")).resolves.toEqual({
+      handle: "youtube:local-user-1",
+    });
+
+    // The revocation only ever talked to B's token (one revoke exchange).
+    expect(counts.revoke).toBe(1);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Multi-profile OAuth store discipline (P8-ISOLATION-WIRING-1, audit §4.2 #2
+// — the local-library per-profile pattern pinned at the OAuthAccountStore
+// seam: no store ever crosses profiles)
+// ---------------------------------------------------------------------------
+
+describe("multi-profile OAuth store discipline (audit §4.2 #2)", () => {
+  it("accounts/tokens in profile X's store set are invisible to profile Y's store set", async () => {
+    // Two profile-scoped store sets — one store instance per profile
+    // directory (the ads-stores.ts:29-35 discipline: "openStore mints one
+    // store per profile directory — no adapter ever crosses profiles").
+    const profileX = memoryOAuthStore();
+    const profileY = memoryOAuthStore();
+    const { fetcher } = fixtureTokenFetcher();
+
+    // Profile X connects local-user-1 (YouTube).
+    const sessionX = new YouTubeOAuthSession({
+      store: profileX,
+      internalAccountId: "local-user-1",
+      clock: () => NOW,
+      tokenFetcher: fetcher,
+    });
+    const requestX = sessionX.startAuthorization({ redirectPort: 41073 });
+    await sessionX.completeAuthorization({
+      code: "FIXTURE-CODE",
+      state: requestX.state,
+      displayName: "Profile X Account",
+    });
+
+    // Profile Y connects a DIFFERENT account id on its own store set.
+    const sessionY = new YouTubeOAuthSession({
+      store: profileY,
+      internalAccountId: "local-user-2",
+      clock: () => NOW,
+      tokenFetcher: fetcher,
+    });
+    const requestY = sessionY.startAuthorization({ redirectPort: 41073 });
+    await sessionY.completeAuthorization({
+      code: "FIXTURE-CODE",
+      state: requestY.state,
+      displayName: "Profile Y Account",
+    });
+
+    // Cross-profile invisibility of accounts: profile Y's store never saw
+    // profile X's record, and vice versa.
+    expect(profileX.accounts.has("local-user-2")).toBe(false);
+    expect(profileY.accounts.has("local-user-1")).toBe(false);
+    expect((await sessionX.loadAccount())?.internalAccountId).toBe("local-user-1");
+    expect((await sessionY.loadAccount())?.internalAccountId).toBe("local-user-2");
+
+    // Cross-profile invisibility of tokens: the vault side is scoped the
+    // same way — each profile's vault holds only its own account's tokens.
+    expect(profileX.vault.has("local-user-2")).toBe(false);
+    expect(profileY.vault.has("local-user-1")).toBe(false);
+
+    // A session over profile Y's store bound to profile X's ACCOUNT id sees
+    // nothing: same install-local id, different profile store set — no
+    // record, no token, honestly unauthenticated (the audit's structural
+    // discipline: per-profile store instantiation is the isolation wall).
+    const sessionYAsUser1 = new YouTubeOAuthSession({
+      store: profileY,
+      internalAccountId: "local-user-1",
+      clock: () => NOW,
+      tokenFetcher: fetcher,
+    });
+    expect(await sessionYAsUser1.loadAccount()).toBeNull();
+    expect(await sessionYAsUser1.status()).toBeNull();
+    await expect(sessionYAsUser1.getToken()).rejects.toThrowError(RequiresAuthError);
+    await expect(
+      sessionYAsUser1.credentialPort().getToken("youtube", "local-user-1"),
+    ).rejects.toThrowError(RequiresAuthError);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Playback plans (official-embed, frozen §2.2)
 // ---------------------------------------------------------------------------
 
