@@ -63,3 +63,50 @@ All three base on main @ 61c37a4 (or later; record HEAD as BASE).
 P7-SEARCH-1 + P7-PLAYER-1 + P7-RETENTION-1 (parallel) → P7-COMPOSE-1 →
 P7-AD-MEMORY-1 → wave-3 candidates. Reviews are serial at the TL2 station
 in delivery order.
+
+## Completion ruling (2026-10-14, final main 26d0abc)
+
+All nine Phase-7 rows are MERGED on origin/main; the plan is complete:
+
+- Wave 1: P7-SEARCH-1, P7-PLAYER-1, P7-RETENTION-1 — merged.
+- Wave 2: P7-COMPOSE-1, P7-AD-MEMORY-1 — merged.
+- Wave 3: P7-GUEST-1 (c35bf86), P7-STREAM-HANDOFF-1 (18f8fa4),
+  P7-AUDIT-ISOLATION-1 (7260f79), P7-AUDIT-RELEASE-1 (bfe2c1e, the
+  wave-3 FINAL — "PHASE 7 COMPLETE") — merged.
+
+Final station verification (this station, independent gate parity on the
+exact final content): tsc -b --force both groups exit 0; pnpm test:unit
+63 files 1513/1513; pnpm test:integration 1/1; pnpm lint 69 warnings /
+0 errors (recorded baseline, zero-new); pnpm fmt:check PASS;
+pnpm architecture:check 0 violations / 0 baseline / 0 new. The numbers
+match the TL2 station's bfe2c1e ruling exactly (same tree, same gates).
+
+Ledger state: every worker row in work-claims.md reads merged; one
+residual fused-line defect (the stale queued P7-GUEST-1 fragment in the
+P7-AD-MEMORY-1 row tail — the same defect class 7260f79 repaired twice)
+was removed post-bfe2c1e at 26d0abc, station-verified, fmt PASS.
+
+Matrix state (35 rows): 30 tested/implemented/audited; 5 planned — ALL
+parked/deferred by documented rulings, NOT shipped, and honestly NOT
+claimable as shipped:
+
+- WF-013/014/015 (torrent discovery/downloads/local playback): parked
+  pending the engine/rights investigation (this plan, wave-3 notes).
+- WF-020 (friend recommendations): parked on the consent model (same).
+- WF-031 (optional sync): pinned deferred per the Phase-6 mobile ruling
+  until explicitly re-opened.
+
+Roadmap completion therefore means: every non-parked roadmap row is
+shipped, merged and station-verified; the parked rows remain future work
+with their blockers recorded, for the operator to re-open at will.
+
+Follow-up payload for any successor (named by the two wave-3 audits,
+source-cited in their reports): release-safety drifts R1-R4 (runtime
+flavor normalization, packaged runtime identity env-var reachability,
+deep-link scheme hardcoding, artifact metadata) + hazard H1 (updater
+cross-feed contamination if a WebFlix build ever normalizes to the
+production flavor); the T-1..T-10 missing-test map; account-isolation
+revocation-propagation UNVERIFIED (no production wiring); target-platform
+smokes never run (the recorded 4GB-OOM environment class) — the release
+evidence template in the release-safety audit §3 is the runnable
+checklist when a release-capable box exists.
