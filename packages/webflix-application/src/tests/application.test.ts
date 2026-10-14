@@ -367,29 +367,31 @@ class FakeProviderMetadata implements ProviderMetadataPort {
  * In-memory fake of the canonical §2.6 CredentialPort seam: resolves opaque
  * CredentialRef HANDLES (never tokens) for (providerId, internalAccountId);
  * a missing credential rejects — the use-case treats that as unauthenticated.
+ *
+ * P8-ISOLATION-WIRING-1 (audit §4.2 #5): the fake keys credentials by
+ * (provider, account) — getToken resolves ONLY the exact pair that was
+ * seeded, so a test can express "refresh as account A must not use account
+ * B's credential" (provider-only keying made that impossible).
  */
 class FakeCredentials implements CredentialPort {
   private readonly tokens = new Map<string, string>();
 
-  setToken(provider: string, token: string | null): void {
-    if (token === null) this.tokens.delete(provider);
-    else this.tokens.set(provider, token);
+  private static key(provider: string, account: string): string {
+    return `${provider}::${account}`;
+  }
+
+  setToken(provider: string, account: string, token: string | null): void {
+    const key = FakeCredentials.key(provider, account);
+    if (token === null) this.tokens.delete(key);
+    else this.tokens.set(key, token);
   }
 
   async getToken(providerId: string, internalAccountId: string): Promise<CredentialRef> {
-    const token = this.tokens.get(providerId);
+    const token = this.tokens.get(FakeCredentials.key(providerId, internalAccountId));
     if (!token) {
-      throw new Error(`no credential for ${providerId}`);
+      throw new Error(`no credential for ${providerId} account ${internalAccountId}`);
     }
     return { handle: `${providerId}:${internalAccountId}` };
-  }
-
-  async set(provider: string, token: string): Promise<void> {
-    this.tokens.set(provider, token);
-  }
-
-  async delete(provider: string): Promise<void> {
-    this.tokens.delete(provider);
   }
 }
 
@@ -856,7 +858,7 @@ describe("RefreshProviderMetadata", () => {
       fields: { mood: "calm" },
       fetchedAt: "2025-01-01T00:00:00.000Z", // == clock.now(): age 0 < 30 days
     });
-    h.credentials.setToken("musicbrainz", "token-1");
+    h.credentials.setToken("musicbrainz", "acct-1", "token-1");
 
     const output = await makeRefresh(h).execute({ provider, internalAccountId: "acct-1" });
 
@@ -875,7 +877,7 @@ describe("RefreshProviderMetadata", () => {
       fields: { mood: "stale" },
       fetchedAt: "2024-11-01T00:00:00.000Z",
     });
-    h.credentials.setToken("musicbrainz", "token-1");
+    h.credentials.setToken("musicbrainz", "acct-1", "token-1");
     h.providers.respond(asTrackId("t1"), provider, {
       kind: "fetched",
       trackId: asTrackId("t1"),
@@ -901,7 +903,7 @@ describe("RefreshProviderMetadata", () => {
       fields: { mood: "stale" },
       fetchedAt: "2024-11-01T00:00:00.000Z",
     });
-    h.credentials.setToken("musicbrainz", "token-1");
+    h.credentials.setToken("musicbrainz", "acct-1", "token-1");
     h.providers.respond(asTrackId("t1"), provider, { kind: "not-found", trackId: asTrackId("t1") });
 
     const output = await makeRefresh(h).execute({ provider, internalAccountId: "acct-1" });
@@ -919,7 +921,7 @@ describe("RefreshProviderMetadata", () => {
       fields: { mood: "stale" },
       fetchedAt: "2024-11-01T00:00:00.000Z",
     });
-    h.credentials.setToken("musicbrainz", "token-1");
+    h.credentials.setToken("musicbrainz", "acct-1", "token-1");
     h.providers.respond(asTrackId("t1"), provider, {
       kind: "error",
       trackId: asTrackId("t1"),
@@ -954,12 +956,45 @@ describe("RefreshProviderMetadata", () => {
     expect(stored?.fetchedAt).toBe("2024-11-01T00:00:00.000Z");
   });
 
+  // P8-ISOLATION-WIRING-1 (audit §4.2 #5): the account-scoped credential pin
+  // — only expressible once the fake keys credentials by (provider, account).
+  it("refresh as account A must not use account B's credential (account-scoped port)", async () => {
+    const h = makeHarness();
+    const provider = asProviderId("musicbrainz");
+    await h.store.putProviderFieldSet({
+      trackId: asTrackId("t1"),
+      provider,
+      fields: { mood: "stale" },
+      fetchedAt: "2024-11-01T00:00:00.000Z",
+    });
+    // ONLY account B holds a credential for this provider.
+    h.credentials.setToken("musicbrainz", "acct-B", "token-b");
+    h.providers.respond(asTrackId("t1"), provider, {
+      kind: "fetched",
+      trackId: asTrackId("t1"),
+      fields: { mood: "fresh" },
+    });
+
+    // A refresh executed as account A resolves no credential → honest skip.
+    const asA = await makeRefresh(h).execute({ provider, internalAccountId: "acct-A" });
+    expect(asA.outcomes).toEqual([{ trackId: "t1", action: "skipped-unauthenticated" }]);
+    expect(h.providers.calls).toHaveLength(0);
+    const storedAfterA = await h.store.getProviderFieldSet(asTrackId("t1"), provider);
+    expect(storedAfterA?.fetchedAt).toBe("2024-11-01T00:00:00.000Z");
+
+    // The same refresh as account B (the credential owner) proceeds — the
+    // port resolved the (provider, account)-scoped handle, never a token.
+    const asB = await makeRefresh(h).execute({ provider, internalAccountId: "acct-B" });
+    expect(asB.outcomes).toEqual([{ trackId: "t1", action: "refreshed" }]);
+    expect(h.providers.calls).toHaveLength(1);
+  });
+
   it("defaults to stored sets of the provider; explicit ids may fill gaps", async () => {
     const h = makeHarness();
     const musicbrainz = asProviderId("musicbrainz");
     const discogs = asProviderId("discogs");
-    h.credentials.setToken("musicbrainz", "token-a");
-    h.credentials.setToken("discogs", "token-b");
+    h.credentials.setToken("musicbrainz", "acct-1", "token-a");
+    h.credentials.setToken("discogs", "acct-1", "token-b");
     await h.store.putProviderFieldSet({
       trackId: asTrackId("t1"),
       provider: musicbrainz,

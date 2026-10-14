@@ -420,6 +420,13 @@ export class YouTubeOAuthSession {
    * — never a token; a missing/unusable credential rejects, which callers
    * treat as honestly unauthenticated. The host opens the handle when it
    * talks to the provider.
+   *
+   * P8-ISOLATION-WIRING-1 (audit §1.4/§4.2 #1a): this port view is
+   * resolve-only-own-account — a session never mints a handle for a FOREIGN
+   * account id on the same store. The refusal reuses the existing typed
+   * `RequiresAuthError` (the honest "resolves nothing" mode; the frozen
+   * contract account.ts:44-46 stays untouched — the port itself remains the
+   * host-implemented seam, this is the session's view of it).
    */
   credentialPort(): CredentialPort {
     return {
@@ -427,6 +434,13 @@ export class YouTubeOAuthSession {
         if (providerId !== YOUTUBE_PROVIDER_ID) {
           throw new RequiresAuthError(
             `youtube oauth session: providerId "${providerId}" is not "${YOUTUBE_PROVIDER_ID}"`,
+          );
+        }
+        if (internalAccountId !== this.internalAccountId) {
+          throw new RequiresAuthError(
+            `youtube oauth session: account "${internalAccountId}" is not this session's account ` +
+              `"${this.internalAccountId}" (foreign-account refusal — a session port resolves ` +
+              `only its own account; audit §1.4)`,
           );
         }
         const record = await this.store.loadAccount(internalAccountId);

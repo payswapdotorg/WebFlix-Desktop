@@ -3,7 +3,12 @@ import { execFile } from "node:child_process";
 import { join } from "node:path";
 import { promisify } from "node:util";
 import { app, BrowserWindow, ipcMain, nativeImage, screen } from "electron";
-import { PlatformChannels, type CuaPermissionKind, type Locale } from "@zcode/shared";
+import {
+  PlatformChannels,
+  ZCODE_PRODUCT_FLAVOR,
+  type CuaPermissionKind,
+  type Locale,
+} from "@zcode/shared";
 import {
   cuaHelperBundleFingerprintUnchanged,
   openCuaPermissionOnboarding,
@@ -15,6 +20,8 @@ import {
   type CuaPermissionDragPanel,
 } from "./cuaPermissionDragPanel.js";
 import { createSystemSettingsWindowWatcher } from "./cuaSystemSettingsWindowWatcher.js";
+import { resolveZCodeProductSurfaceForRuntime } from "./webflix/product-surface-guard.js";
+import { resolveIsolationFlags } from "./webflix/isolation-flags.js";
 
 const execFileAsync = promisify(execFile);
 const MACOS_SYSTEM_SETTINGS_BUNDLE_ID = "com.apple.systempreferences";
@@ -297,6 +304,27 @@ export function registerCuaPermissionIpcHandlers(options: {
   };
   currentApplicationLocale: () => Locale;
 }) {
+  /*
+   * P8-ISOLATION-WIRING-1 (#4, isolation audit §3.4): the CUA permission
+   * onboarding / helper-drag IPC surface is a ZCode commercial surface.
+   * While the webflixProductSurface flag is OFF (the fail-closed default)
+   * in a WebFlix build NONE of these handlers are registered — the surface
+   * is UNREACHABLE from the renderer ("No handler registered"), the
+   * chrome-import registration discipline (desktopBrowserDataIpc.ts).
+   * ZCode identity builds are never gated by the flag (the baked flavor is
+   * the discriminator — resolveZCodeProductSurfaceForRuntime).
+   */
+  const cuaProductSurface = resolveZCodeProductSurfaceForRuntime({
+    flavor: ZCODE_PRODUCT_FLAVOR,
+    webflixProductSurface: resolveIsolationFlags(process.env).webflixProductSurface,
+  });
+  if (!cuaProductSurface.enabled) {
+    options.logger.info(
+      "[cua-permission-ipc] CUA permission IPC not registered: webflixProductSurface flag is OFF (default, fail-closed)",
+    );
+    return;
+  }
+
   // operationId 只在同一个 webContents id 命名空间内有效，避免另一个 renderer 猜中 id 后取消
   // 不属于自己的 participant。invoke 终态一定删除；destroyed 仍由原有 signal 路径兜底。
   const onboardingControllers = new Map<string, AbortController>();

@@ -293,6 +293,11 @@ export class InstagramOAuthSession {
    * Canonical §2.5/§2.6 CredentialPort view of this session (main-process).
    * Resolves an opaque CredentialRef HANDLE for (providerId,
    * internalAccountId) — never a token.
+   *
+   * P8-ISOLATION-WIRING-1 (audit §1.4/§4.2 #1a): resolve-only-own-account —
+   * a foreign account id on the same store refuses with the typed
+   * `RequiresAuthError` (the session view never mints another account's
+   * handle; the frozen contract seam stays untouched).
    */
   credentialPort(): CredentialPort {
     return {
@@ -300,6 +305,13 @@ export class InstagramOAuthSession {
         if (providerId !== INSTAGRAM_PROVIDER_ID) {
           throw new RequiresAuthError(
             `instagram oauth session: providerId "${providerId}" is not "${INSTAGRAM_PROVIDER_ID}"`,
+          );
+        }
+        if (internalAccountId !== this.internalAccountId) {
+          throw new RequiresAuthError(
+            `instagram oauth session: account "${internalAccountId}" is not this session's ` +
+              `account "${this.internalAccountId}" (foreign-account refusal — a session port ` +
+              `resolves only its own account; audit §1.4)`,
           );
         }
         const record = await this.store.loadAccount(internalAccountId);

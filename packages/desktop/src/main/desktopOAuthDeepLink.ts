@@ -8,6 +8,7 @@ import {
   type OAuthProviderId,
   type OAuthStateRegistration,
   PlatformChannels,
+  ZCODE_PRODUCT_FLAVOR,
 } from "@zcode/shared";
 import {
   extractWorkspaceOpenPath,
@@ -24,6 +25,8 @@ import {
   protocolSchemeNameOf,
 } from "./webflix/identity.js";
 import { webFlixDataRootName } from "./desktopRuntimeEnv.js";
+import { resolveZCodeProductSurfaceForRuntime } from "./webflix/product-surface-guard.js";
+import { resolveIsolationFlags } from "./webflix/isolation-flags.js";
 
 interface DeepLinkWorkspaceGateOptions {
   canOpenWorkspace?: (workspacePath: string) => boolean;
@@ -303,6 +306,26 @@ export function handleDeepLink(
   }
 
   if (isPaymentCallbackUrl(parsedUrl)) {
+    /*
+     * P8-ISOLATION-WIRING-1 (#4, isolation audit §3.4): the payment-callback
+     * deep link is part of the Coding Plan / PayPal commercial surface.
+     * While the webflixProductSurface flag is OFF (fail-closed default) in
+     * a WebFlix build the callback is consumed UNROUTED — never forwarded to
+     * a renderer, never cached for the next ready window (the pending
+     * cache below only fills from this branch). ZCode identity builds are
+     * never gated by the flag.
+     */
+    const paymentSurfaceEnabled = resolveZCodeProductSurfaceForRuntime({
+      flavor: ZCODE_PRODUCT_FLAVOR,
+      webflixProductSurface: resolveIsolationFlags(process.env).webflixProductSurface,
+    }).enabled;
+    if (!paymentSurfaceEnabled) {
+      logger.info(
+        "[deep-link] 支付回调 deep link 已拒绝路由：webflixProductSurface 关闭（默认 fail-closed，Coding Plan/PayPal 商业面不可达）",
+        { host: parsedUrl.hostname, path: parsedUrl.pathname },
+      );
+      return true;
+    }
     const targetWindow = options.resolveApplicationWindow
       ? options.resolveApplicationWindow()
       : (BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0] ?? null);

@@ -2,6 +2,7 @@
 import { app, BrowserWindow, ipcMain, shell } from "electron";
 import armsRum from "@arms/rum-electron";
 import {
+  ZCODE_PRODUCT_FLAVOR,
   armsCustomEventPayloadSchema,
   buildRemoteWorkspaceConnectResultTelemetry,
   classifyRemoteUsageError,
@@ -24,6 +25,8 @@ import {
   parseOAuthStateRegistration,
   registerOAuthState,
 } from "./desktopOAuthDeepLink.js";
+import { resolveZCodeProductSurfaceForRuntime } from "./webflix/product-surface-guard.js";
+import { resolveIsolationFlags } from "./webflix/isolation-flags.js";
 import {
   dispatchFinalArmsCustomEvent,
   enableSharedFinalArmsCustomEventE2EController,
@@ -390,6 +393,28 @@ export function registerRemoteIpcHandlers(options: {
       clearOAuthRoutesForWindow(windowWebContentsId);
     });
   });
+
+  /*
+   * P8-ISOLATION-WIRING-1 (#4, isolation audit §3.4): the SSH/Docker/WSL
+   * remote-sessions IPC family is a ZCode commercial surface. While the
+   * webflixProductSurface flag is OFF (the fail-closed default) in a WebFlix
+   * build these handlers are NOT registered at all — the surface is
+   * UNREACHABLE from the renderer ("No handler registered"), the same
+   * registration-level discipline as the chrome-import IPC
+   * (desktopBrowserDataIpc.ts). ZCode identity builds are never gated by
+   * the flag (resolveZCodeProductSurfaceForRuntime keys on the baked
+   * flavor — the P8-RELEASE-DRIFT-1 discriminator).
+   */
+  const remoteProductSurface = resolveZCodeProductSurfaceForRuntime({
+    flavor: ZCODE_PRODUCT_FLAVOR,
+    webflixProductSurface: resolveIsolationFlags(process.env).webflixProductSurface,
+  });
+  if (!remoteProductSurface.enabled) {
+    options.logger.info(
+      "[remote-ipc] SSH/Docker/WSL remote IPC not registered: webflixProductSurface flag is OFF (default, fail-closed)",
+    );
+    return;
+  }
 
   ipcMain.handle(PlatformChannels.ConnectRemote, async (event, rawPayload: unknown) => {
     const wrappedPayload: {

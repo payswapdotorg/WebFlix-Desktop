@@ -22,6 +22,8 @@ import {
 } from "@zcode/shared";
 import { readZCodeStdioTapDevState, setZCodeStdioTapDevEnabled } from "@zcode/services/node";
 import { isZCodeUpdaterSurfaceEnabledForFlavor } from "./webflix/updater-product-guard.js";
+import { resolveZCodeProductSurfaceForRuntime } from "./webflix/product-surface-guard.js";
+import { resolveIsolationFlags } from "./webflix/isolation-flags.js";
 import { showAboutDialog } from "./about.js";
 import { checkForUpdateMenuClick } from "./autoUpdater.js";
 import { exportLogs } from "./exportLogs.js";
@@ -503,6 +505,22 @@ export async function executeDesktopCommand(options: {
     `[desktop-command] execute ${options.command} windowId=${targetWindow?.id ?? "<none>"}`,
   );
 
+  /*
+   * P8-ISOLATION-WIRING-1 (#4, isolation audit §3.4): the ZCode commercial
+   * desktop commands (Coding Plan webview storage, CUA OS support) refuse
+   * while the webflixProductSurface flag is OFF in a WebFlix build — the
+   * command body never executes the gated surface. Registration-level
+   * unreachability is enforced at the gated IPC families
+   * (desktopMainIpcRemote.ts / desktopCuaPermissionIpc.ts); this is the
+   * shared-dispatch-channel refusal (a per-command throw would leak as an
+   * unhandled rejection through the menu-click void-promises — refusal is
+   * logged + returns undefined). ZCode identity builds are never gated.
+   */
+  const productSurfaceEnabled = resolveZCodeProductSurfaceForRuntime({
+    flavor: ZCODE_PRODUCT_FLAVOR,
+    webflixProductSurface: resolveIsolationFlags(process.env).webflixProductSurface,
+  }).enabled;
+
   switch (options.command) {
     case DesktopCommandIds.NewTask:
       targetWindow?.webContents.send(PlatformChannels.NewTask);
@@ -685,9 +703,21 @@ export async function executeDesktopCommand(options: {
       });
       return;
     case DesktopCommandIds.ClearCodingPlanWebviewStorage:
+      if (!productSurfaceEnabled) {
+        options.logger.info(
+          "[desktop-command] Coding Plan webview storage command refused: webflixProductSurface flag is OFF (default, fail-closed)",
+        );
+        return;
+      }
       await clearCodingPlanWebviewStorage({ logger: options.logger });
       return;
     case DesktopCommandIds.GetCuaOsSupport:
+      if (!productSurfaceEnabled) {
+        options.logger.info(
+          "[desktop-command] CUA OS support command refused: webflixProductSurface flag is OFF (default, fail-closed)",
+        );
+        return;
+      }
       return resolveCuaOsSupport();
   }
 }

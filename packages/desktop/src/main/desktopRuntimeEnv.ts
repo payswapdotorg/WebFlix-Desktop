@@ -39,6 +39,8 @@ import {
 import { getElectronAppPath, isElectronAppPackaged } from "./desktopElectronApp.js";
 import { resolveWebFlixDataRootName } from "../../scripts/desktop-product-identity.mjs";
 import { applyWebFlixDataRootEnv } from "./webflix/identity-env.js";
+import { resolveZCodeProductSurfaceForRuntime } from "./webflix/product-surface-guard.js";
+import { resolveIsolationFlags } from "./webflix/isolation-flags.js";
 
 const isLocalDevelopmentRuntime = !isElectronAppPackaged();
 export const desktopRuntimeEnv: ZCodeRuntimeEnv = isLocalDevelopmentRuntime
@@ -556,6 +558,22 @@ export function buildHostProcessEnv(hostProcessLocalEnv: Record<string, string>)
     ...sanitizeZCodeRuntimeEnv(rawInheritedEnv),
     ...buildZCodeToolEnvPassthroughEnv(rawInheritedEnv),
   });
+  /*
+   * P8-ISOLATION-WIRING-1 (#4, isolation audit §3.4): the Lark surface —
+   * while the webflixProductSurface flag is OFF (fail-closed default) in a
+   * WebFlix build the lark-cli binary path never reaches the host process,
+   * neither bundled nor inherited from the local environment (the key is
+   * NOT in SANITIZED_RUNTIME_ENV_KEYS, so an inherited value would otherwise
+   * flow straight through). ZCode identity builds are never gated by the
+   * flag (the baked flavor is the discriminator).
+   */
+  const larkProductSurfaceEnabled = resolveZCodeProductSurfaceForRuntime({
+    flavor: ZCODE_PRODUCT_FLAVOR,
+    webflixProductSurface: resolveIsolationFlags(process.env).webflixProductSurface,
+  }).enabled;
+  if (!larkProductSurfaceEnabled) {
+    delete inheritedEnv.ZCODE_LARK_CLI_BINARY;
+  }
   // A release app must never inherit the local unsigned-Helper escape hatch.
   // Otherwise a developer shell/launchctl variable can make the signed app
   // reject its verified bundled Helper and route onboarding to a stale dev app.
@@ -596,6 +614,8 @@ export function buildHostProcessEnv(hostProcessLocalEnv: Record<string, string>)
       ? { [ZCODE_CUA_BUNDLED_HELPER_APP_PATH_ENV]: bundledCuaHelperAppPath }
       : {}),
     ...(resolvedGlmBinaryPath ? { GLM_BINARY_PATH: resolvedGlmBinaryPath } : {}),
-    ...(resolvedLarkCliBinaryPath ? { ZCODE_LARK_CLI_BINARY: resolvedLarkCliBinaryPath } : {}),
+    ...(larkProductSurfaceEnabled && resolvedLarkCliBinaryPath
+      ? { ZCODE_LARK_CLI_BINARY: resolvedLarkCliBinaryPath }
+      : {}),
   };
 }
