@@ -221,3 +221,21 @@ export * from "./fixture-search-sources";
 // existing use-case edits in this lane.
 export * from "./history-retention";
 export * from "./in-memory-retention-stores";
+
+// P7-AD-MEMORY-1 (Phase-7 wave-2 row 5, WF-029 ad personal memory): the
+// EXPLICIT OPT-IN memory lane over the 0.13.0 ads-memory contracts —
+// ad-memory.ts owns the ports (the per-scope consent store, the
+// saved-ad store, the append-only user-observation store) and the use
+// cases: GrantAdMemoryConsent / RevokeAdMemoryConsent (the ONLY consent
+// writers — explicit user actions, injected clock), SaveAd / ForgetAd /
+// RecordObservation / ListMemory (each gated by the per-scope consent;
+// the refusals ads-memory/consent-required and ads-memory/scope-revoked
+// are DATA, never thrown — a listing never hides a closed scope, a user
+// observation is user-stated and never conflated with source-backed
+// evidence, and nothing auto-joins across sources).
+// in-memory-ad-memory-stores.ts ships the NOT-DURABLE fixture doubles
+// (pure-test defaults; the durable adapters are a later local-library
+// order if sanctioned). NO shell edits, NO engine rework, NO provider
+// calls, NO telemetry.
+export * from "./ad-memory";
+export * from "./in-memory-ad-memory-stores";
