@@ -87,9 +87,16 @@ The release audit §5 explicitly defers remedy choice to TL2. Rulings:
   T-map pins (T-1..T-6, T-8, T-9, T-5 provider battery; T-7/T-10
   unit-level halves only). Work order:
   docs/plans/work-orders/P8-RELEASE-DRIFT-1.md.
+- **P8-ISOLATION-WIRING-1** — the isolation audit's follow-up payload:
+  the OAuth-seam cross-account/multi-profile test batteries (audit §4.2
+  #1/#2/#5) + the disconnect→partition propagation wiring (#3) + the
+  webflixProductSurface enforcement at the real surface owners with
+  policy-data realignment (the §3.4 finding, #4). Work order:
+  docs/plans/work-orders/P8-ISOLATION-WIRING-1.md.
 - Future (blocked, honestly): target-platform smokes + release
   evidence run (needs a release-capable box), T-7 e2e coexistence
-  installs, T-10 e2e notices/recovery (needs a real feed),
-  revocation-propagation production wiring. These stay named-not-
-  ordered until their blockers clear; the operator re-opens parked
-  rows explicitly.
+  installs, T-10 e2e notices/recovery (needs a real feed), the
+  production OS vault behind OAuthAccountStore (audit §1.5), the
+  renderer-boundary preload test (no preload surface exists, §4.2 #6).
+  These stay named-not-ordered until their blockers clear; the operator
+  re-opens parked rows explicitly.
