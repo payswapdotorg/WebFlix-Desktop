@@ -113,3 +113,7 @@ Reuse contracts and application use cases after desktop boundaries are stable. D
 ## Critical path
 
 Actual WebFlix desktop identity → YouTube policy/capability audit → per-user account and playback contracts → local persistence + first YouTube browse/search/watch path in parallel → restart/resume and account isolation → packaged desktop acceptance → expanded YouTube capability matrix → next social-platform selection. Everything not on this path may proceed in parallel only when ownership and dependencies are explicit.
+
+## Phase 9 — Ubuntu WebFlix desktop release candidate (current priority)
+
+Execute `docs/plans/work-orders/P9-UBUNTU-WEBFLIX-1.md` using the three disjoint claims in `docs/plans/work-claims.md`. Worker 1 mounts the actual WebFlix shell and removes visible inherited ZCode branding; Worker 2 builds downloadable Ubuntu 24.04 x86_64 .deb and AppImage artifacts through CI; Worker 3 tests the packaged artifact and records screenshots/logs/evidence. This may overlap only on disjoint paths with the queued P8-VAULT-1 work. The vault must merge before real account-connect IPC wiring and final release-candidate acceptance. The release is not done until a packaged artifact launches as WebFlix, local media/UI behavior is proven, identity isolation/regressions pass, and download/install/launch instructions plus a direct artifact link are available. The test build should be distributed as a workflow artifact, not a public production release while WebFlix homepage/author metadata and an update feed remain unapproved/unavailable.
