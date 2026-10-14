@@ -239,3 +239,27 @@ export * from "./in-memory-retention-stores";
 // calls, NO telemetry.
 export * from "./ad-memory";
 export * from "./in-memory-ad-memory-stores";
+
+// P7-GUEST-1 (Phase-7 wave-3, WF-003 guest viewing): the guest session
+// lane. guest-session.ts owns the READ-ONLY account-state port and the
+// manifest-source port, plus the GuestSessionFactory (minting a FRESH
+// guest profile with NO provider accounts connected — closed kind
+// literal, injected id + clock, fresh-profile law guarded with the typed
+// GuestRuleError) and the GuestSession (gate() / capabilities() derive
+// LIVE from the manifest source plus the observed account state).
+// guest-capabilities.ts owns the pure view model: per provider
+// operation, whether the GUEST state permits it (manifest "supported" =
+// public browse/search/watch, permitted with auth "public") or refuses
+// with the typed auth-required reason pointing at the connect flow (the
+// settings/accounts surface + the manifest's own oauth.connect row with
+// its status — never a dead action), plus declared-unavailable rows that
+// surface the manifest's own non-auth state VERBATIM (never re-labeled
+// auth-required) and the honest connected-account reads (WF-010's
+// post-connect vocabulary — this lane writes no account state, ever).
+// The in-memory doubles + the public-capability connector manifest
+// fixture are TESTS-TREE fixtures (src/tests/guest-fixtures.ts) per the
+// order; durable adapters and composition wiring are later orders. NO
+// contract edits, NO shell edits, NO provider calls, NO credentials, NO
+// telemetry.
+export * from "./guest-session";
+export * from "./guest-capabilities";
