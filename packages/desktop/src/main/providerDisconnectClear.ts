@@ -1,4 +1,5 @@
 import type { EmbeddedBrowserDataClearResult } from "@zcode/shared";
+import type { OAuthAccountStore } from "connectors";
 import { clearEmbeddedBrowserData } from "./browserDataManager.js";
 
 /**
@@ -68,4 +69,135 @@ export async function clearDisconnectedProviderAccountPartition(
     providerId,
     accountKey,
   });
+}
+
+// ---------------------------------------------------------------------------
+// P8-VAULT-1 additive composition (ruling 6; phase8-successor-payload.md's
+// "the disconnect composition (vault remove + the P8-ISOLATION scoped
+// partition clear)"; isolation audit §1.5/§2.3). Additive ONLY — the
+// #3 adapter above is untouched.
+// ---------------------------------------------------------------------------
+
+/**
+ * The vault surface a disconnect needs. `Pick` of the frozen
+ * OAuthAccountStore (connectors/src/youtube/oauth.ts) — TYPE-ONLY import,
+ * erased at compile time (no runtime dependency on the connectors package);
+ * the OS vault behind the seam is `createOsVaultAccountStore`
+ * (./webflix/osVaultAccountStore.ts), injected by the future mount order.
+ */
+export type DisconnectAccountRemovalStore = Pick<
+  OAuthAccountStore,
+  "removeAccount" | "removeTokens"
+>;
+
+/** Typed failure code: a vault remove (record or tokens) failed mid-disconnect. */
+export const DISCONNECT_VAULT_REMOVE_ERROR = "disconnect_vault_remove_error";
+
+export interface DisconnectProviderAccountOptions {
+  logger: {
+    info: (...args: unknown[]) => void;
+    warn: (...args: unknown[]) => void;
+  };
+  /** The disconnected account's provider id (e.g. "youtube"). */
+  providerId: string;
+  /** The disconnected account's key (the internalAccountId). */
+  accountKey: string;
+  /** The provider's OAuthAccountStore (the OS vault) — record + tokens are removed. */
+  accountStore: DisconnectAccountRemovalStore;
+}
+
+export interface DisconnectProviderAccountResult {
+  /** True only when BOTH legs succeeded (vault removal AND partition clear). */
+  success: boolean;
+  /** The account's record AND tokens were removed from the OS vault. */
+  vaultRemoved: boolean;
+  /** The account's scoped embedded-browser partition was cleared. */
+  partitionCleared: boolean;
+  /** Typed error codes, vault-leg errors first then the partition error; empty on success. */
+  errors: string[];
+}
+
+/**
+ * The full provider-account disconnect composition (P8-VAULT-1 ruling 6):
+ * remove the disconnected account's record + tokens from the OS vault AND
+ * clear its scoped embedded-browser partition — one idempotent,
+ * order-independent call for the future account host. NO IPC/preload/
+ * renderer surface is invented here (mounting is the mount order's call).
+ *
+ * Order-independence by construction: BOTH legs are always attempted — a
+ * vault-remove failure never skips the partition clear, and a partition-clear
+ * failure never skips the vault removal — so the observable end state never
+ * depends on leg order, and a retry of the same call converges (every leg
+ * operation is itself idempotent). An unscoped call refuses without touching
+ * the vault or ANY partition.
+ */
+export async function disconnectProviderAccount(
+  options: DisconnectProviderAccountOptions,
+): Promise<DisconnectProviderAccountResult> {
+  const providerId = options.providerId?.trim();
+  const accountKey = options.accountKey?.trim();
+  if (!providerId || !accountKey || typeof options.accountStore?.removeAccount !== "function") {
+    options.logger.warn(
+      "[provider-disconnect] refusing unscoped disconnect: providerId + accountKey + accountStore " +
+        "are all required (a disconnect may only remove ONE account's vault entries and ONE " +
+        "account's partition; nothing is touched otherwise)",
+      {
+        hasProviderId: Boolean(providerId),
+        hasAccountKey: Boolean(accountKey),
+        hasAccountStore: typeof options.accountStore?.removeAccount === "function",
+      },
+    );
+    return {
+      success: false,
+      vaultRemoved: false,
+      partitionCleared: false,
+      errors: [INVALID_DISCONNECT_SCOPE_ERROR],
+    };
+  }
+
+  // Leg 1 — the OS vault removes. Each remove is attempted even when the
+  // other threw (disjoint files, idempotent): a partial failure can never
+  // strand one half of the account's vault entries, and a retry heals.
+  const errors: string[] = [];
+  let vaultRemoved = true;
+  const vaultRemovals: Array<[label: string, remove: () => Promise<void>]> = [
+    ["tokens", () => options.accountStore.removeTokens(accountKey)],
+    ["record", () => options.accountStore.removeAccount(accountKey)],
+  ];
+  for (const [label, remove] of vaultRemovals) {
+    try {
+      await remove();
+    } catch (error) {
+      vaultRemoved = false;
+      errors.push(DISCONNECT_VAULT_REMOVE_ERROR);
+      options.logger.warn(
+        "[provider-disconnect] vault remove failed during disconnect (idempotent retry converges)",
+        { providerId, accountKey, entry: label, error: String(error) },
+      );
+    }
+  }
+
+  // Leg 2 — the scoped partition clear (P8-ISOLATION-WIRING-1 #3; refuses
+  // unscoped and never touches the shared partition — unchanged).
+  const partition = await clearDisconnectedProviderAccountPartition({
+    logger: options.logger,
+    providerId,
+    accountKey,
+  });
+  if (!partition.success) {
+    errors.push(partition.error ?? "embedded_browser_clear_failed");
+  }
+
+  if (errors.length === 0) {
+    options.logger.info(
+      "[provider-disconnect] provider account disconnected (vault entries removed + scoped partition cleared)",
+      { providerId, accountKey },
+    );
+  }
+  return {
+    success: vaultRemoved && partition.success,
+    vaultRemoved,
+    partitionCleared: partition.success,
+    errors,
+  };
 }
