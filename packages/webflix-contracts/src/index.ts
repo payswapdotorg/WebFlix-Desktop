@@ -72,3 +72,15 @@ export * from "./errors";
 // (the frozen catalog shapes reused verbatim), and the ONE rejecting
 // error code search/source-invalid on the sibling's own vocabulary.
 export * from "./search";
+
+// Ad Center personal memory (Phase 7, P7-AD-MEMORY-1 — WF-029): the ads
+// lane's own memory sibling (0.12.0 -> 0.13.0 additive, the ads-sources
+// discipline) — the closed AdMemoryScope union, the per-scope
+// AdMemoryConsent record (grants + revocations with timestamps — consent
+// is DATA, never ambient), the SavedAdRecord (an AdRecord reference +
+// user note + saved-at), the UserObservation with its closed
+// user-stated provenance label (never conflated with source-backed
+// evidence), the AdMemoryEntry union, and the AdMemoryRefusal reasons
+// (ads-memory/consent-required, ads-memory/scope-revoked) carried as
+// DATA, never thrown.
+export * from "./ads-memory";

@@ -240,6 +240,25 @@ forbiddenImports:
       - TransparencySourceDescriptor
       - TransparencySourceOptions
       - TransparencySourcePort
+      # P7-AD-MEMORY-1 (0.13.0 additive ads sibling — ads-memory.ts): the
+      # personal-memory symbols extend the list in lockstep per the standing
+      # comment above (the P5-SOURCES precedent).
+      - AdMemoryScopeSchema
+      - AdMemoryScope
+      - AdMemoryConsentSchema
+      - AdMemoryConsent
+      - SavedAdRecordSchema
+      - SavedAdRecord
+      - UserObservationProvenanceSchema
+      - UserObservationProvenance
+      - UserObservationSchema
+      - UserObservation
+      - AdMemoryEntrySchema
+      - AdMemoryEntry
+      - AdMemoryRefusalReasonSchema
+      - AdMemoryRefusalReason
+      - AdMemoryRefusalSchema
+      - AdMemoryRefusal
   - id: ads-separation-reverse
     description: >-
       The ads contract module imports nothing from the ranking/intelligence
