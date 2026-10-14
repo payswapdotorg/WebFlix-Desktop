@@ -93,10 +93,18 @@ The release audit §5 explicitly defers remedy choice to TL2. Rulings:
   webflixProductSurface enforcement at the real surface owners with
   policy-data realignment (the §3.4 finding, #4). Work order:
   docs/plans/work-orders/P8-ISOLATION-WIRING-1.md.
+- **P8-VAULT-1** — the production OS vault behind the OAuthAccountStore
+  seam (audit §1.5's "no implementation exists" gap): a desktop
+  main-process encrypted-at-rest account/token store (Electron
+  safeStorage key management, the credentialService's own named path)
+  with scoped keys, fail-closed unavailability, idempotent removes, and
+  the disconnect composition (vault remove + the P8-ISOLATION scoped
+  partition clear). Work order:
+  docs/plans/work-orders/P8-VAULT-1.md.
 - Future (blocked, honestly): target-platform smokes + release
   evidence run (needs a release-capable box), T-7 e2e coexistence
   installs, T-10 e2e notices/recovery (needs a real feed), the
-  production OS vault behind OAuthAccountStore (audit §1.5), the
-  renderer-boundary preload test (no preload surface exists, §4.2 #6).
-  These stay named-not-ordered until their blockers clear; the operator
-  re-opens parked rows explicitly.
+  renderer-boundary preload test (no preload surface exists, §4.2 #6),
+  provider webview/account-UI surfaces (the mount order). These stay
+  named-not-ordered until their blockers clear; the operator re-opens
+  parked rows explicitly.
