@@ -8,6 +8,8 @@
  *    (2026-10-10) because it had drifted from the frozen §2.2 shapes.
  *  - pure PlaybackPlan resolution (official-embed | local-file | unavailable)
  *  - WebFlix-owned progress helpers (provider writes are explicit ops only)
+ *  - capability-aware player controls (P7-PLAYER-1 / WF-006): the typed
+ *    ControlsAvailability matrix + ControlCommand applicability seam
  */
 
 export {
@@ -33,3 +35,4 @@ export {
   type UnavailableReason,
 } from "webflix-contracts";
 export * from "./resolve.js";
+export * from "./controls.js";
