@@ -389,19 +389,30 @@ jobs:
           fi
           echo "[deb] hicolor webflix.png icon present"
 
-          echo "== AppImage desktop entry identity =="
+          echo "== AppImage desktop entry + executable identity =="
+          # electron-builder 的 AppImage target（appImageUtil.js writeAppLauncherAndRelatedFiles）：
+          #   - desktop 文件命名为 <executableName>.desktop → 必须是 webflix.desktop；
+          #   - Exec 行是上游固化的 `AppRun --no-sandbox %U` 约定（AppImageTarget.js
+          #     APP_RUN_ENTRYPOINT="AppRun"）——AppRun 是生成的 bash 脚本，最终 exec
+          #     的是 AppDir 里的 webflix 二进制。真正的执行身份断言落在该二进制上。
           APPIMAGE_EXTRACT_DIR="$(mktemp -d)"
-          (cd "$APPIMAGE_EXTRACT_DIR" && "$GITHUB_WORKSPACE/$APPIMAGE" --appimage-extract "*.desktop")
-          APPIMAGE_DESKTOP="$(find "$APPIMAGE_EXTRACT_DIR" -name "*.desktop" -type f)"
-          if [ -z "$APPIMAGE_DESKTOP" ]; then
-            (cd "$APPIMAGE_EXTRACT_DIR" && "$GITHUB_WORKSPACE/$APPIMAGE" --appimage-extract)
-            APPIMAGE_DESKTOP="$(find "$APPIMAGE_EXTRACT_DIR" -maxdepth 2 -name "*.desktop" -type f)"
-          fi
-          if [ -z "$APPIMAGE_DESKTOP" ]; then
-            echo "FAIL: no .desktop entry found inside AppImage" >&2
+          (cd "$APPIMAGE_EXTRACT_DIR" && "$GITHUB_WORKSPACE/$APPIMAGE" --appimage-extract)
+          APPIMAGE_ROOT="$APPIMAGE_EXTRACT_DIR/squashfs-root"
+          APPIMAGE_DESKTOP="$APPIMAGE_ROOT/webflix.desktop"
+          if [ ! -f "$APPIMAGE_DESKTOP" ]; then
+            echo "FAIL: AppImage desktop entry is not webflix.desktop (found: $(find "$APPIMAGE_ROOT" -maxdepth 1 -name '*.desktop' -type f))" >&2
             exit 1
           fi
-          assert_desktop_entry "$APPIMAGE_DESKTOP" "appimage"
+          grep -qx "Name=WebFlix" "$APPIMAGE_DESKTOP" || { echo "FAIL: appimage desktop Name is not WebFlix" >&2; exit 1; }
+          grep -qx "Icon=webflix" "$APPIMAGE_DESKTOP" || { echo "FAIL: appimage desktop Icon is not webflix" >&2; exit 1; }
+          grep -Eq "^Exec=AppRun( |$)" "$APPIMAGE_DESKTOP" || { echo "FAIL: appimage desktop Exec is not the upstream AppRun entrypoint convention: $(grep '^Exec=' "$APPIMAGE_DESKTOP")" >&2; exit 1; }
+          grep -q "x-scheme-handler/webflix" "$APPIMAGE_DESKTOP" || { echo "FAIL: appimage desktop entry missing webflix:// scheme" >&2; exit 1; }
+          echo "[appimage] desktop entry identity OK (webflix.desktop; Exec=AppRun upstream convention)"
+          if [ ! -x "$APPIMAGE_ROOT/webflix" ]; then
+            echo "FAIL: AppImage does not contain an executable webflix binary" >&2
+            exit 1
+          fi
+          echo "[appimage] executable webflix binary present (AppRun target)"
 
           echo "== baked product flavor inside app.asar =="
           (cd packages/desktop && VERSION="$VERSION" node --input-type=module <<'EOF'
