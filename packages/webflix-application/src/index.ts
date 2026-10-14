@@ -203,3 +203,21 @@ export * from "./fixture-replay-transparency-source";
 // order behind the same port).
 export * from "./federated-search";
 export * from "./fixture-search-sources";
+// P7-RETENTION-1 (Phase-7 wave-1 row 3): WF-021 history/retention controls
+// — typed use cases + the retention store seams over WebFlix-owned local
+// records ONLY. history-retention.ts owns the ports (the persisted pause
+// preference store; the scoped record stores for history/progress/feedback,
+// with the watch-history append PAUSE-AWARE at the store seam — the typed
+// `paused` outcome, never a silent no-op) and the five use cases:
+// pauseHistoryTracking / resumeHistoryTracking (persisted preference),
+// resetLocalData (scoped history | progress | feedback | all — deletes only
+// ever claim the confirmed WebFlix-local scope), getRetentionState (the
+// boundary view model) and describeDataBoundaries (the typed, i18n-ready
+// local/provider/derived explanation — provider-owned records are reported
+// as not deletable here, never touched, never claimed).
+// in-memory-retention-stores.ts ships the NOT-DURABLE fixture doubles
+// (pure-test defaults; the durable adapters are a later local-library
+// order, wired by P7-COMPOSE-1). NO contract edits, NO shell edits, NO
+// existing use-case edits in this lane.
+export * from "./history-retention";
+export * from "./in-memory-retention-stores";
