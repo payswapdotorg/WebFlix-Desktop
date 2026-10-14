@@ -32,6 +32,7 @@ YouTube integration must use each user's own authorization and preserve the stan
 7. [Upstream baseline and reuse policy](docs/architecture/upstream-baseline.md)
 8. [YouTube-first per-user strategy ADR](docs/adr/0003-youtube-first-per-user-identity.md)
 9. [Provider policy matrix](docs/architecture/provider-policy-matrix.md)
+10. [Ubuntu desktop release work order](docs/plans/work-orders/P9-UBUNTU-WEBFLIX-1.md)
 
 When a document, issue comment, external chat or worker summary conflicts with the checked-in requirements and decisions, follow the repository. Record changes as a reviewed ADR/documentation change; do not silently drift.
 
