@@ -27,7 +27,7 @@ Read, in order:
 ## Hard dependency and sequencing
 
 - `P8-VAULT-1` is currently recorded as queued. The production per-user credential vault and its isolation guarantees must be merged before the release candidate claims that provider-account connection is production-ready. Do not bypass this dependency with plaintext storage, a shared operator account, cookie reuse, mocked credentials, or an undocumented browser session.
-- Workers may begin the disjoint UI/packaging/test-harness work below in parallel immediately, after independently confirming their base SHA and registering their child claim. Do not write files owned by another child claim. Account-connect IPC/preload wiring and the final candidate acceptance wait until P8-VAULT-1 has landed.
+- Respect the existing three-worker capacity: queued `P8-VAULT-1` is assigned to the D1/Worker-1 lane, so TL2 must not double-book that worker. While Worker 1 completes P8-VAULT-1, Worker 2 may start `P9-LINUX-1` and Worker 3 may start `P9-QA-1` preparation in their non-overlapping paths. Start `P9-UI-1` as soon as Worker 1 is free (or reassign P8-VAULT-1 only after TL2 updates the ledger and has a genuinely available lane). This is a resource schedule, not permission to skip any child claim. Every worker must verify its current base SHA and own claim before editing; never write files assigned to another claim. Account-connect IPC/preload wiring and final candidate acceptance wait until P8-VAULT-1 has landed.
 - If an actual blocker prevents this sequence, report it in the ledger; do not redefine an unverified state as complete.
 
 ## Parallel worker grants
