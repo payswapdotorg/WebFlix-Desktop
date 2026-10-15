@@ -31,6 +31,27 @@ Test from a clean WebFlix development profile with no imported ZCode settings/se
 12. Architecture and automated gates pass on the exact merged SHA.
 13. Packaged artifact launches and passes the same core scenario on a documented target OS.
 
+## Packaged-artifact smoke (tier 6, Linux)
+
+Tier 6 is exercised by `packages/desktop/scripts/e2e/webflix-packaged-smoke.mjs`. It never launches the dev server: it launches the **real packaged Ubuntu artifacts** — the `.deb` installed tree (rootless `dpkg-deb -x`, faithful to the shipped desktop entry, no `--no-sandbox`) and/or the AppImage (`--appimage-extract`, the documented no-FUSE path, run via its shipped `AppRun --no-sandbox` form) — each under a fresh throwaway `HOME`, its own `Xvfb`, and CDP automation through `playwright-core` (the repo's automation harness). Nothing is inferred from a green exit: every assertion reads the live packaged process, the live DOM, or the real filesystem the packaged app wrote, and every run leaves `results.json` (per-assertion pass/fail/blocked + detail), the full main-process log (`main-<flavor>.log`), and one PNG screenshot per covered state.
+
+Covered, per flavor (requirement mapping in `docs/operations/ubuntu-release-evidence.md`): launch markers, `document.title`/product mark/splash identity, real-click navigation of Home/Search/Library/Accounts/Settings, the ZCode/Z.ai visible-surface leak scan, the fail-closed vault banner and no-token-material check in a secret-service-less environment, honest not-connected/connect-refusal account states, requires-auth search, offline local library, a REAL file-picker import and REAL `<video>` playback of the imported object URL, the H1 fail-closed updater refusal marker, native-module/dlopen/crash-dump scans, SIGTERM shutdown, the `~/.webflix` data-root contract (with `~/.zcode` creation recorded as a FAIL finding while that leak is open), the user-level desktop entry identity, a same-HOME restart (identity restored, session-only library honestly empty again), and the packaged static identity surfaces (desktop entry fields, deb control fields, hicolor icons).
+
+Usage (from `packages/desktop`; `--deb`/`--appimage` are independently optional, no `--media` ⇒ local-media records BLOCKED, never passes):
+
+```bash
+node scripts/e2e/webflix-packaged-smoke.mjs \
+  --deb WebFlix-<version>-linux-amd64.deb \
+  --appimage WebFlix-<version>-linux-x86_64.AppImage \
+  --media webflix-smoke-test-clip.mp4 \
+  --out <evidence-dir>
+ffmpeg -f lavfi -i testsrc=duration=3:size=320x240:rate=15 \
+  -f lavfi -i sine=frequency=440:duration=3 \
+  -pix_fmt yuv420p -c:a aac -shortest webflix-smoke-test-clip.mp4
+```
+
+Outcome semantics: `BLOCKED` is a first-class outcome and never counts as passed (external-source flows without authorized credentials — the tier-5 YouTube scenario — stay BLOCKED here, not "green"). Genuine product defects observed on the packaged build are recorded as FAIL findings and tracked in the release evidence doc; the release candidate is not clean while an open FAIL finding exists. Re-run flakiness (e.g. an intermittent restart stall) must be reported with the observed frequency, not silently retried away.
+
 ## YouTube-first desktop acceptance
 
 In addition to the local-first scenario above, test the first external-platform slice with a dedicated test user's own YouTube account and a fresh WebFlix profile:
