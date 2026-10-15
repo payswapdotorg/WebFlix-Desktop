@@ -735,6 +735,12 @@ export default {
     // 与 /usr/share/icons/hicolor/*/apps/zcode.png 保持一致。
     executableName: desktopProductIdentity.linuxExecutableName,
     category: "Development",
+    // P9-LINUX-1：desktop entry Comment 与 deb/rpm control Description 跟随产品身份
+    // （LinuxTargetHelper.getDescription：linux.description 优先于 package.json
+    // description）。生产/Preview 值与原回落值逐字相同（零行为变化）；WebFlix 为
+    // "WebFlix Desktop App"——run 38657065806 曾把 "ZCode Desktop App" 泄漏进
+    // WebFlix desktop entry 与 deb 元数据，freeze §6.1 产品面不允许。
+    description: desktopProductIdentity.desktopEntryDescription,
     // P8-RELEASE-DRIFT-1（R4）：deb maintainer 随产品身份（WebFlix 值 PROPOSED，待 TL2 复核）；
     // fpm 的非空校验由身份模块的字段保证（authorName/authorEmail 恒非空）。
     maintainer: `${desktopProductIdentity.authorName} <${desktopProductIdentity.authorEmail}>`,

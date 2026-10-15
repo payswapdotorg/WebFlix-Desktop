@@ -38,6 +38,13 @@ export interface DesktopProductIdentity {
   readonly installManifestName: string;
   /** Dev updater-experiment cache dir name (dev-app-update.yml; R4). */
   readonly updaterCacheDirName: string;
+  /**
+   * Linux desktop-entry Comment + deb/rpm control Description
+   * (electron-builder linux.description; P9-LINUX-1). ZCode flavors keep the
+   * historical package.json fallback value verbatim; WebFlix derives it from
+   * productName (never a ZCode string on the WebFlix product surface).
+   */
+  readonly desktopEntryDescription: string;
   /** WebFlix flavor only (frozen §6.1). */
   readonly linuxPackageGlob?: string;
   readonly dataRoot?: string;

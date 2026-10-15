@@ -233,6 +233,7 @@ jobs:
           assertEqual("linux.executableName", config.linux.executableName, "webflix");
           assertEqual("deb.packageName", config.deb.packageName, "webflix-desktop");
           assertEqual("linux.maintainer", config.linux.maintainer, "WebFlix <dev@webflix.org>");
+          assertEqual("linux.description", config.linux.description, "WebFlix Desktop App");
           assertEqual("protocols[0].schemes[0]", config.protocols[0].schemes[0], "webflix");
           const targets = config.linux.target;
           if (
@@ -260,6 +261,9 @@ jobs:
           }
           if (config.appId !== "dev.zcode.app" || config.protocols[0].schemes[0] !== "zcode") {
             throw new Error("default (ZCode) lane identity drifted");
+          }
+          if (config.linux.description !== "ZCode Desktop App") {
+            throw new Error(`default (ZCode) lane description drifted: ${config.linux.description}`);
           }
           console.log("[builder-config] default lane OK: linux.target =", targets.join(","));
           EOF
@@ -360,6 +364,15 @@ jobs:
           check_field Version "$VERSION"
           check_field Homepage "https://webflix.org"
           check_field Maintainer "WebFlix <dev@webflix.org>"
+          if dpkg-deb -f "$DEB" Description | grep -qi "zcode"; then
+            echo "FAIL: deb control Description leaks a ZCode string" >&2
+            dpkg-deb -f "$DEB" Description >&2
+            exit 1
+          fi
+          dpkg-deb -f "$DEB" Description | grep -q "WebFlix Desktop App" || {
+            echo "FAIL: deb control Description is not the WebFlix description" >&2
+            exit 1
+          }
           echo "[deb] Package=$(field Package) Version=$(field Version)"
           echo "[deb] Homepage=$(field Homepage)"
           echo "[deb] Maintainer=$(field Maintainer)"
@@ -380,6 +393,12 @@ jobs:
             grep -qx "Icon=webflix" "$entry_file" || { echo "FAIL: $label desktop Icon is not webflix" >&2; exit 1; }
             grep -Eq "^Exec=.*webflix( |$)" "$entry_file" || { echo "FAIL: $label desktop Exec does not run webflix" >&2; exit 1; }
             grep -q "x-scheme-handler/webflix" "$entry_file" || { echo "FAIL: $label desktop entry missing webflix:// scheme" >&2; exit 1; }
+            grep -qx "Comment=WebFlix Desktop App" "$entry_file" || { echo "FAIL: $label desktop Comment leaks non-WebFlix description: $(grep '^Comment=' "$entry_file")" >&2; exit 1; }
+            if grep -qi "zcode" "$entry_file"; then
+              echo "FAIL: $label desktop entry contains a ZCode string" >&2
+              grep -in "zcode" "$entry_file" >&2
+              exit 1
+            fi
             echo "[$label] desktop entry identity OK"
           }
           assert_desktop_entry "$DEB_DESKTOP" "deb"
@@ -407,6 +426,12 @@ jobs:
           grep -qx "Icon=webflix" "$APPIMAGE_DESKTOP" || { echo "FAIL: appimage desktop Icon is not webflix" >&2; exit 1; }
           grep -Eq "^Exec=AppRun( |$)" "$APPIMAGE_DESKTOP" || { echo "FAIL: appimage desktop Exec is not the upstream AppRun entrypoint convention: $(grep '^Exec=' "$APPIMAGE_DESKTOP")" >&2; exit 1; }
           grep -q "x-scheme-handler/webflix" "$APPIMAGE_DESKTOP" || { echo "FAIL: appimage desktop entry missing webflix:// scheme" >&2; exit 1; }
+          grep -qx "Comment=WebFlix Desktop App" "$APPIMAGE_DESKTOP" || { echo "FAIL: appimage desktop Comment leaks non-WebFlix description: $(grep '^Comment=' "$APPIMAGE_DESKTOP")" >&2; exit 1; }
+          if grep -qi "zcode" "$APPIMAGE_DESKTOP"; then
+            echo "FAIL: appimage desktop entry contains a ZCode string" >&2
+            grep -in "zcode" "$APPIMAGE_DESKTOP" >&2
+            exit 1
+          fi
           echo "[appimage] desktop entry identity OK (webflix.desktop; Exec=AppRun upstream convention)"
           if [ ! -x "$APPIMAGE_ROOT/webflix" ]; then
             echo "FAIL: AppImage does not contain an executable webflix binary" >&2
