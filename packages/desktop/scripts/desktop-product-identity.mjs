@@ -33,6 +33,16 @@ const PRODUCTION_IDENTITY = Object.freeze({
   installManifestName: ".zcode-install-manifest",
   /** 开发态更新实验的下载缓存目录名（dev-app-update.yml）。 */
   updaterCacheDirName: "zcode-dev-updater",
+  /*
+   * P9-LINUX-1：Linux desktop entry Comment 与 deb/rpm control Description 的
+   * 解析源（electron-builder LinuxTargetHelper.getDescription：linux.description
+   * 优先，缺省回落 package.json description，即 "ZCode Desktop App"）。生产/Preview
+   * 显式保持与回落值逐字相同，零行为变化；WebFlix 不得携带 ZCode 字样
+   * （freeze §6.1 产品面——run 38657065806 证据：desktop entry Comment 与 deb
+   * control Description 曾泄漏 "ZCode Desktop App"）。值由 productName 推导，
+   * 不属于 PROPOSED homepage/author/maintainer 一类待定元数据。
+   */
+  desktopEntryDescription: "ZCode Desktop App",
 });
 
 const PREVIEW_IDENTITY = Object.freeze({
@@ -48,6 +58,9 @@ const PREVIEW_IDENTITY = Object.freeze({
   authorEmail: "dev@zcode.z.ai",
   installManifestName: ".zcode-install-manifest",
   updaterCacheDirName: "zcode-dev-updater",
+  // 见 PRODUCTION_IDENTITY.desktopEntryDescription 注释（P9-LINUX-1）：Preview 与
+  // 生产共用同一描述，保持现状回落值，零行为变化。
+  desktopEntryDescription: "ZCode Desktop App",
 });
 
 /**
@@ -85,6 +98,13 @@ const WEBFLIX_DESKTOP_IDENTITY = Object.freeze({
   installManifestName: ".webflix-install-manifest",
   /** WebFlix 开发态更新实验缓存目录名（当前更新器对 WebFlix fail-closed 拒绝，见 H1）。 */
   updaterCacheDirName: "webflix-dev-updater",
+  /*
+   * P9-LINUX-1：WebFlix 的 Linux desktop entry Comment / deb control Description。
+   * run 38657065806 证据修复：此前回落 package.json description，把 "ZCode Desktop App"
+   * 带进 WebFlix desktop entry 与 deb 元数据（freeze §6.1 产品面不允许）。由
+   * productName 推导（同 installManifestName 的推导层级，非 PROPOSED 待定值）。
+   */
+  desktopEntryDescription: "WebFlix Desktop App",
 });
 
 export const desktopProductIdentities = Object.freeze({

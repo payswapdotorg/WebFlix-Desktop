@@ -453,6 +453,32 @@ function assertPackagedNodePtyPrebuild(context) {
     throw new Error(`node-pty 预编译产物缺失: ${targetBinaryPath}`);
 }
 
+// P9-LINUX-1：Linux 目标集合支持按环境变量收敛。完整默认集合保持不变（本地/ZCode
+// 打包链继续一次产出 AppImage/deb/rpm/pacman）；CI 流水线只需要其中子集时可设
+// ZCODE_LINUX_TARGETS="AppImage,deb" 显式收敛——例如 GitHub Actions ubuntu runner
+// 不带 rpmbuild/xz（见上方 rpm 注释：fpm 产 rpm 需要构建机自备），强行全量会在
+// rpm/pacman 阶段直接失败。取值必须是默认集合的非空子集，未知拼写/空集直接报错
+// （fail-closed，与身份开关的严格语义一致），避免拼错目标名后静默产出缺格式的包。
+const DEFAULT_LINUX_TARGETS = ["AppImage", "deb", "rpm", "pacman"];
+
+function resolveLinuxBuildTargets(env = process.env) {
+  const raw = env.ZCODE_LINUX_TARGETS?.trim();
+  if (!raw) {
+    return DEFAULT_LINUX_TARGETS;
+  }
+  const requested = raw
+    .split(",")
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+  const unknown = requested.filter((entry) => !DEFAULT_LINUX_TARGETS.includes(entry));
+  if (requested.length === 0 || unknown.length > 0) {
+    throw new Error(
+      `invalid ZCODE_LINUX_TARGETS=${raw}; expected a non-empty comma-separated subset of ${DEFAULT_LINUX_TARGETS.join(", ")}`,
+    );
+  }
+  return requested;
+}
+
 /** @type {import("electron-builder").Configuration} */
 export default {
   appId: desktopProductIdentity.appId,
@@ -700,7 +726,8 @@ export default {
     artifactName: buildDesktopArtifactName("win"),
   },
   linux: {
-    target: ["AppImage", "deb", "rpm", "pacman"],
+    // P9-LINUX-1：默认全量四目标；ZCODE_LINUX_TARGETS 可收敛为子集（见上方注释）。
+    target: resolveLinuxBuildTargets(process.env),
     artifactName: buildDesktopArtifactName("linux"),
     // desktop 包名是 scoped package（@zcode/desktop），electron-builder 默认会把
     // Linux executable/Icon 推成 @zcodedesktop。部分桌面环境无法按这个 icon name 命中
@@ -708,6 +735,12 @@ export default {
     // 与 /usr/share/icons/hicolor/*/apps/zcode.png 保持一致。
     executableName: desktopProductIdentity.linuxExecutableName,
     category: "Development",
+    // P9-LINUX-1：desktop entry Comment 与 deb/rpm control Description 跟随产品身份
+    // （LinuxTargetHelper.getDescription：linux.description 优先于 package.json
+    // description）。生产/Preview 值与原回落值逐字相同（零行为变化）；WebFlix 为
+    // "WebFlix Desktop App"——run 38657065806 曾把 "ZCode Desktop App" 泄漏进
+    // WebFlix desktop entry 与 deb 元数据，freeze §6.1 产品面不允许。
+    description: desktopProductIdentity.desktopEntryDescription,
     // P8-RELEASE-DRIFT-1（R4）：deb maintainer 随产品身份（WebFlix 值 PROPOSED，待 TL2 复核）；
     // fpm 的非空校验由身份模块的字段保证（authorName/authorEmail 恒非空）。
     maintainer: `${desktopProductIdentity.authorName} <${desktopProductIdentity.authorEmail}>`,
