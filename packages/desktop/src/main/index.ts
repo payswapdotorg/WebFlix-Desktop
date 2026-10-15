@@ -206,6 +206,12 @@ import { createDesktopHelpConfigReader } from "./desktopHelpConfig.js";
 import { registerPlatformIpcHandlers } from "./desktopMainIpcPlatform.js";
 import { loadCliMcpFromUserDirectory, migrateLegacyCommonMcp } from "./mcpUserDirectory/index.js";
 import { registerRemoteIpcHandlers } from "./desktopMainIpcRemote.js";
+// P9-UI-1 (requirement 5, post-P8-VAULT-1 additive account wiring): the
+// explicitly-permissioned WebFlix Accounts IPC surface. Consumes — never
+// modifies — the merged OS vault (createOsVaultAccountStore) and the ruling-6
+// disconnect composition; registration itself is a NO-OP outside the baked
+// webflix flavor (zero ZCode-build surface).
+import { registerWebFlixAccountIpc } from "./webflixAccountIpc.js";
 import {
   configureDesktopStabilityTelemetry,
   getStabilityLifecycleScene,
@@ -2174,6 +2180,12 @@ app.whenReady().then(async () => {
     env: process.env,
     logger,
   });
+
+  // P9-UI-1 (requirement 5): the WebFlix Accounts IPC channels (webflix
+  // flavor only — registerWebFlixAccountIpc no-ops otherwise). Fail-closed
+  // by construction: without OS secure storage the status surface answers
+  // with the typed refusal; tokens never cross the boundary.
+  registerWebFlixAccountIpc({ logger });
 
   registerRemoteIpcHandlers({
     logger,

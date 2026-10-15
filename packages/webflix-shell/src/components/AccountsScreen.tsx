@@ -45,6 +45,16 @@ export interface AccountsScreenProps {
   readonly accounts?: readonly ProviderAccountRecord[];
   readonly onConnect?: (providerId: string) => void;
   readonly onDisconnect?: (internalAccountId: string) => void;
+  /**
+   * P9-UI-1 (order requirement 5 — the truthful connect outcome): the typed
+   * outcome of the LAST real connect attempt for a provider, rendered as an
+   * honest status line in that provider's card. null = no attempt yet
+   * (nothing rendered — nothing invented). The outcome comes from the real
+   * main-process account bridge; in this build connect is honestly
+   * UNAVAILABLE (no operator-provisioned OAuth client), and the line says
+   * exactly that instead of pretending a flow started.
+   */
+  readonly connectOutcome?: { providerId: string; ok: boolean; reason: string } | null;
 }
 
 const styles: Record<string, React.CSSProperties> = {
@@ -121,7 +131,7 @@ const styles: Record<string, React.CSSProperties> = {
 };
 
 export function AccountsScreen(props: AccountsScreenProps) {
-  const { accounts = [], onConnect, onDisconnect } = props;
+  const { accounts = [], onConnect, onDisconnect, connectOutcome = null } = props;
 
   const byProvider = new Map<string, ProviderAccountRecord[]>();
   for (const account of accounts) {
@@ -162,6 +172,21 @@ export function AccountsScreen(props: AccountsScreenProps) {
                 >
                   Connect
                 </button>
+                {/* P9-UI-1: the truthful typed connect outcome — rendered only
+                    for the provider it belongs to, only when an attempt
+                    actually happened. */}
+                {connectOutcome !== null && connectOutcome.providerId === provider.id && (
+                  <p
+                    data-testid={`connect-outcome-${provider.id}`}
+                    role="status"
+                    style={{
+                      ...styles.muted,
+                      color: connectOutcome.ok ? theme.colors.ok : theme.colors.warning,
+                    }}
+                  >
+                    {connectOutcome.reason}
+                  </p>
+                )}
               </div>
             )}
 

@@ -85,6 +85,12 @@ import {
   shouldEnableE2ETestBridge,
 } from "@zcode/shared";
 import { createOAuthCallbackHandler } from "./oauthCallbackBridge.js";
+// P9-UI-1 (requirement 5): the WebFlix Accounts preload bridge — a new,
+// narrowly scoped module (exactly three typed methods over three namespaced
+// channels; no token-bearing payload exists on the surface). Self-registers
+// at import evaluation and is a NO-OP unless the baked product flavor is
+// "webflix", so ZCode production/preview preloads gain nothing.
+import "./webflixAccountBridge.js";
 
 if (shouldEnableE2ETestBridge(process.env)) {
   contextBridge.exposeInMainWorld("__zcodeFinalArmsCustomEventsE2E", {

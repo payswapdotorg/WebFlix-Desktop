@@ -6,6 +6,13 @@ export interface LibraryScreenProps {
   readonly collections?: readonly Collection[];
   readonly localEntries?: readonly CatalogItem[];
   readonly onPlay?: (item: CatalogItem) => void;
+  /**
+   * P9-UI-1 (order requirement 3 — the real local import path): fires when
+   * the user asks to import local media files. The HOST owns the picker
+   * (a real file input in the desktop renderer); the shell only renders the
+   * affordance — absent handler = no button (never a dead control).
+   */
+  readonly onImportLocalFiles?: () => void;
 }
 
 const styles: Record<string, React.CSSProperties> = {
@@ -52,10 +59,23 @@ const styles: Record<string, React.CSSProperties> = {
     padding: "6px 12px",
     cursor: "pointer",
   },
+  // P9-UI-1: the import affordance is a PRIMARY action — accent-filled like
+  // the shell's other primary buttons (AccountsScreen connect button).
+  importButton: {
+    alignSelf: "flex-start",
+    background: theme.colors.accent,
+    color: "#08211b",
+    border: "none",
+    borderRadius: theme.radii.sm,
+    padding: "8px 14px",
+    fontWeight: 600,
+    cursor: "pointer",
+    minHeight: 44,
+  },
 };
 
 export function LibraryScreen(props: LibraryScreenProps) {
-  const { collections = [], localEntries = [], onPlay } = props;
+  const { collections = [], localEntries = [], onPlay, onImportLocalFiles } = props;
 
   return (
     <section aria-label="Library" style={styles.root}>
@@ -91,11 +111,25 @@ export function LibraryScreen(props: LibraryScreenProps) {
 
       <div style={styles.card}>
         <h2 style={styles.cardTitle}>Local entries</h2>
+        {/* P9-UI-1: the real import path — rendered only when the host wired a
+            real picker; the honest empty state below still explains itself. */}
+        {onImportLocalFiles && (
+          <button
+            type="button"
+            style={styles.importButton}
+            data-testid="library-import-local-files"
+            onClick={onImportLocalFiles}
+          >
+            Import local files…
+          </button>
+        )}
         {localEntries.length === 0 ? (
           <div data-testid="library-local-empty" style={styles.empty}>
             <p style={styles.muted}>
-              No local files yet. Point the local library (D2) at a folder of videos you own and
-              they will be listed here.
+              No local files yet.{" "}
+              {onImportLocalFiles
+                ? "Import files you own with the button above — entries are session-only in this build (the durable local-library bridge is a later order)."
+                : "Point the local library (D2) at a folder of videos you own and they will be listed here."}
             </p>
           </div>
         ) : (

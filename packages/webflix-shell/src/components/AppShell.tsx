@@ -56,6 +56,12 @@ export interface AppShellProps {
   readonly onSearchQuery?: (query: string) => void;
   readonly onSearchSubmit?: (query: string) => void;
   readonly onRetrySearch?: () => void;
+  /**
+   * P9-UI-1 (order requirement 3 — the real local import path): passed
+   * through to LibraryScreen; the host owns the actual file picker.
+   * Absent = no import affordance rendered (never a dead control).
+   */
+  readonly onImportLocalFiles?: () => void;
   // DESKTOP-COMPOSITION-1 (the composition row the P4/P5 ledger rows
   // promised): the Ad Center + MI Evaluation surfaces mount props-driven,
   // flat-optional like every other screen prop. Defaults are the honest
@@ -87,6 +93,12 @@ export interface AppShellProps {
   readonly onResumeHistoryTracking?: () => void;
   /** Fires with the CONFIRMED scope (ResetLocalData use case). */
   readonly onResetLocalData?: (scope: RetentionScope) => void;
+  /**
+   * P9-UI-1 (order requirement 5 — the truthful connect outcome): the typed
+   * outcome of the last REAL connect attempt, passed through to
+   * AccountsScreen's honest status line. null = no attempt yet.
+   */
+  readonly connectOutcome?: { providerId: string; ok: boolean; reason: string } | null;
 }
 
 const styles: Record<string, React.CSSProperties> = {
@@ -177,6 +189,8 @@ export function AppShell(props: AppShellProps) {
     onSearchQuery,
     onSearchSubmit,
     onRetrySearch,
+    onImportLocalFiles,
+    connectOutcome = null,
   } = props;
 
   const [screen, setScreen] = useState<ScreenId>(initialScreen);
@@ -227,10 +241,20 @@ export function AppShell(props: AppShellProps) {
           />
         )}
         {screen === "library" && (
-          <LibraryScreen collections={collections} localEntries={localEntries} onPlay={onPlay} />
+          <LibraryScreen
+            collections={collections}
+            localEntries={localEntries}
+            onPlay={onPlay}
+            onImportLocalFiles={onImportLocalFiles}
+          />
         )}
         {screen === "accounts" && (
-          <AccountsScreen accounts={accounts} onConnect={onConnect} onDisconnect={onDisconnect} />
+          <AccountsScreen
+            accounts={accounts}
+            onConnect={onConnect}
+            onDisconnect={onDisconnect}
+            connectOutcome={connectOutcome}
+          />
         )}
         {screen === "settings" && (
           <SettingsScreen
