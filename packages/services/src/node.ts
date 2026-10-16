@@ -2,14 +2,17 @@
 // Node.js service implementations — NOT safe to import in browser code
 import { randomBytes } from "node:crypto";
 import { readFileSync } from "node:fs";
-import { homedir } from "node:os";
 import { join } from "node:path";
 import {
   createNodeProviderRuntimePathEnv,
   NodeModelSelectionConfigRepository,
   PERSONAL_PROVIDER_CONFIG_FILE_NAME,
 } from "@zcode/provider-node";
-import { getAppConfigDir as resolveAppConfigDir } from "./paths.js";
+import {
+  getAppConfigDir as resolveAppConfigDir,
+  isWebFlixDataRootActive,
+  resolveZCodeCliHomeDir,
+} from "./paths.js";
 import {
   buildLocalMediaPreviewUrl,
   isProviderProvisioningAccountCredentialKey,
@@ -60,6 +63,8 @@ export {
   setDataBaseDir,
   getDataBaseDir,
   getZCodeDataRootDir,
+  isWebFlixDataRootActive,
+  resolveZCodeCliHomeDir,
   getConversationWorkspaceDir,
   getAppConfigDir,
   getExportLogStageDir,
@@ -1072,10 +1077,13 @@ export function resolveBundledCuaHelperAppPath(
 export { isOfficialCuaPluginEnabledForWorkspace };
 
 export function hasGlobalCliZCodeCuaServer(env: NodeJS.ProcessEnv = process.env): boolean {
-  const home = env.HOME?.trim() || homedir();
-  const configPath = join(home, ".zcode", "cli", "config.json");
   let parsed: unknown;
   try {
+    // P9-FIX-1 F2：CLI 配置存储的位置跟随产品身份（resolveZCodeCliHomeDir：
+    // ZCODE_HOME 显式覆盖 > 身份感知数据根）。packaged WebFlix 运行时读
+    // `~/.webflix/cli/config.json`，绝不以 `~/.zcode` 为准；身份状态非法时本探测
+    // fail-closed 返回 false（读不到可信配置 = 无全局 zcode-cua server，不注入）。
+    const configPath = join(resolveZCodeCliHomeDir(env), "cli", "config.json");
     parsed = JSON.parse(readFileSync(configPath, "utf8"));
   } catch {
     return false;
@@ -1107,6 +1115,51 @@ function isGlobalCliZCodeCuaServer(name: string, config: unknown): boolean {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+/*
+ * P9-FIX-1 F2：Agent 子进程的 CLI 会话存储钉到身份感知 CLI home。
+ *
+ * 背景（QA 证据 data-root:<flavor>:no-zcode-root）：继承的 zcode-agent 运行时把会话库
+ * 写到自身默认 `~/.zcode/cli/db/db.sqlite`，packaged WebFlix 机器上凭空出现 ~/.zcode。
+ * Agent 侧的会话库位置由 env 契约 ZCODE_SESSION_DB_PATH/ZCODE_SESSION_DB 覆盖
+ * （apps/zcode-cli env-config.adapter：env 层优先于用户配置文件），在 spawn env 里
+ * 注入即可重定向，不必改动 Agent 包（本单允许路径之外）。
+ *
+ * 语义：
+ * - 显式覆盖优先：操作员/测试已设置 ZCODE_SESSION_DB_PATH 或 ZCODE_SESSION_DB 时
+ *   绝不改写（注入值在 spawn env 中晚于继承值生效，会让显式覆盖失效）；
+ * - ZCode flavor（WEBFLIX_IDENTITY 未开启）：不注入，Agent 行为逐字节不变；
+ * - WebFlix 身份：注入 `{resolveZCodeCliHomeDir()}/cli/db/db.sqlite`——
+ *   ZCODE_HOME 显式覆盖优先，否则冻结数据根（~/.webflix）；
+ * - 身份状态非法（resolveDataRootSegment fail-closed 抛错）：打类型化日志后不注入，
+ *   绝不静默回落（packaged 引导链上该状态不可达——desktop main 的 identity-env
+ *   在启动早期就会因同一非法状态抛错）。
+ */
+export function buildIdentityScopedCliSessionDbSpawnEnv(
+  env: NodeJS.ProcessEnv = process.env,
+  logger: ServiceLogger = createServiceLogger("zcode-agent-spawn-env"),
+): Record<string, string> {
+  if (env.ZCODE_SESSION_DB_PATH?.trim() || env.ZCODE_SESSION_DB?.trim()) {
+    return {};
+  }
+  let webFlixActive: boolean;
+  let cliHome: string;
+  try {
+    webFlixActive = isWebFlixDataRootActive();
+    cliHome = resolveZCodeCliHomeDir(env);
+  } catch (error) {
+    logger.error(
+      undefined,
+      "[zcode-agent-spawn-env] cli session db identity resolution failed (agent keeps its inherited default store)",
+      { error: error instanceof Error ? error.message : String(error) },
+    );
+    return {};
+  }
+  if (!webFlixActive) {
+    return {};
+  }
+  return { ZCODE_SESSION_DB_PATH: join(cliHome, "cli", "db", "db.sqlite") };
 }
 
 export async function buildCuaProductHelperAgentEnv(
@@ -1805,7 +1858,9 @@ export function createLocalServices(options: {
     const socketPath = resolveBrokerSocketPath();
     // standaloneHelperCandidatePaths 未在上游 exports 白名单——此处按同一规则枚举安装候选
     //（dev-desktop → dev/ 前缀；app 名一律取 helperConstants，不写字面量）。
-    const home = process.env.ZCODE_HOME?.trim() || join(homedir(), ".zcode");
+    // P9-FIX-1 F2：home 跟随身份感知 CLI home（ZCODE_HOME 显式覆盖优先；ZCode 默认
+    // 与历史值逐字节一致；WebFlix 身份落到冻结数据根，不再独立解析 ~/.zcode）。
+    const home = resolveZCodeCliHomeDir();
     const baseRoot = join(home, "computer-use");
     // 安装布局见上游 helperLauncher.resolveCuaHelperInstallRoot：dev 是独立子根 `dev/` 且 app
     // 名换成 DEV_HELPER_APP_NAME；preview 是独立子根 `preview/` 但**沿用**稳定 app 名
@@ -2227,6 +2282,10 @@ export function createLocalServices(options: {
         // 把 host 解析出的权威 origin（含 settings 覆盖）下发给 agent，否则 agent 侧只按
         // env 推导，test env + 自定义端点时两侧信任判定的输入分叉、官方 MCP 整体 fail closed。
         ...buildAgentEndpointOriginEnv(await resolveCurrentZCodeEndpointOrigin()),
+        // P9-FIX-1 F2：WebFlix 身份下把 Agent 的 CLI 会话库钉到身份感知 CLI home
+        // （~/.webflix/cli/db/db.sqlite），杜绝继承默认 ~/.zcode/cli/db/db.sqlite 落盘；
+        // ZCode flavor 不注入（行为不变），显式 ZCODE_SESSION_DB_* 覆盖优先。
+        ...buildIdentityScopedCliSessionDbSpawnEnv(),
         // broker 凭据（socket/token）注入 agent spawn env，让内置 zcode-cua plugin 的
         // computer-use MCP server 经 __zcode-plugin-host 恢复 token 后连上 broker。
         // 上面 cuaProductHelperEnv 已完成代际校验与 unavailable 兜底，取代 staging 侧

@@ -10,6 +10,8 @@ let _dataBaseDir: string | null = null;
 export const ZCODE_WINDOWS_APP_INSTALL_DIR_ENV = "ZCODE_WINDOWS_APP_INSTALL_DIR";
 const envDataBaseDir = process.env.ZCODE_DATA_BASE_DIR?.trim() || null;
 const defaultDataBaseDir = process.env.HOME?.trim() || homedir();
+/** ZCode 身份的默认数据根段（历史值，逐字节不变）。 */
+const ZCODE_DEFAULT_DATA_ROOT_SEGMENT = ".zcode";
 
 interface DataBaseDirTargetValidationOptions {
   platform?: NodeJS.Platform | string;
@@ -51,7 +53,7 @@ function resolveDataRootSegment(): string {
    */
   const raw = process.env.WEBFLIX_IDENTITY?.trim() ?? "";
   if (raw === "" || raw === "0") {
-    return ".zcode";
+    return ZCODE_DEFAULT_DATA_ROOT_SEGMENT;
   }
   if (raw !== "1") {
     throw new Error(`invalid WEBFLIX_IDENTITY=${raw}; expected 1 or 0 (fail-closed)`);
@@ -63,6 +65,32 @@ function resolveDataRootSegment(): string {
     );
   }
   return webflixRoot;
+}
+
+/**
+ * WebFlix 数据根身份是否活跃（P9-FIX-1 F2 的注入门）：数据根段已从默认
+ * `.zcode` 切换到 WebFlix 冻结根。身份状态非法时沿用 resolveDataRootSegment
+ * 的 fail-closed 抛错（调用方负责以类型化日志显式暴露，绝不静默吞掉）。
+ */
+export function isWebFlixDataRootActive(): boolean {
+  return resolveDataRootSegment() !== ZCODE_DEFAULT_DATA_ROOT_SEGMENT;
+}
+
+/**
+ * P9-FIX-1 F2：身份感知的 CLI home（CLI 会话/配置存储的根）。
+ *
+ * 优先级：`ZCODE_HOME` 显式覆盖（操作员/测试隔离）> 身份感知数据根
+ * （ZCode flavor：`{dataBaseDir}/.zcode`，与历史默认逐字节一致；WebFlix 身份：
+ * 冻结数据根 `{dataBaseDir}/.webflix`，经 getZCodeDataRootDir 的 fail-closed 段解析）。
+ * packaged WebFlix 运行时的 CLI 存储因此落在 `~/.webflix/...`，绝不回落 `~/.zcode`
+ * （freeze §6.1 coexistence；QA 证据 data-root:<flavor>:no-zcode-root）。
+ */
+export function resolveZCodeCliHomeDir(env: NodeJS.ProcessEnv = process.env): string {
+  const override = env.ZCODE_HOME?.trim();
+  if (override) {
+    return override;
+  }
+  return getZCodeDataRootDir();
 }
 
 export function getZCodeDataRootDir(): string {
