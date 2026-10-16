@@ -1,0 +1,476 @@
+<err> [5908:1016/145345.737595:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/dbus/system_bus_socket: No such file or directory
+<err> 
+<out> [2026-10-16 14:53:46.403] [pid:5908] [main] [crash-capture] configured remoteCrashReporterEnabled=true stagingDir=/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-0125462/appimage/home-appimage/.webflix/v2/crash/live archiveDir=/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-0125462/appimage/home-appimage/.webflix/v2/crash/archive
+<out> 
+<err> LaunchProcess: failed to execvp:
+<err> xdg-settings
+<err> 
+<err> [2026-10-16 14:53:46.423] [pid:5908] [main] [deep-link] 注册协议失败 { scheme: 'webflix' }
+<err> 
+<err> [2026-10-16 14:53:46.432] [pid:5908] [main] [deep-link] Linux 用户级协议注册失败 {
+<err>   desktopFilePath: '/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-0125462/appimage/home-appimage/.local/share/applications/webflix.desktop',
+<err>   desktopFileName: 'webflix.desktop',
+<err>   executablePath: '/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-0125462/appimage/appimage-run/squashfs-root/webflix',
+<err>   args: [],
+<err>   status: null,
+<err>   signal: null,
+<err>   timeoutMs: undefined,
+<err>   error: 'spawnSync xdg-mime ENOENT',
+<err>   stderr: undefined
+<err> }
+<err> 
+<err> [2026-10-16 14:53:46.432] [pid:5908] [main] [deep-link] update-desktop-database 不可用，已跳过 {
+<err>   desktopFilePath: '/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-0125462/appimage/home-appimage/.local/share/applications/webflix.desktop',
+<err>   message: 'spawnSync update-desktop-database ENOENT'
+<err> }
+<err> 
+<err> (node:5908) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+<err> (Use `webflix --trace-warnings ...` to show where the warning was created)
+<err> 
+<err> [5908:1016/145346.828420:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+<err> 
+<err> [5908:1016/145346.828980:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/dbus/system_bus_socket: No such file or directory
+<err> [5908:1016/145346.829012:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/dbus/system_bus_socket: No such file or directory
+<err> 
+<out> [2026-10-16 14:53:46.839] [pid:5908] [main] [startup] runtime process env prepared asynchronously id=1 in 431ms
+<out> 
+<err> 
+<err> DevTools listening on ws://127.0.0.1:45319/devtools/browser/d0d9da81-2677-434b-ab92-949e7b7e9175
+<err> 
+<err> [5908:1016/145346.878171:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+<err> 
+<err> [5908:1016/145346.878475:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+<err> 
+<err> [5908:1016/145346.894034:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+<err> 
+<out> [2026-10-16 14:53:46.895] [pid:5908] [main] [desktop-network] renderer proxy mode=direct bypass=disabled customCa=disabled insecureCerts=rejected
+<out> 
+<out> [2026-10-16 14:53:46.896] [pid:5908] [main] [desktop-network] renderer proxy mode=system bypass=disabled customCa=disabled insecureCerts=rejected
+<out> 
+<out> [2026-10-16 14:53:46.897] [pid:5908] [main] [auto-update] refused (disabled for this desktop product flavor): WebFlix runtime product identity is active (H1 fail-closed; freeze §6.1 defers the WebFlix update feed — the ZCode manifest feed must never serve a WebFlix build)
+<out> 
+<out> [2026-10-16 14:53:46.898] [pid:5908] [main] [browser-data] chrome import IPC not registered: chromeImportEnabled flag is OFF (default, fail-closed)
+<out> 
+<out> [2026-10-16 14:53:46.899] [pid:5908] [main] [cua-permission-ipc] CUA permission IPC not registered: webflixProductSurface flag is OFF (default, fail-closed)
+<out> 
+<out> [2026-10-16 14:53:46.900] [pid:5908] [main] [webflix-accounts] account IPC registered (webflix flavor) {
+<out>   channels: [
+<out>     'webflix:accounts:get-status',
+<out>     'webflix:accounts:connect',
+<out>     'webflix:accounts:disconnect'
+<out>   ]
+<out> }
+<out> 
+<out> [2026-10-16 14:53:46.901] [pid:5908] [main] [remote-ipc] SSH/Docker/WSL remote IPC not registered: webflixProductSurface flag is OFF (default, fail-closed)
+<out> 
+<out> [2026-10-16 14:53:46.902] [pid:5908] [main] [resource] sampling started interval=10000ms report=300000ms
+<out> 
+<out> [2026-10-16 14:53:46.903] [pid:5908] [main] [network] reporting started interval=300000ms
+<out> 
+<out> [2026-10-16 14:53:46.903] [pid:5908] [main] [force-update] 当前产品身份（webflix，webflix-never-consults-the-zcode-kill-switch）跳过远端强制升级检查
+<out> 
+<out> [2026-10-16 14:53:46.903] [pid:5908] [main] [startup] 创建主窗口
+<out> 
+<out> [2026-10-16 14:53:46.904] [pid:5908] [main] [primary-window] creating main window (app-ready)
+<out> 
+<out> [2026-10-16 14:53:46.916] [pid:5908] [main] [startup-workspace] using conversation workspace: /home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-0125462/appimage/home-appimage/.webflix/workspace/default
+<out> 
+<err> [5908:1016/145346.985383:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+<err> 
+<err> [5908:1016/145347.014823:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+<err> 
+<out> [2026-10-16 14:53:47.114] [pid:5908] [main] [desktop-context-prompt] config refreshed { enabled: true, configVersion: 'desktop-sp-v1' }
+<out> 
+<out> [2026-10-16 14:53:47.426] [pid:5908] [main] [createWindow] dom-ready fired (local-1)
+<out> 
+<out> [2026-10-16 14:53:47.427] [pid:5908] [main] [desktop-context-prompt] first host spawn decision resolved { enabled: true, configVersion: 'desktop-sp-v1' }
+<out> 
+<out> [2026-10-16 14:53:47.437] [pid:5908] [main] [spawnHostProcess] forked host process for (local-1), pid=undefined
+<out> 
+<out> [2026-10-16 14:53:47.438] [pid:5908] [main] [spawnHostProcess] host module path: /home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-0125462/appimage/appimage-run/squashfs-root/resources/app.asar/out/host/index.js
+<out> 
+<out> [2026-10-16 14:53:47.439] [pid:5908] [main] [spawnHostProcess] glm binary path: <not found>
+<out> 
+<out> [2026-10-16 14:53:47.439] [pid:5908] [main] [spawnHostProcess] BIGMODEL_OAUTH_APP_SECRET source: fallback
+<out> 
+<out> [2026-10-16 14:53:47.441] [pid:5908] [main] [task-realtime] registered host {
+<out>   hostId: '015894e4-2338-408f-9a85-efb7ed0a5fb9',
+<out>   windowId: 1,
+<out>   workspaceKeyCount: 0,
+<out>   deliveryKind: 'desktop_window'
+<out> }
+<out> 
+<err> [2026-10-16 14:53:47.477] [pid:5908] [main] [webflix-accounts] OS secure storage unavailable — reporting the typed fail-closed status
+<err> 
+<err> (node:5983) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+<err> (Use `exe --trace-warnings ...` to show where the warning was created)
+<err> [2026-10-16 14:53:48.214] [pid:5983] [zcode-host] ExperimentalWarning: SQLite is an experimental feature and might change at any time
+<err> 
+<err> [2026-10-16 14:53:48.277] [pid:5908] [main] [host-log] (local-1) [host] [2026-10-16 14:53:48.214] [pid:5983] [zcode-host] ExperimentalWarning: SQLite is an experimental feature and might change at any time
+<err> 
+<err> [2026-10-16 14:53:48.291] [pid:5983] [zcode-host] [cua-pip-session] focus event dropped: service unavailable
+<err> [2026-10-16 14:53:48.292] [pid:5908] [main] [host-log] (local-1) [host] [2026-10-16 14:53:48.291] [pid:5983] [zcode-host] [cua-pip-session] focus event dropped: service unavailable
+<err> 
+<err> (node:5983) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+<err> (Use `exe --trace-warnings ...` to show where the warning was created)
+<err> 
+<err> [2026-10-16 14:53:48.593] [pid:5983] [zcode-host] local database startup failed attempt=28ef7bfc-8f70-4f4b-b33f-fa988f4b7918 Error: Storage preparation failed: unsupported_runtime
+<err>     at statusError (file:///home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-0125462/appimage/appimage-run/squashfs-root/resources/app.asar/out/host/index.js:1:13951)
+<err>     at prepareSessionStorage (file:///home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-0125462/appimage/appimage-run/squashfs-root/resources/app.asar/out/host/index.js:1:15067)
+<err>     at Object.prepare (file:///home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-0125462/appimage/appimage-run/squashfs-root/resources/app.asar/out/host/index.js:2:1364)
+<err>     at async DatabaseStartupCoordinator.run (file:///home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-0125462/appimage/appimage-run/squashfs-root/resources/app.asar/out/host/index.js:1:10599)
+<err>     at async DatabaseStartupCoordinator.start (file:///home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-0125462/appimage/appimage-run/squashfs-root/resources/app.asar/out/host/index.js:1:9006)
+<err>     at async ParentPort.<anonymous> (file:///home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-0125462/appimage/appimage-run/squashfs-root/resources/app.asar/out/host/index.js:254:84758) {
+<err>   kind: 'unsupported_runtime',
+<err>   errcode: undefined,
+<err>   code: undefined,
+<err>   migrationId: undefined,
+<err>   migrationUpdate: undefined
+<err> }
+<err> 
+<err> [2026-10-16 14:53:48.596] [pid:5908] [main] [host-log] (local-1) [host] [2026-10-16 14:53:48.593] [pid:5983] [zcode-host] local database startup failed attempt=28ef7bfc-8f70-4f4b-b33f-fa988f4b7918 {"name":"Error","message":"Storage preparation failed: unsupported_runtime","stack":"Error: Storage preparation failed: unsupported_runtime\n    at statusError (file:///home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-0125462/appimage/appimage-run/squashfs-root/resources/app.asar/out/host/index.js:1:13951)\n    at prepareSessionStorage (file:///home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-0125462/appimage/appimage-run/squashfs-root/resources/app.asar/out/host/index.js:1:15067)\n    at Object.prepare (file:///home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-0125462/appimage/appimage-run/squashfs-root/resources/app.asar/out/host/index.js:2:1364)\n    at async DatabaseStartupCoordinator.run (file:///home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-0125462/appimage/appimage-run/squashfs-root/resources/app.asar/out/host/index.js:1:10599)\n    at async DatabaseStartupCoordinator.start (file:///home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-0125462/appimage/appimage-run/squashfs-root/resources/app.asar/out/host/index.js:1:9006)\n    at async ParentPort.<anonymous> (file:///home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-0125462/appimage/appimage-run/squashfs-root/resources/app.asar/out/host/index.js:254:84758)"}
+<err> 
+<out> [2026-10-16 14:53:48.597] [pid:5908] [main] [database-startup] terminal {
+<out>   attemptId: '28ef7bfc-8f70-4f4b-b33f-fa988f4b7918',
+<out>   status: 'failed',
+<out>   durationMs: 317,
+<out>   errorCode: 'unsupported_runtime',
+<out>   disk: [
+<out>     {
+<out>       scopeId: '44cb730c420480a0477b505ae68af508fb90f96cf0ec54c6ad16949dd427f13a',
+<out>       observedAvailableDropPeakBytes: 0,
+<out>       minAvailableBytes: 2182561792,
+<out>       quality: 'complete',
+<out>       sampledAt: 1792162428293
+<out>     }
+<out>   ]
+<out> }
+<out> 
+<err> [5908:1016/145348.700672:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+<err> 
+<err> [5908:1016/145348.700769:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+<err> [5908:1016/145348.700798:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+<err> 
+<err> [5908:1016/145348.700811:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+<err> 
+<out> [2026-10-16 14:53:48.862] [pid:5908] [main] [webflix-accounts] connect requested but unavailable in this build (no operator OAuth client) { providerId: 'youtube' }
+<out> 
+<err> [5908:1016/145348.899178:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+<err> 
+<err> [5908:1016/145348.899258:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+<err> [5908:1016/145348.899293:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+<err> [5908:1016/145348.899315:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+<err> 
+<err> [5908:1016/145349.069593:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+<err> [5908:1016/145349.069650:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+<err> [5908:1016/145349.069679:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+<err> 
+<err> [5908:1016/145349.069732:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+<err> 
+<err> 
+<err> (webflix:5908): dconf-WARNING **: 14:53:49.340: failed to commit changes to dconf: Unknown or unsupported transport “disabled
+<err> ” for address “disabled:”
+<err> 
+<err> [2026-10-16 14:53:49.346] [pid:5983] [zcode-host] [cua-pip-session] focus event dropped: service unavailable
+<err> 
+<err> [2026-10-16 14:53:49.348] [pid:5908] [main] [host-log] (local-1) [host] [2026-10-16 14:53:49.346] [pid:5983] [zcode-host] [cua-pip-session] focus event dropped: service unavailable
+<err> 
+<err> 
+<err> (webflix:5908): dconf-WARNING **: 14:53:49.351: failed to commit changes to dconf: Unknown or unsupported transport “disabled
+<err> ” for address “disabled:”
+<err> 
+<err> 
+<err> (webflix:5908): dconf-WARNING **: 14:53:49.369: failed to commit changes to dconf: Unknown or unsupported transport “disabled
+<err> ” for address “disabled:”
+<err> 
+<err> 
+<err> (webflix:5908): dconf-WARNING **: 14:53:49.386: failed to commit changes to dconf: Unknown or unsupported transport “disabled” for address “disabled:”
+<err> 
+<err> [5908:1016/145349.393053:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+<err> 
+<err> [5908:1016/145349.393161:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+<err> 
+<err> [5908:1016/145349.393208:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+<err> 
+<err> [5908:1016/145349.393274:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+<err> 
+<err> 
+<err> (webflix:5908): dconf-WARNING **: 14:53:49.402: failed to commit changes to dconf: Unknown or unsupported transport “disabled” for address “disabled:”
+<err> 
+<err> 
+<err> (webflix:5908): dconf-WARNING **: 14:53:49.419: failed to commit changes to dconf: Unknown or unsupported transport “disabled” for address “disabled:”
+<err> 
+<err> 
+<err> (webflix:5908): dconf-WARNING **: 14:53:49.481: failed to commit changes to dconf: Unknown or unsupported transport “disabled” for address “disabled:”
+<err> 
+<err> 
+<err> (webflix:5908): dconf-WARNING **: 14:53:49.499: failed to commit changes to dconf: Unknown or unsupported transport “disabled” for address “disabled:”
+<err> 
+<err> 
+<err> (webflix:5908): dconf-WARNING **: 14:53:49.514: failed to commit changes to dconf: Unknown or unsupported transport “disabled” for address “disabled:”
+<err> 
+<err> 
+<err> (webflix:5908): dconf-WARNING **: 14:53:49.530: failed to commit changes to dconf: Unknown or unsupported transport “disabled” for address “disabled:”
+<err> 
+<err> 
+<err> (webflix:5908): dconf-WARNING **: 14:53:49.551: failed to commit changes to dconf: Unknown or unsupported transport “disabled” for address “disabled:”
+<err> 
+<err> 
+<err> (webflix:5908): dconf-WARNING **: 14:53:49.565: failed to commit changes to dconf: Unknown or unsupported transport “disabled” for address “disabled:”
+<err> 
+<err> 
+<err> (webflix:5908): dconf-WARNING **: 14:53:49.583: failed to commit changes to dconf: Unknown or unsupported transport “disabled” for address “disabled:”
+<err> 
+<err> [5908:1016/145349.584760:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+<err> [5908:1016/145349.584842:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+<err> 
+<err> [5908:1016/145349.584865:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+<err> [5908:1016/145349.584888:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+<err> 
+<err> 
+<err> (webflix:5908): dconf-WARNING **: 14:53:49.599: failed to commit changes to dconf: Unknown or unsupported transport “disabled” for address “disabled:”
+<err> 
+<err> 
+<err> (webflix:5908): dconf-WARNING **: 14:53:49.616: failed to commit changes to dconf: Unknown or unsupported transport “disabled” for address “disabled:”
+<err> 
+<err> 
+<err> (webflix:5908): dconf-WARNING **: 14:53:49.632: failed to commit changes to dconf: Unknown or unsupported transport “disabled” for address “disabled:”
+<err> 
+<err> ALSA lib confmisc.c:855:(parse_card) cannot find card '0'
+<err> ALSA lib conf.c:5205:(_snd_config_evaluate) function snd_func_card_inum returned error: No such file or directory
+<err> ALSA lib confmisc.c:422:(snd_func_concat) error evaluating strings
+<err> ALSA lib conf.c:5205:(_snd_config_evaluate) function snd_func_concat returned error: No such file or directory
+<err> ALSA lib confmisc.c:1342:(snd_func_refer) error evaluating name
+<err> ALSA lib conf.c:5205:(_snd_config_evaluate) function snd_func_refer returned error: No such file or directory
+<err> ALSA lib conf.c:5728:(snd_config_expand) Evaluate error: No such file or directory
+<err> 
+<err> ALSA lib pcm.c:2722:(snd_pcm_open_noupdate) Unknown PCM default
+<err> [6014:1016/145349.634821:ERROR:media/audio/alsa/alsa_util.cc:204] PcmOpen: default,No such file or directory
+<err> 
+<err> ALSA lib confmisc.c:855:(parse_card) cannot find card '0'
+<err> ALSA lib conf.c:5205:(_snd_config_evaluate) function snd_func_card_inum returned error: No such file or directory
+<err> ALSA lib confmisc.c:422:(snd_func_concat) error evaluating strings
+<err> ALSA lib conf.c:5205:(_snd_config_evaluate) function snd_func_concat returned error: No such file or directory
+<err> ALSA lib confmisc.c:1342:(snd_func_refer) error evaluating name
+<err> ALSA lib conf.c:5205:(_snd_config_evaluate) function snd_func_refer returned error: No such file or directory
+<err> ALSA lib conf.c:5728:(snd_config_expand) Evaluate error: No such file or directory
+<err> 
+<err> ALSA lib pcm.c:2722:(snd_pcm_open_noupdate) Unknown PCM default
+<err> [6014:1016/145349.634933:ERROR:media/audio/alsa/alsa_util.cc:204] PcmOpen: plug:default,No such file or directory
+<err> 
+<err> [5908:1016/145349.682517:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+<err> [5908:1016/145349.682568:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+<err> 
+<err> [5908:1016/145349.682605:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+<err> 
+<err> [5908:1016/145349.682701:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+<err> 
+<err> [5908:1016/145349.703311:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+<err> 
+<err> [5908:1016/145349.703368:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+<err> [5908:1016/145349.703418:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+<err> [5908:1016/145349.703436:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+<err> 
+<out> [2026-10-16 14:53:49.785] [pid:5908] [main] [app-quit] forceQuit enabled (app-before-quit)
+<out> 
+<out> [2026-10-16 14:53:49.785] [pid:5908] [main] [stability] perf_app_exit reported { scene: 'app_quit', exitCode: 0 }
+<out> 
+<out> [2026-10-16 14:53:49.786] [pid:5908] [main] [app-quit] waiting for host process cleanup (app-before-quit), kind=normal, hosts=1, forceKillDelayMs=7500, waitTimeoutMs=9000
+<out> 
+<out> [2026-10-16 14:53:49.786] [pid:5908] [main] [disposeHostProcess] disposing host process (app-before-quit-1), pid=5983
+<out> 
+<out> [2026-10-16 14:53:49.788] [pid:5983] [zcode-host] disposing host resources, reason=parent dispose
+<out> 
+<out> [2026-10-16 14:53:49.788] [pid:5908] [main] [host-log] (local-1) [host] [2026-10-16 14:53:49.788] [pid:5983] [zcode-host] disposing host resources, reason=parent dispose
+<out> 
+<out> [2026-10-16 14:53:49.789] [pid:5908] [main] [task-realtime] unregistered host { hostId: '015894e4-2338-408f-9a85-efb7ed0a5fb9', windowId: 1 }
+<out> 
+<out> [2026-10-16 14:53:49.789] [pid:5908] [main] [spawnHostProcess] host process (local-1) exited with code 0
+<out> 
+<out> [2026-10-16 14:53:49.790] [pid:5908] [main] [app-quit] host process cleanup completed (app-before-quit)
+<out> 
+<out> [2026-10-16 14:53:49.790] [pid:5908] [main] [app-quit] preparation finished, resuming quit with windows=1
+<out> 
+<out> [2026-10-16 14:53:49.798] [pid:5908] [main] [createWindow] window closed, killing host process (local-1)
+<out> 
+<out> [2026-10-16 14:53:49.798] [pid:5908] [main] [app-quit] all windows closed after preparation, exiting app
+<out> 
+<out> [2026-10-16 14:53:49.798] [pid:5908] [main] [app-quit] exiting prepared app (all-windows-closed-after-preparation)
+<out> 
+--- restart ---
+<err> [6026:1016/145350.133893:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/dbus/system_bus_socket: No such file or directory
+<err> 
+<out> [2026-10-16 14:53:50.767] [pid:6026] [main] [crash-capture] configured remoteCrashReporterEnabled=true stagingDir=/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-0125462/appimage/home-appimage/.webflix/v2/crash/live archiveDir=/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-0125462/appimage/home-appimage/.webflix/v2/crash/archive
+<out> 
+<err> LaunchProcess: failed to execvp:
+<err> xdg-settings
+<err> 
+<err> [2026-10-16 14:53:50.786] [pid:6026] [main] [deep-link] 注册协议失败 { scheme: 'webflix' }
+<err> 
+<err> [2026-10-16 14:53:50.793] [pid:6026] [main] [deep-link] Linux 用户级协议注册失败 {
+<err>   desktopFilePath: '/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-0125462/appimage/home-appimage/.local/share/applications/webflix.desktop',
+<err>   desktopFileName: 'webflix.desktop',
+<err>   executablePath: '/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-0125462/appimage/appimage-run/squashfs-root/webflix',
+<err>   args: [],
+<err>   status: null,
+<err>   signal: null,
+<err>   timeoutMs: undefined,
+<err>   error: 'spawnSync xdg-mime ENOENT',
+<err>   stderr: undefined
+<err> }
+<err> 
+<err> [2026-10-16 14:53:50.794] [pid:6026] [main] [deep-link] update-desktop-database 不可用，已跳过 {
+<err>   desktopFilePath: '/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-0125462/appimage/home-appimage/.local/share/applications/webflix.desktop',
+<err>   message: 'spawnSync update-desktop-database ENOENT'
+<err> }
+<err> 
+<err> (node:6026) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+<err> (Use `webflix --trace-warnings ...` to show where the warning was created)
+<err> 
+<err> [6026:1016/145350.859695:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+<err> [6026:1016/145350.859730:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/dbus/system_bus_socket: No such file or directory
+<err> 
+<err> [6026:1016/145350.859886:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/dbus/system_bus_socket: No such file or directory
+<err> 
+<out> [2026-10-16 14:53:50.868] [pid:6026] [main] [startup] runtime process env prepared asynchronously id=1 in 96ms
+<out> 
+<err> 
+<err> DevTools listening on ws://127.0.0.1:45319/devtools/browser/94814aa9-e5e3-480b-9d1c-418b333ab6aa
+<err> 
+<err> [6026:1016/145350.894636:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+<err> 
+<err> [6026:1016/145350.896075:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+<err> 
+<err> [6026:1016/145350.905351:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+<err> 
+<out> [2026-10-16 14:53:50.912] [pid:6026] [main] [desktop-network] renderer proxy mode=direct bypass=disabled customCa=disabled insecureCerts=rejected
+<out> [2026-10-16 14:53:50.912] [pid:6026] [main] [desktop-network] renderer proxy mode=system bypass=disabled customCa=disabled insecureCerts=rejected
+<out> 
+<out> [2026-10-16 14:53:50.913] [pid:6026] [main] [auto-update] refused (disabled for this desktop product flavor): WebFlix runtime product identity is active (H1 fail-closed; freeze §6.1 defers the WebFlix update feed — the ZCode manifest feed must never serve a WebFlix build)
+<out> 
+<out> [2026-10-16 14:53:50.914] [pid:6026] [main] [browser-data] chrome import IPC not registered: chromeImportEnabled flag is OFF (default, fail-closed)
+<out> 
+<out> [2026-10-16 14:53:50.915] [pid:6026] [main] [cua-permission-ipc] CUA permission IPC not registered: webflixProductSurface flag is OFF (default, fail-closed)
+<out> 
+<out> [2026-10-16 14:53:50.915] [pid:6026] [main] [webflix-accounts] account IPC registered (webflix flavor) {
+<out>   channels: [
+<out>     'webflix:accounts:get-status',
+<out>     'webflix:accounts:connect',
+<out>     'webflix:accounts:disconnect'
+<out>   ]
+<out> }
+<out> 
+<out> [2026-10-16 14:53:50.916] [pid:6026] [main] [remote-ipc] SSH/Docker/WSL remote IPC not registered: webflixProductSurface flag is OFF (default, fail-closed)
+<out> 
+<out> [2026-10-16 14:53:50.916] [pid:6026] [main] [resource] sampling started interval=10000ms report=300000ms
+<out> 
+<out> [2026-10-16 14:53:50.917] [pid:6026] [main] [network] reporting started interval=300000ms
+<out> 
+<out> [2026-10-16 14:53:50.917] [pid:6026] [main] [force-update] 当前产品身份（webflix，webflix-never-consults-the-zcode-kill-switch）跳过远端强制升级检查
+<out> 
+<out> [2026-10-16 14:53:50.917] [pid:6026] [main] [startup] 创建主窗口
+<out> 
+<out> [2026-10-16 14:53:50.917] [pid:6026] [main] [primary-window] creating main window (app-ready)
+<out> 
+<out> [2026-10-16 14:53:50.921] [pid:6026] [main] [startup-workspace] using conversation workspace: /home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-0125462/appimage/home-appimage/.webflix/workspace/default
+<out> 
+<err> [6026:1016/145350.957697:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+<err> 
+<err> [6026:1016/145350.990160:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+<err> 
+<out> [2026-10-16 14:53:51.086] [pid:6026] [main] [desktop-context-prompt] config refreshed { enabled: true, configVersion: 'desktop-sp-v1' }
+<out> 
+<out> [2026-10-16 14:53:51.231] [pid:6026] [main] [createWindow] dom-ready fired (local-1)
+<out> [2026-10-16 14:53:51.232] [pid:6026] [main] [desktop-context-prompt] first host spawn decision resolved { enabled: true, configVersion: 'desktop-sp-v1' }
+<out> 
+<out> [2026-10-16 14:53:51.240] [pid:6026] [main] [spawnHostProcess] forked host process for (local-1), pid=undefined
+<out> 
+<out> [2026-10-16 14:53:51.240] [pid:6026] [main] [spawnHostProcess] host module path: /home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-0125462/appimage/appimage-run/squashfs-root/resources/app.asar/out/host/index.js
+<out> 
+<out> [2026-10-16 14:53:51.241] [pid:6026] [main] [spawnHostProcess] glm binary path: <not found>
+<out> 
+<out> [2026-10-16 14:53:51.241] [pid:6026] [main] [spawnHostProcess] BIGMODEL_OAUTH_APP_SECRET source: fallback
+<out> 
+<out> [2026-10-16 14:53:51.242] [pid:6026] [main] [task-realtime] registered host {
+<out>   hostId: '6914dd6c-04d5-4747-a0d8-b31e876cb0b5',
+<out>   windowId: 1,
+<out>   workspaceKeyCount: 0,
+<out>   deliveryKind: 'desktop_window'
+<out> }
+<out> 
+<err> [2026-10-16 14:53:51.290] [pid:6026] [main] [webflix-accounts] OS secure storage unavailable — reporting the typed fail-closed status
+<err> 
+<err> (node:6099) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+<err> (Use `exe --trace-warnings ...` to show where the warning was created)
+<err> 
+<err> [2026-10-16 14:53:51.816] [pid:6099] [zcode-host] ExperimentalWarning: SQLite is an experimental feature and might change at any time
+<err> 
+<err> [2026-10-16 14:53:51.829] [pid:6026] [main] [host-log] (local-1) [host] [2026-10-16 14:53:51.816] [pid:6099] [zcode-host] ExperimentalWarning: SQLite is an experimental feature and might change at any time
+<err> 
+<err> [2026-10-16 14:53:51.830] [pid:6099] [zcode-host] [cua-pip-session] focus event dropped: service unavailable
+<err> 
+<err> [2026-10-16 14:53:51.836] [pid:6026] [main] [host-log] (local-1) [host] [2026-10-16 14:53:51.830] [pid:6099] [zcode-host] [cua-pip-session] focus event dropped: service unavailable
+<err> 
+<err> (node:6099) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+<err> (Use `exe --trace-warnings ...` to show where the warning was created)
+<err> 
+<err> [2026-10-16 14:53:52.033] [pid:6099] [zcode-host] local database startup failed attempt=30bd1af9-2425-406d-936f-0abe74a6083d Error: Storage preparation failed: unsupported_runtime
+<err>     at statusError (file:///home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-0125462/appimage/appimage-run/squashfs-root/resources/app.asar/out/host/index.js:1:13951)
+<err>     at prepareSessionStorage (file:///home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-0125462/appimage/appimage-run/squashfs-root/resources/app.asar/out/host/index.js:1:15067)
+<err>     at Object.prepare (file:///home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-0125462/appimage/appimage-run/squashfs-root/resources/app.asar/out/host/index.js:2:1364)
+<err>     at async DatabaseStartupCoordinator.run (file:///home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-0125462/appimage/appimage-run/squashfs-root/resources/app.asar/out/host/index.js:1:10599)
+<err>     at async DatabaseStartupCoordinator.start (file:///home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-0125462/appimage/appimage-run/squashfs-root/resources/app.asar/out/host/index.js:1:9006)
+<err>     at async ParentPort.<anonymous> (file:///home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-0125462/appimage/appimage-run/squashfs-root/resources/app.asar/out/host/index.js:254:84758) {
+<err>   kind: 'unsupported_runtime',
+<err>   errcode: undefined,
+<err>   code: undefined,
+<err>   migrationId: undefined,
+<err>   migrationUpdate: undefined
+<err> }
+<err> 
+<err> [2026-10-16 14:53:52.046] [pid:6026] [main] [host-log] (local-1) [host] [2026-10-16 14:53:52.033] [pid:6099] [zcode-host] local database startup failed attempt=30bd1af9-2425-406d-936f-0abe74a6083d {"name":"Error","message":"Storage preparation failed: unsupported_runtime","stack":"Error: Storage preparation failed: unsupported_runtime\n    at statusError (file:///home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-0125462/appimage/appimage-run/squashfs-root/resources/app.asar/out/host/index.js:1:13951)\n    at prepareSessionStorage (file:///home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-0125462/appimage/appimage-run/squashfs-root/resources/app.asar/out/host/index.js:1:15067)\n    at Object.prepare (file:///home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-0125462/appimage/appimage-run/squashfs-root/resources/app.asar/out/host/index.js:2:1364)\n    at async DatabaseStartupCoordinator.run (file:///home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-0125462/appimage/appimage-run/squashfs-root/resources/app.asar/out/host/index.js:1:10599)\n    at async DatabaseStartupCoordinator.start (file:///home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-0125462/appimage/appimage-run/squashfs-root/resources/app.asar/out/host/index.js:1:9006)\n    at async ParentPort.<anonymous> (file:///home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-0125462/appimage/appimage-run/squashfs-root/resources/app.asar/out/host/index.js:254:84758)"}
+<err> 
+<out> [2026-10-16 14:53:52.047] [pid:6026] [main] [database-startup] terminal {
+<out>   attemptId: '30bd1af9-2425-406d-936f-0abe74a6083d',
+<out>   status: 'failed',
+<out>   durationMs: 225,
+<out>   errorCode: 'unsupported_runtime',
+<out>   disk: [
+<out>     {
+<out>       scopeId: '44cb730c420480a0477b505ae68af508fb90f96cf0ec54c6ad16949dd427f13a',
+<out>       observedAvailableDropPeakBytes: 0,
+<out>       minAvailableBytes: 2181926912,
+<out>       quality: 'complete',
+<out>       sampledAt: 1792162431830
+<out>     }
+<out>   ]
+<out> }
+<out> 
+<err> [6026:1016/145352.078093:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+<err> [6026:1016/145352.078165:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+<err> [6026:1016/145352.078195:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+<err> [6026:1016/145352.078205:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+<err> 
+<out> [2026-10-16 14:53:52.187] [pid:6026] [main] [app-quit] forceQuit enabled (app-before-quit)
+<out> 
+<out> [2026-10-16 14:53:52.188] [pid:6026] [main] [stability] perf_app_exit reported { scene: 'app_quit', exitCode: 0 }
+<out> 
+<out> [2026-10-16 14:53:52.188] [pid:6026] [main] [app-quit] waiting for host process cleanup (app-before-quit), kind=normal, hosts=1, forceKillDelayMs=7500, waitTimeoutMs=9000
+<out> 
+<out> [2026-10-16 14:53:52.189] [pid:6026] [main] [disposeHostProcess] disposing host process (app-before-quit-1), pid=6099
+<out> 
+<out> [2026-10-16 14:53:52.189] [pid:6099] [zcode-host] disposing host resources, reason=parent dispose
+<out> 
+<out> [2026-10-16 14:53:52.195] [pid:6026] [main] [host-log] (local-1) [host] [2026-10-16 14:53:52.189] [pid:6099] [zcode-host] disposing host resources, reason=parent dispose
+<out> 
+<out> [2026-10-16 14:53:52.196] [pid:6026] [main] [task-realtime] unregistered host { hostId: '6914dd6c-04d5-4747-a0d8-b31e876cb0b5', windowId: 1 }
+<out> [2026-10-16 14:53:52.196] [pid:6026] [main] [spawnHostProcess] host process (local-1) exited with code 0
+<out> [2026-10-16 14:53:52.196] [pid:6026] [main] [app-quit] host process cleanup completed (app-before-quit)
+<out> [2026-10-16 14:53:52.196] [pid:6026] [main] [app-quit] preparation finished, resuming quit with windows=1
+<out> 
+<out> [2026-10-16 14:53:52.200] [pid:6026] [main] [createWindow] window closed, killing host process (local-1)
+<out> 
+<out> [2026-10-16 14:53:52.201] [pid:6026] [main] [app-quit] all windows closed after preparation, exiting app
+<out> 
+<out> [2026-10-16 14:53:52.201] [pid:6026] [main] [app-quit] exiting prepared app (all-windows-closed-after-preparation)
+<out> 

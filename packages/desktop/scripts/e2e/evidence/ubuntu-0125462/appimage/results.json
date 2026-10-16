@@ -1,0 +1,202 @@
+{
+  "results": [
+    {
+      "name": "launch:appimage:window",
+      "ok": true,
+      "blocked": false,
+      "detail": "primary window created (packaged log marker)"
+    },
+    {
+      "name": "launch:appimage:renderer",
+      "ok": true,
+      "blocked": false,
+      "detail": "renderer dom-ready fired (packaged log marker)"
+    },
+    {
+      "name": "cdp:appimage:attached",
+      "ok": true,
+      "blocked": false,
+      "detail": "packaged renderer page file:///home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubu…"
+    },
+    {
+      "name": "identity:appimage:title",
+      "ok": true,
+      "blocked": false,
+      "detail": "document.title=\"WebFlix\""
+    },
+    {
+      "name": "identity:appimage:product-mark",
+      "ok": true,
+      "blocked": false,
+      "detail": "webflix-product-mark mounted (1)"
+    },
+    {
+      "name": "identity:appimage:splash-swap",
+      "ok": true,
+      "blocked": false,
+      "detail": "startup overlay carries the WebFlix aria-label"
+    },
+    {
+      "name": "nav:appimage:home",
+      "ok": true,
+      "blocked": false,
+      "detail": "nav button click → screen rendered"
+    },
+    {
+      "name": "nav:appimage:search",
+      "ok": true,
+      "blocked": false,
+      "detail": "nav button click → screen rendered"
+    },
+    {
+      "name": "nav:appimage:library",
+      "ok": true,
+      "blocked": false,
+      "detail": "nav button click → screen rendered"
+    },
+    {
+      "name": "nav:appimage:accounts",
+      "ok": true,
+      "blocked": false,
+      "detail": "nav button click → screen rendered"
+    },
+    {
+      "name": "nav:appimage:settings",
+      "ok": true,
+      "blocked": false,
+      "detail": "nav button click → screen rendered"
+    },
+    {
+      "name": "zcode-leak:appimage:visible-surface",
+      "ok": true,
+      "blocked": false,
+      "detail": "no ZCode/Z.ai text on the visible product surface"
+    },
+    {
+      "name": "vault:appimage:fail-closed",
+      "ok": true,
+      "blocked": false,
+      "detail": "typed vault refusal rendered: Account storage is unavailable on this system: os_vault_unavailable: Electron safeStorage is unavailable on this system …"
+    },
+    {
+      "name": "vault:appimage:no-token-material",
+      "ok": true,
+      "blocked": false,
+      "detail": "no token-shaped strings in renderer text/storage"
+    },
+    {
+      "name": "accounts:appimage:not-connected",
+      "ok": true,
+      "blocked": false,
+      "detail": "youtube not-connected card (1)"
+    },
+    {
+      "name": "accounts:appimage:connect-typed-refusal",
+      "ok": true,
+      "blocked": false,
+      "detail": "typed outcome: Connect for \"youtube\" is not available in this build: WebFlix has no operator-provisioned OAuth client yet (the client id is a pending-provi"
+    },
+    {
+      "name": "search:appimage:requires-auth",
+      "ok": true,
+      "blocked": false,
+      "detail": "honest state: Sign-in required  This capability needs a connected account before it can show anything.  …"
+    },
+    {
+      "name": "offline:appimage:local-library",
+      "ok": true,
+      "blocked": false,
+      "detail": "library renders with network emulated offline"
+    },
+    {
+      "name": "local-media:appimage:import",
+      "ok": true,
+      "blocked": false,
+      "detail": "picker import → library entry \"webflix-smoke-test-clip.mp4 · local file Play\""
+    },
+    {
+      "name": "local-media:appimage:playback",
+      "ok": true,
+      "blocked": false,
+      "detail": "playing: t=0.02s/3.00s src=blob:file:///7cd5597a-7ca7-4027-87fa-ea5"
+    },
+    {
+      "name": "updater:appimage:fail-closed",
+      "ok": true,
+      "blocked": false,
+      "detail": "packaged boot refused the ZCode updater (flavor guard fired)"
+    },
+    {
+      "name": "crash:appimage:no-native-module-errors",
+      "ok": true,
+      "blocked": false,
+      "detail": "no module/dlopen errors in the packaged log"
+    },
+    {
+      "name": "crash:appimage:process-alive",
+      "ok": true,
+      "blocked": false,
+      "detail": "packaged process alive through the interaction phase"
+    },
+    {
+      "name": "shutdown:appimage:clean",
+      "ok": true,
+      "blocked": false,
+      "detail": "exit=0 after SIGTERM"
+    },
+    {
+      "name": "data-root:appimage:webflix",
+      "ok": true,
+      "blocked": false,
+      "detail": "/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-0125462/appimage/home-appimage/.webflix"
+    },
+    {
+      "name": "data-root:appimage:no-zcode-root",
+      "ok": true,
+      "blocked": false,
+      "detail": "~/.zcode absent"
+    },
+    {
+      "name": "crash:appimage:no-crash-dumps",
+      "ok": true,
+      "blocked": false,
+      "detail": "no crashpad dumps (live dir holds only client_id)"
+    },
+    {
+      "name": "desktop-entry:appimage:user-level",
+      "ok": true,
+      "blocked": false,
+      "detail": "webflix.desktop: Name=WebFlix Icon=webflix MimeType=x-scheme-handler/webflix;"
+    },
+    {
+      "name": "restart:appimage:boot",
+      "ok": true,
+      "blocked": false,
+      "detail": "second launch on the same HOME: window=true dom-ready=true"
+    },
+    {
+      "name": "restart:appimage:identity",
+      "ok": true,
+      "blocked": false,
+      "detail": "second boot restores the WebFlix identity"
+    },
+    {
+      "name": "restart:appimage:session-library-honest-empty",
+      "ok": true,
+      "blocked": false,
+      "detail": "library honestly empty again (session-only entries — documented truthfulness)"
+    },
+    {
+      "name": "restart:appimage:shutdown",
+      "ok": true,
+      "blocked": false,
+      "detail": "second run exit=0"
+    },
+    {
+      "name": "packaged-entry:appimage-installed-entry",
+      "ok": true,
+      "blocked": false,
+      "detail": "/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-0125462/appimage/appimage-run/squashfs-root/webflix.desktop identity fields exact"
+    }
+  ]
+}

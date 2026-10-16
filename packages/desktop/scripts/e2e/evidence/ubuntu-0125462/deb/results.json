@@ -1,0 +1,214 @@
+{
+  "results": [
+    {
+      "name": "launch:deb:window",
+      "ok": true,
+      "blocked": false,
+      "detail": "primary window created (packaged log marker)"
+    },
+    {
+      "name": "launch:deb:renderer",
+      "ok": true,
+      "blocked": false,
+      "detail": "renderer dom-ready fired (packaged log marker)"
+    },
+    {
+      "name": "cdp:deb:attached",
+      "ok": true,
+      "blocked": false,
+      "detail": "packaged renderer page file:///home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubu…"
+    },
+    {
+      "name": "identity:deb:title",
+      "ok": true,
+      "blocked": false,
+      "detail": "document.title=\"WebFlix\""
+    },
+    {
+      "name": "identity:deb:product-mark",
+      "ok": true,
+      "blocked": false,
+      "detail": "webflix-product-mark mounted (1)"
+    },
+    {
+      "name": "identity:deb:splash-swap",
+      "ok": true,
+      "blocked": false,
+      "detail": "startup overlay absent after boot (aria=null) — post-boot state"
+    },
+    {
+      "name": "nav:deb:home",
+      "ok": true,
+      "blocked": false,
+      "detail": "nav button click → screen rendered"
+    },
+    {
+      "name": "nav:deb:search",
+      "ok": true,
+      "blocked": false,
+      "detail": "nav button click → screen rendered"
+    },
+    {
+      "name": "nav:deb:library",
+      "ok": true,
+      "blocked": false,
+      "detail": "nav button click → screen rendered"
+    },
+    {
+      "name": "nav:deb:accounts",
+      "ok": true,
+      "blocked": false,
+      "detail": "nav button click → screen rendered"
+    },
+    {
+      "name": "nav:deb:settings",
+      "ok": true,
+      "blocked": false,
+      "detail": "nav button click → screen rendered"
+    },
+    {
+      "name": "zcode-leak:deb:visible-surface",
+      "ok": true,
+      "blocked": false,
+      "detail": "no ZCode/Z.ai text on the visible product surface"
+    },
+    {
+      "name": "vault:deb:fail-closed",
+      "ok": true,
+      "blocked": false,
+      "detail": "typed vault refusal rendered: Account storage is unavailable on this system: os_vault_unavailable: Electron safeStorage is unavailable on this system …"
+    },
+    {
+      "name": "vault:deb:no-token-material",
+      "ok": true,
+      "blocked": false,
+      "detail": "no token-shaped strings in renderer text/storage"
+    },
+    {
+      "name": "accounts:deb:not-connected",
+      "ok": true,
+      "blocked": false,
+      "detail": "youtube not-connected card (1)"
+    },
+    {
+      "name": "accounts:deb:connect-typed-refusal",
+      "ok": true,
+      "blocked": false,
+      "detail": "typed outcome: Connect for \"youtube\" is not available in this build: WebFlix has no operator-provisioned OAuth client yet (the client id is a pending-provi"
+    },
+    {
+      "name": "search:deb:requires-auth",
+      "ok": true,
+      "blocked": false,
+      "detail": "honest state: Sign-in required  This capability needs a connected account before it can show anything.  …"
+    },
+    {
+      "name": "offline:deb:local-library",
+      "ok": true,
+      "blocked": false,
+      "detail": "library renders with network emulated offline"
+    },
+    {
+      "name": "local-media:deb:import",
+      "ok": true,
+      "blocked": false,
+      "detail": "picker import → library entry \"webflix-smoke-test-clip.mp4 · local file Play\""
+    },
+    {
+      "name": "local-media:deb:playback",
+      "ok": true,
+      "blocked": false,
+      "detail": "playing: t=0.01s/3.00s src=blob:file:///eef8ab4e-2f43-48e7-86e4-de7"
+    },
+    {
+      "name": "updater:deb:fail-closed",
+      "ok": true,
+      "blocked": false,
+      "detail": "packaged boot refused the ZCode updater (flavor guard fired)"
+    },
+    {
+      "name": "crash:deb:no-native-module-errors",
+      "ok": true,
+      "blocked": false,
+      "detail": "no module/dlopen errors in the packaged log"
+    },
+    {
+      "name": "crash:deb:process-alive",
+      "ok": true,
+      "blocked": false,
+      "detail": "packaged process alive through the interaction phase"
+    },
+    {
+      "name": "shutdown:deb:clean",
+      "ok": true,
+      "blocked": false,
+      "detail": "exit=0 after SIGTERM"
+    },
+    {
+      "name": "data-root:deb:webflix",
+      "ok": true,
+      "blocked": false,
+      "detail": "/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-0125462/deb/home-deb/.webflix"
+    },
+    {
+      "name": "data-root:deb:no-zcode-root",
+      "ok": true,
+      "blocked": false,
+      "detail": "~/.zcode absent"
+    },
+    {
+      "name": "crash:deb:no-crash-dumps",
+      "ok": true,
+      "blocked": false,
+      "detail": "no crashpad dumps (live dir holds only client_id)"
+    },
+    {
+      "name": "desktop-entry:deb:user-level",
+      "ok": true,
+      "blocked": false,
+      "detail": "webflix.desktop: Name=WebFlix Icon=webflix MimeType=x-scheme-handler/webflix;"
+    },
+    {
+      "name": "restart:deb:boot",
+      "ok": true,
+      "blocked": false,
+      "detail": "second launch on the same HOME: window=true dom-ready=true"
+    },
+    {
+      "name": "restart:deb:identity",
+      "ok": true,
+      "blocked": false,
+      "detail": "second boot restores the WebFlix identity"
+    },
+    {
+      "name": "restart:deb:session-library-honest-empty",
+      "ok": true,
+      "blocked": false,
+      "detail": "library honestly empty again (session-only entries — documented truthfulness)"
+    },
+    {
+      "name": "restart:deb:shutdown",
+      "ok": true,
+      "blocked": false,
+      "detail": "second run exit=0"
+    },
+    {
+      "name": "packaged-entry:deb-installed-entry",
+      "ok": true,
+      "blocked": false,
+      "detail": "/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-0125462/deb/deb-tree/usr/share/applications/webflix.desktop identity fields exact"
+    },
+    {
+      "name": "packaged-deb:deb:control",
+      "ok": true,
+      "blocked": false,
+      "detail": "Package=webflix-desktop Description=WebFlix Desktop App"
+    },
+    {
+      "name": "packaged-deb:deb:icons",
+      "ok": true,
+      "blocked": false,
+      "detail": "9 hicolor sizes of webflix.png"
+    }
+  ]
+}
