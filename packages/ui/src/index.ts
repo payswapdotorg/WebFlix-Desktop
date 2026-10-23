@@ -105,3 +105,13 @@ export { generateMobileDeviceFingerprint, setStreamClientId } from "./lib/stream
 export { GlobalDatabaseStartupLoading } from "./root/GlobalDatabaseStartupLoading.js";
 
 export { LocalTtftObserver, setLocalTtftObserver } from "@/v4/telemetry/localTtftObserver.js";
+
+// WFX-AGENT-BRIDGE-1 (freeze §9.3 agent panel composition law) — additive
+// public exports for the desktop's toggleable agent panel: the REAL chat
+// surface plus the provider/task surfaces it composes. Pure re-exports,
+// zero behavior change; existing importers are unaffected.
+export { V4ChatPane } from "./v4/V4ChatPane.js";
+export { TabStoreProvider } from "./store/TabStoreProvider.js";
+export { useZCodeSessionStore } from "./store/zcodeSessionStore.js";
+export { useWorkspaceTaskLists } from "./hooks/useWorkspaceTaskLists.js";
+export { BackgroundTaskElapsedLabel } from "./BackgroundTaskElapsedLabel.js";
