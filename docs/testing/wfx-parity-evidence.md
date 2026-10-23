@@ -1,0 +1,59 @@
+# WFX-DESKTOP-WEBFLIX-UX-1 — the parity/gap + evidence matrix
+
+Status: TL2 integration report (the wave's §6A deliverable). Date: 2026-10-23.
+Base: d384dfb (pre-wave main) → freeze e1dd80f → merged lanes c95de42/8e31071/9f45149 → integration 6e25669 → evidence 9383f35 (HEAD at report time).
+Gates at merge: full battery 1853/1853 (83 files), renderer battery 180/180 (15 files, +11 WFX integration pins), typecheck clean (`pnpm typecheck`, exit 0), lint 0 errors on every touched path (`pnpm exec oxlint …`).
+GUI evidence: `packages/desktop/scripts/e2e/webflix-wfx-journey.mjs` — 17 PASS / 0 FAIL / 3 BLOCKED; screenshots `scripts/e2e/evidence/wfx/wfx-0*.png`; dev smoke 11/11 (gate-aware).
+
+## A. Route-by-route parity matrix (web reference → desktop)
+
+| Surface | Web reference route | Desktop implementation | Backing data/adapter | Automated tests | GUI evidence | Gap/policy note |
+|---|---|---|---|---|---|---|
+| Home feed | `/` (home-feed.tsx: chips, interleaved grids, 2 shorts shelves, continue rail, growing grid) | `HomeScreen` consumes the frozen `HomeFeedView` sections model (W1) over `YouTubeHomeFeedProducer` (W2: trending + shorts classification + local continue-watching compose, `compositionNote` mandatory) | Official Data API `videos.list chart=mostPopular` + local session history | shell: home-feed tests; app: media-producers tests (1032 suite); host: bootIntegration pins | wfx-01-home.png | Honest compose — no official home API exists (manifest row `home-feed` unsupported); without the operator key the phase is requires-auth (wfx-01) |
+| Search | `/search?q=` (SearchPageDTO: videos + channels + cursor) | `SearchScreen` card results (video + channel cards, load-more) over `YouTubeSearchPageProducer` | `search.list` (type=video + channel rail) + `videos.list` enrichment | search-cards tests + producer suites + bootIntegration | wfx-02-watch.png (link path); keyword path unit-pinned | budgetNote carries the quota snapshot; the shell-side phase mapping owns the honest states |
+| Watch | `/watch/[id]` (IFrame player + related + actions + queue) | `WatchScreen` in the persistent watch dock (freeze §9.6): official-embed host, metadata band, honest action row, queue strip, typed controls | `playbackPlanForCatalogItem` → official `youtube-nocookie.com/embed` (keyless, approved path) | watch-upgrade tests + bootIntegration | wfx-02/04 (embed mounted; player survives panel close) | Account actions honestly disabled with reasons; related rail empty until a related source exists (no official API — manifest) |
+| Channel | `/channel/[handle]` (ChannelPageDTO tabs) | `ChannelScreen` (header band + honest `availableTabs` + videos grid + shorts rail) over `YouTubeChannelProducer` | `channels.list` (id/forHandle) + `channelUploadsCatalog` | channel tests + producer suites | unit/component tier (GUI key-gated) | Tabs limited to data-supported set; live GUI needs the key |
+| Shorts | `/shorts` | `ShortsScreen` vertical feed over `YouTubeShortsProducer` | shorts-classified chart/search rows (documented honest compose — no official shorts API) | shorts tests | unit tier | Classification rule documented (≤60s or API-declared) |
+| Trending | `/trending` | `TrendingScreen` (chips + region + grid) over `YouTubeTrendingProducer` | `videos.list chart=mostPopular` (region/category) | trending tests | unit tier | — |
+| Subscriptions | `/subscriptions` | `SubscriptionsScreen` (channel rail + videos + degradeNote display) over `YouTubeSubscriptionsProducer` | requires-auth without an account; connected compose = per-channel uploads polling (mandatory degradeNote, frozen law) | subscriptions tests | unit tier | No third-party subscriptions-feed API exists — the degrade is the honest product behavior |
+| History | `/history` | `HistoryScreen` grouped continue-watching over `LocalHistoryProducer` | WebFlix-owned session history (durable store = later order) | history tests | unit tier | Session-scoped (stated in UI) |
+| Library/You | `/you`, `/playlists` | `LibraryScreen` (local entries + collections, card visuals) | session local library (P9-UI-1 path preserved) | library tests + bootHost | wfx-01 (sidebar) | Durable local-library bridge is a later order |
+| Accounts/Settings | `/settings`, `/account` | `AccountsScreen` + `SettingsScreen` (retention controls) preserved | OS-vault account bridge (fail-closed; connect honestly unavailable — freeze AS-Q3) | accounts tests + bootHost | wfx-01 vault banner path | Native OAuth BLOCKED (no operator-provisioned desktop client) |
+| Agent panel | (no web equivalent — the desktop's own layer) | The right-docked resizable slot (W1) + `AgentPanel` (W3: the REAL ZCode chat over the runtime admission) | The host utility process (already running in this flavor) + the frozen UI-action bridge | agent bridge tests (169 suite) + bootIntegration | wfx-03/04/05 | The chat surface mount in dev hits sandbox compile limits (see C) |
+
+## B. The agent↔UI action bridge (freeze §9.1) — verified paths
+
+| Action | Implementation | GUI/unit evidence |
+|---|---|---|
+| `searchCatalog` | `uiActionBridgeHandlers.ts` → the same `searchPage` producer the Search screen uses | bootIntegration (typed ok + phase mapping); GUI: the honest requires-auth path |
+| `resolveChannel` | → `ChannelResolutionPort` (newest-first uploads, ambiguity law) | bootIntegration (resolved/ambiguous/not-found); GUI: the honest BLOCKED gate |
+| `openRoute` | → the same route setter the sidebar uses | bootIntegration |
+| `playCatalogItem` | → the same `playCard` path the cards use; ids resolve against the host's item registry | bootIntegration (ok + hallucinated-id typed failure); GUI trace |
+| `openAccountConnection` | → the Accounts route + the honest connect refusal | bootIntegration |
+| `toggleAgentPanel` | → the same panel state the toggle button drives | bootIntegration + GUI (panel open/close/reopen) |
+| `getVisibleMediaContext` | the LIVE-STATE post-commit snapshot (never a DOM scrape) | bootIntegration + GUI: context verification (route watch, playing item, plan kind, panel state) |
+
+Consent law: no account mutation action exists in the frozen union (contract-pinned: like/subscribe/playlist actions are REJECTED by the schema).
+
+## C. BLOCKED gates (honest — never a mock pass)
+
+1. **The live MrBeast journey** (`wfx-journey:mrbeast-live`): every code path is wired (resolveChannel → newest-first uploads → playCatalogItem → the official embed) and unit-pinned with fixtures; the GUI answers the typed `requires-auth` BLOCKED gate because the operator's official YouTube Data API v3 key is not provisioned. Unblock: set `WEBFLIX_YOUTUBE_API_KEY` (main-process env) or write `<dataRoot>/youtube-api-key` — zero code changes.
+2. **The agent chat surface live mount** (`wfx-agent:composer-mounted`): the panel + bridge are LIVE in the GUI; the V4ChatPane mount needs the runtime port delivery to complete — in the dev sandbox the lazy `@zcode/ui` chunk under vite's on-demand compilation does not settle in the window (and a window reload exhausts Chromium's resource budget — ERR_INSUFFICIENT_RESOURCES). The PACKAGED tier (prebuilt bundle — the P9 packaging workflow) is this gate's proper venue; recorded BLOCKED pending that run.
+3. **Live model/provider switching + long-task lifecycle** (`wfx-agent:live-chat-roundtrip`): the real provider services + task lifecycle are composed (unit-pinned composition; the panel rides the REAL V4ChatPane over the REAL runtime services); a live round-trip needs provider credentials in the profile. BLOCKED per the work order's no-mock rule.
+
+## D. Known issues / follow-ups
+
+- **The F2 dev-path leak** (found by the dev smoke, 2026-10-23): with the monorepo zcode CLI bundle present, the dev app's agent warmup writes `~/.zcode/cli/db/db.sqlite` despite the identity env. The packaged tier owns the no-zcode-root gate and CLOSED it in P9-QA-2 (F1/F2). The dev smoke's assertion is now gate-aware (only that exact artifact is tolerated; anything else still fails). Follow-up lane candidate: thread the identity-scoped CLI home through the dev agent spawn env chain.
+- Subscriptions OAuth transport (`subscriptions.list mine=true`) is a later order (the account seam is injected).
+- The federated `SearchOutcome` vocabulary lacks a rate-limited class (W2's recorded freeze-deviation proposal: rate-limited maps to `partial-failure` with the honest reason).
+- Session-scoped history (the durable local-library bridge is a later order — stated in the UI).
+
+## E. Commands (exact, with exit codes)
+
+- `pnpm exec vitest run` → 83 files / 1853 tests passed (exit 0)
+- `pnpm exec vitest run --config packages/desktop/src/renderer/vitest.config.ts` → 15 files / 180 tests (exit 0)
+- `pnpm typecheck` → exit 0
+- `pnpm exec oxlint <touched paths>` → 0 errors (warnings only, non-gating style suggestions)
+- `DISPLAY=:99 node scripts/e2e/webflix-wfx-journey.mjs` → 17 PASS / 0 FAIL / 3 BLOCKED (exit 0)
+- `DISPLAY=:99 node scripts/e2e/webflix-smoke.mjs` → 11/11 (exit 0)
+- Environment: Linux sandbox, 2 vCPU / 4GB, Xvfb :99 1440x900x24, node v24.21.0, pnpm 10.33.2.
