@@ -84,3 +84,30 @@ export * from "./search";
 // (ads-memory/consent-required, ads-memory/scope-revoked) carried as
 // DATA, never thrown.
 export * from "./ads-memory";
+
+// UI-action bridge (WFX-DESKTOP-WEBFLIX-UX-1 — freeze §9): the typed
+// agent<->UI seam (0.13.0 -> 0.14.0 additive, the ads-sources discipline) —
+// the frozen MediaRoute/RouteParams navigation model, the VisibleMediaContext
+// snapshot the host answers FROM ITS OWN STATE (never a DOM scrape), the
+// seven-action UiAction union (navigation/read/play only — NO provider
+// account mutations ride this bridge, the freeze §9 consent law), the typed
+// UiActionResult union (ok + evidence + verification context | failure |
+// needs-user-choice | unsupported with the frozen capability vocabulary),
+// the AgentItemSummary/AgentChannelSummary (ids + display facts — an agent
+// cannot fabricate playable items), the UiActionDispatcher port (interface
+// only), and the AgentActionTraceEntry for acceptance-run evidence.
+export * from "./ui-actions";
+
+// Media-surface views (WFX-DESKTOP-WEBFLIX-UX-1 — freeze §9): the frozen
+// shell<->producer view seam (same 0.13.0 -> 0.14.0 additive bump) — the
+// MediaViewPhase honest-state vocabulary as DATA, the card atoms
+// (VideoCardView/ContinueCardView/ChannelCardView/ChannelHeaderView — each
+// carrying the canonical CatalogItem VERBATIM), the HomeFeedView sections
+// model (the reference's interleaved composition with per-section honest
+// states), the page surfaces (SearchPageData, ChannelView, TrendingView,
+// ShortsView, SubscriptionsView with its mandatory degradeNote, HistoryView),
+// and the producer ports (interface only, the CredentialPort precedent):
+// HomeFeedPort, SearchPagePort, ChannelPort, TrendingPort, ShortsPort,
+// SubscriptionsPort, HistoryPort, and the ChannelResolutionPort behind the
+// agent's resolveChannel action (newest-first uploads, typed ambiguity).
+export * from "./media-views";

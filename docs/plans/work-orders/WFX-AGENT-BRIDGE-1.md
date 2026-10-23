@@ -1,0 +1,37 @@
+# Work Order — WFX-AGENT-BRIDGE-1 (Worker 3: ZCode agent/action bridge)
+
+Parent order: `docs/plans/work-orders/WFX-DESKTOP-WEBFLIX-UX-1.md` (source of truth — read it first).
+Frozen law: `docs/plans/contract-freeze.md` §9 + `webflix-contracts` v0.14.0 (`src/ui-actions.ts` — the bridge you implement is frozen there; read it first).
+The verified integration surface (TL2 exploration, 2026-10-23 — trust this, re-verify lines as you code): in the webflix flavor the main process ALREADY spawns the host utility process with the full agent runtime (`desktopWindowLifecycle.ts` dom-ready → `spawnLocalHost` → `desktopHostProcess.ts` posts `InternalChannels.ServicePort` + `DatabaseStartupState` to the renderer via preload — unconditionally, no flavor gate). The webflix renderer simply never listens. Your job is the renderer-side bridge.
+
+## Ownership (strict — no edits outside)
+
+- **owns**: NEW directory `packages/desktop/src/renderer/src/agent/**` (all files + tests), plus the renderer-local test config additions needed (`packages/desktop/src/renderer/vitest.config.ts` include paths ONLY if required — coordinate the minimal diff).
+- **explicitly granted (additive, minimal diffs)**: `packages/ui/src/index.ts` ONLY to add missing public exports needed by the bridge (V4ChatPane, TabStoreProvider, registerBaseWorkspaceServices if not exported, DatabaseStartupAdmission helpers if misplaced) — additive exports only, zero behavior change; and `packages/ui/package.json` exports map if a subpath import is cleaner.
+- Do NOT touch: webflix-shell, boot.tsx (TL2 integrates your mount API), connectors/application contracts, main-process files (the host spawn already works — verify with a probe, don't modify).
+
+## Deliverables
+
+1. **The agent runtime admission module** (`agent/runtimeAdmission.ts`): the renderer-side handshake replicating zcodeBoot's law — listen for the preload's window messages (`InternalChannels.ServicePort` + `DatabaseStartupState` — see `zcodeBoot.tsx` lines ~273–313 + `databaseStartupAdmission.ts`), `DatabaseStartupAdmission` state+port pairing, the snapshot control send, the 30s timeout guard, then `connectViaMessagePort(port)` → `services` + `registerBaseWorkspaceServices(services)` + `setStreamClientId`. Export a typed `getAgentRuntime(): Promise<AgentRuntimeHandle | null>` (null = timeout/unavailable — honest typed state, no throw). MUST be single-admission-safe (idempotent across panel open/close).
+2. **The AgentPanel component** (`agent/AgentPanel.tsx` + composition): lazily mounts the REAL ZCode chat surface — `V4ChatPane` (or the minimal supported composition: `AppErrorBoundary > ZCodeIntlProvider > PlatformProvider(createDesktopPlatform) > ServiceProvider > StoreProvider > TabStoreProvider > V4ChatPane`) with `workspacePath` = the injected agent workspace dir (freeze §9.7: `<dataRoot>/agent-workspace` — the host passes it in; you accept it as a prop) and sessionId from the session store (draft initially; `onSessionCreated` selection). MUST include: the model/provider picker (the composer's own model selection — verify it renders; if the composer picker needs services you must wire), a task-list strip (recent sessions/tasks with status via `useWorkspaceTaskLists` or `useZCodeSessionStore` selection — running/elapsed/close/resume affordances that the existing V4 surface provides), and honest unavailable states (runtime timeout → typed message + retry button). Lazy-load ALL @zcode/ui code via dynamic import — the media-first shell never pays the bundle cost until the panel opens. `import "@zcode/ui/styles.css"` loads with the panel and MUST be scoped: wrap the panel content in a container carrying the ZCode theme root classes (`dark` + its variables) so the global sheet cannot restyle the media shell (freeze §9.4 — verify with a DOM test).
+3. **The UI-action bridge executor** (`agent/uiActionBridge.ts`): implements the frozen `UiActionDispatcher` interface — `dispatch(action)` routes to injected host callbacks (a typed `UiActionHandlers` record: searchCatalog/resolveChannel/openRoute/playCatalogItem/openAccountConnection/toggleAgentPanel/getVisibleMediaContext — TL2's boot integration provides them over the app's own use cases), builds typed `UiActionResult`s (ok with summary + evidence + post-context via the context provider; failure codes; needs-user-choice passthrough; unsupported with capability), and records `AgentActionTraceEntry` rows in an exportable trace buffer (acceptance evidence). NO direct DOM manipulation anywhere.
+4. **The agent-side action TOOL** (`agent/actionTool.ts` + whatever registration surface the ZCode runtime supports — investigate `packages/services`/`packages/server` for the tool/skill/MCP registration the agent runtime actually uses): expose the bridge to the LLM as a tool the agent can call (e.g. a `webflix_ui` tool or MCP tool set with the frozen action union as its input schema, returning the typed result JSON + context). PREFER the runtime's existing supported extension surface (built-in tool registry, skills, or MCP config). The tool description must encode the consent law (read/navigation/play only; ask via needs-user-choice on ambiguity; never claim account actions). If the only viable path is an MCP server config pointing at a bundled stdio entry, document the exact wiring for TL2.
+5. **Panel + bridge tests** (`agent/__tests__/*.test.ts(x)`): admission handshake (fake window messages + fake port; the state/port startupId pairing; timeout → null), the bridge dispatch table (every action → handler called once, typed results, trace entries), tool input schema round-trip vs the frozen `UiActionSchema`, and a jsdom composition test of the panel's unavailable state. Follow `packages/desktop/src/renderer/src/webflix/__tests__/` conventions (the renderer vitest config already defines `__ZCODE_PRODUCT_FLAVOR__: "webflix"`).
+
+## Binding laws
+
+- The ZCode runtime is REUSED, not reimplemented (parent order §3.2): no second chat implementation, no disconnected demo agent. Model/provider switching flows through the existing services (`IModelSelectionService`, `IProviderSettingsService`, the composer picker).
+- The frozen action set only; NO account mutations; needs-user-choice on ambiguity.
+- `windowKind === "update-status"` routing is untouched; the panel exists only in the main window composition.
+- Nothing here writes `~/.zcode` (the baked flavor's env already isolates the data root).
+- Electron main process is NOT modified by you — renderer-only bridge. If a main-process change is genuinely required for the tool registration, STOP and report the exact need instead of editing.
+
+## Gates (run + record exact commands, exit codes, totals)
+
+1. `pnpm exec vitest run --config packages/desktop/src/renderer/vitest.config.ts` (existing renderer battery stays green).
+2. The repo's typecheck path covering packages/ui + the renderer (`pnpm typecheck` may cover host tsconfigs — run the scoped variant that includes your files; record it).
+3. `pnpm exec oxlint` scoped to changed files.
+
+## Report back (worklog + final message)
+
+Base SHA, head SHA, files changed, test totals (before/after), the exact mount API the TL2 integration must call (component props, the handlers record shape, the workspace-path contract), the tool registration mechanism you chose + how it's configured at runtime (exact steps for TL2), CSS scoping verification, limitations.

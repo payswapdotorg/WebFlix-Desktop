@@ -102,3 +102,64 @@ Status: this file is BINDING as of the freeze commit. Version 1.0.0.
 6. **Gates location (Q6)**: GitHub Actions. TL2 owns `.github/workflows/*`; D1 delivers the runner + first workflow (install, lint, typecheck-extended, architecture:check, hermetic tests, Linux GUI smoke tier).
 7. **ZCode commercial/ops substrate (Q7)**: Coding Plan + PayPal bridge, CUA helper, Lark SDK, SSH/Docker/WSL remotes, force-update prompt — all ISOLATED behind one `webflix-product-surface` flag, default OFF, with unreachable-when-off IPC/menu tests; removal decisions deferred (lock §2.12).
 8. **Coexistence + dev data root (Q8)**: WebFlix MUST coexist with real ZCode installs — separate userData, AUMID, package names (identity test matrix); WebFlix dev NEVER writes `~/.zcode`: dev scripts default to the isolated `~/.webflix-dev` root (AUDIT-DESKTOP found `dev:desktop:prod` shares `~/.zcode` — that mode is forbidden for WebFlix work; `mise dev`-style isolation becomes the default).
+
+## 9. WFX wave addendum (WFX-DESKTOP-WEBFLIX-UX-1 — frozen 2026-10-23, binding)
+
+Version 1.1.0 of this freeze (additive; §1–§8 untouched). The WFX wave turns
+the desktop product media-first while preserving the ZCode agent runtime as
+a toggleable layer. TL2 decisions, binding on all lanes:
+
+1. **THE UI-ACTION BRIDGE IS THE ONLY AGENT→UI PATH** (frozen in
+   `webflix-contracts/src/ui-actions.ts`, v0.14.0): typed
+   `UiAction`/`UiActionResult`/`VisibleMediaContext`. The agent NEVER
+   scrapes the DOM, injects prompts, or fabricates `CatalogItem`s — it
+   references itemIds from bridge results or the visible context, and the
+   host resolves ids against its own state. The frozen action set is
+   navigation/read/play ONLY (searchCatalog, resolveChannel, openRoute,
+   playCatalogItem, openAccountConnection, toggleAgentPanel,
+   getVisibleMediaContext). NO provider account mutation (like, subscribe,
+   comment, playlist writes) rides this bridge — those need the user's
+   express intent through their own consented surfaces. Widening the set
+   requires a new freeze decision.
+2. **THE MEDIA-VIEW SEAM** (frozen in `webflix-contracts/src/media-views.ts`,
+   v0.14.0): the shell consumes View shapes (HomeFeedView sections model,
+   SearchPageData, ChannelView, TrendingView, ShortsView, SubscriptionsView,
+   HistoryView, card atoms carrying the canonical CatalogItem verbatim);
+   the producer implements the ports (HomeFeedPort, SearchPagePort,
+   ChannelPort, TrendingPort, ShortsPort, SubscriptionsPort, HistoryPort,
+   ChannelResolutionPort) in webflix-application. Honest states are DATA
+   (MediaViewPhase). Subscriptions composed from per-channel upload polling
+   MUST carry degradeNote. The ChannelResolutionPort answers the agent's
+   resolveChannel with newest-first uploads (the MrBeast journey's data path).
+3. **AGENT PANEL COMPOSITION LAW** (supersedes the P9-UI-1 "imports NOTHING
+   from @zcode/ui" posture FOR THE PANEL ONLY): the media-first boot surface
+   still never loads ZCode UI; the toggleable agent panel — when the user
+   opens it — dynamically imports the ZCode chat surface (V4ChatPane behind
+   the full provider stack) and connects through the SAME ServicePort/
+   DatabaseStartupAdmission handshake the ZCode boot uses (the host
+   utility process already runs in the webflix flavor — verified 2026-10-23).
+   The panel is a first-class shell state: docked right, resizable, closable,
+   width/visibility persisted; media playback/navigation survive panel
+   open/close/resize without restarting the player.
+4. **CSS ISOLATION LAW**: `@zcode/ui/styles.css` loads ONLY when the panel
+   first opens (lazy), scoped to the panel container (the ZCode theme root
+   classes must not restyle the media shell). The WebFlix media surface
+   keeps its own theme tokens.
+5. **DATA API KEY LAW**: the official YouTube Data API v3 composition root
+   reads the key from user-level configuration (env `WEBFLIX_YOUTUBE_API_KEY`
+   and/or a Settings surface persisting under the WebFlix data root) — NEVER
+   baked into the binary, never in renderer-visible strings. Without a key,
+   every Data-API-backed surface answers `requires-auth` honestly
+   (fixtures label themselves). The live MrBeast journey gate stays BLOCKED
+   until the operator provisions a key; fixture-labelled runs are recorded
+   separately, never as live passes.
+6. **PERSISTENT PLAYER COMPLIANCE POSITION** (revises AS-Q12 for WFX): the
+   watch player host may persist across route transitions WITHIN the visible
+   window (standard desktop split-view), with the official IFrame embed's
+   own behavior (ads, required player chrome) preserved and no
+   audio/background play when the window is hidden/minimized. No PiP until a
+   further written position. The queue is WebFlix-local data.
+7. **AGENT WORKSPACE LAW**: the agent chat runs against a dedicated
+   per-profile workspace directory under the WebFlix data root
+   (`~/.webflix[-dev]/agent-workspace`) — never `~/.zcode`, never the
+   user's arbitrary project dirs (the media-first product is the workspace).

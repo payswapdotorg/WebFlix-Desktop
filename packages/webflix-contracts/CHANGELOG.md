@@ -6,6 +6,47 @@ impact note. No CHANGELOG existed before 0.2.0 — the 0.1.0 history is the git
 log of this package (frozen §2 shapes, D2-LOCAL lane).
 
 ## 0.11.0 — 2026-10-12 — the transparency-source seam (P5-SOURCES)
+## 0.14.0 — 2026-10-23 — the WFX UI-action bridge + media-view seam (WFX-DESKTOP-WEBFLIX-UX-1, freeze §9)
+
+The WFX wave's two frozen siblings (the ads-sources discipline, additive
+only — every 0.13.0 export is untouched):
+
+- `ui-actions.ts` — the typed agent↔UI bridge: MediaRoute/RouteParams (the
+  frozen navigation model), VisibleMediaContext (the structured snapshot the
+  host answers from its own state — never a DOM scrape; visibleItemIds capped
+  at 25), the seven-action UiAction union (searchCatalog, resolveChannel,
+  openRoute, playCatalogItem, openAccountConnection, toggleAgentPanel,
+  getVisibleMediaContext — navigation/read/play ONLY: no provider account
+  mutation rides this bridge, the freeze §9 consent law), the typed
+  UiActionResult union (ok with summary + evidence + post-action context |
+  failure with code/message/retryable | needs-user-choice with labeled
+  choices | unsupported with the frozen capability vocabulary), the
+  AgentItemSummary/AgentChannelSummary atoms (ids + display facts — an
+  agent cannot fabricate a playable CatalogItem through this seam), the
+  UiActionDispatcher port (interface only; implementations dispatch through
+  the SAME application use cases the UI buttons use), and the
+  AgentActionTraceEntry for acceptance evidence.
+- `media-views.ts` — the frozen shell↔producer view seam: MediaViewPhase
+  (the honest states as data), the card atoms (VideoCardView,
+  ContinueCardView, ChannelCardView, ChannelHeaderView — the canonical
+  CatalogItem rides VERBATIM, labels are producer-formatted presentation
+  facts), the HomeFeedView sections model (video-grid | shorts-shelf |
+  continue-watching | section-state — per-section honest states so a
+  degraded compose still shows what worked; compositionNote names HOW the
+  feed was composed), the page surfaces (SearchPageData, ChannelView,
+  TrendingView, ShortsView, SubscriptionsView — whose YouTube-honest
+  degradeNote is mandatory when composed from per-channel upload polling —
+  and HistoryView), and the producer ports (interfaces only, the
+  CredentialPort precedent): HomeFeedPort, SearchPagePort, ChannelPort,
+  TrendingPort, ShortsPort, SubscriptionsPort, HistoryPort, and the
+  ChannelResolutionPort (resolve one channel + newest-first uploads, typed
+  ambiguity candidates, or typed unavailability — the MrBeast journey's
+  data path).
+
+Consumer impact: none on existing consumers (purely additive; no existing
+export changed shape; webflix-shell's SearchState grammar and
+webflix-application's existing ports are unaffected — the new ports are new
+symbols).
 
 Phase-5 row 6 (the FINAL row). Adds the transparency-source seam that closes
 Phase 5's shape: the `TransparencySourcePort` (INTERFACE ONLY, the
