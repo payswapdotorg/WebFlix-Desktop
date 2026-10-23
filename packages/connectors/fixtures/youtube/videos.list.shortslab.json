@@ -1,0 +1,50 @@
+{
+  "_fixture": "FIXTURE-ONLY: abridged YouTube Data API v3 videos.list?id= response envelope (the documented enrichment read for the shorts-lab uploads page); durations chosen to exercise the shorts classification rule (≤60s short, >60s long); synthetic values, never a live capture; no credentials",
+  "kind": "youtube#videoListResponse",
+  "etag": "fixture-etag-videos-shortslab-1",
+  "pageInfo": { "totalResults": 3, "resultsPerPage": 3 },
+  "items": [
+    {
+      "kind": "youtube#video",
+      "etag": "fixture-etag-video-sl-1",
+      "id": "FIXVID10001",
+      "snippet": {
+        "publishedAt": "2026-09-01T12:00:00Z",
+        "channelId": "UCFIXCH0000000000000002",
+        "title": "Fixture: shorts lab september warmup",
+        "description": "Fixture-only abridged description.",
+        "channelTitle": "Fixture Shorts Lab"
+      },
+      "contentDetails": { "duration": "PT58S", "definition": "hd" },
+      "statistics": { "viewCount": "1234", "likeCount": "56" }
+    },
+    {
+      "kind": "youtube#video",
+      "etag": "fixture-etag-video-sl-2",
+      "id": "FIXVID10002",
+      "snippet": {
+        "publishedAt": "2026-09-15T18:30:00Z",
+        "channelId": "UCFIXCH0000000000000002",
+        "title": "Fixture: shorts lab mid september long form",
+        "description": "Fixture-only abridged description.",
+        "channelTitle": "Fixture Shorts Lab"
+      },
+      "contentDetails": { "duration": "PT9M30S", "definition": "hd" },
+      "statistics": { "viewCount": "56", "likeCount": "7" }
+    },
+    {
+      "kind": "youtube#video",
+      "etag": "fixture-etag-video-sl-3",
+      "id": "FIXVID10003",
+      "snippet": {
+        "publishedAt": "2026-10-20T09:00:00Z",
+        "channelId": "UCFIXCH0000000000000002",
+        "title": "Fixture: shorts lab newest upload #shorts",
+        "description": "Fixture-only abridged description.",
+        "channelTitle": "Fixture Shorts Lab"
+      },
+      "contentDetails": { "duration": "PT45S", "definition": "hd" },
+      "statistics": { "viewCount": "1048576", "likeCount": "65536" }
+    }
+  ]
+}

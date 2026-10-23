@@ -312,6 +312,22 @@ function utcDateKey(epochMs: number): string {
   return new Date(epochMs).toISOString().slice(0, 10);
 }
 
+/** Normalizes a handle for the official forHandle param: trimmed, leading "@" ensured. */
+export function normalizeHandleParam(handle: string): string {
+  const trimmed = handle.trim();
+  return trimmed.startsWith("@") ? trimmed : `@${trimmed}`;
+}
+
+/**
+ * Redacts the API key from a request URL before it enters the quota ledger
+ * (freeze §9.5 Data-API-key law: the key is never baked, never logged, never
+ * renderer-visible — the ledger is an in-process log surface, so its recorded
+ * URLs carry `key=REDACTED`; the wire request itself keeps the real key).
+ */
+function redactApiKeyInUrl(url: string): string {
+  return url.replace(/([?&])key=[^&]*/, "$1key=REDACTED");
+}
+
 function clampInt(value: number, min: number, max: number): number {
   const n = Math.floor(Number(value));
   if (!Number.isFinite(n)) return min;
@@ -468,22 +484,30 @@ export class YouTubeDataApiClient {
 
   async getChannel(params: {
     id?: string;
+    /** Channel handle (official channels.list forHandle param; normalized to a leading "@"). */
+    handle?: string;
     mine?: boolean;
     parts?: readonly string[];
   }): Promise<YouTubeChannelItem> {
-    if (!params.id && !params.mine) {
+    // id takes precedence when a caller offers both (documented tie-break;
+    // the official endpoint accepts only one selector per call).
+    const selector = params.id ?? (params.handle !== undefined ? normalizeHandleParam(params.handle) : undefined);
+    if (!selector && !params.mine) {
       throw new YouTubeApiError({
         operationId: "channels.list",
-        message: "getChannel requires id or mine:true",
+        message: "getChannel requires id, handle or mine:true",
       });
     }
+    const usingId = params.id !== undefined;
+    const usingHandle = params.id === undefined && params.handle !== undefined;
     const page = await this.call<YouTubeListResponse<YouTubeChannelItem>>(
       "channels.list",
       {
         part: (params.parts ?? ["snippet", "statistics"]).join(","),
-        id: params.id,
+        id: usingId ? selector : undefined,
+        forHandle: usingHandle ? selector : undefined,
         mine: params.mine ? "true" : undefined,
-        maxResults: params.id ? 1 : undefined,
+        maxResults: usingId || usingHandle ? 1 : undefined,
       },
       { requiresAuth: Boolean(params.mine) },
     );
@@ -491,7 +515,13 @@ export class YouTubeDataApiClient {
     if (!item) {
       throw new NotFoundError({
         operationId: "channels.list",
-        message: `channels.list returned no channel${params.id ? ` for id "${params.id}"` : " for the authorized account"}`,
+        message: `channels.list returned no channel${
+          usingId
+            ? ` for id "${params.id}"`
+            : usingHandle
+              ? ` for handle "${params.handle}"`
+              : " for the authorized account"
+        }`,
       });
     }
     return item;
@@ -613,6 +643,8 @@ export class YouTubeDataApiClient {
     }
 
     const url = buildUrl(spec.endpoint, params, this.apiKey);
+    // The ledger is a log surface: the key never appears in it (freeze §9.5).
+    const ledgerUrl = redactApiKeyInUrl(url);
     const remaining = this.limitToday - this.usedToday;
     if (this.providerReportedExhaustion || remaining < spec.cost) {
       this.ledger.push({
@@ -624,7 +656,7 @@ export class YouTubeDataApiClient {
         outcome: "blocked-preflight",
         httpStatus: null,
         reason: "local-budget-exhausted",
-        url,
+        url: ledgerUrl,
       });
       throw new QuotaExceededError({
         operationId,
@@ -652,7 +684,7 @@ export class YouTubeDataApiClient {
         outcome: "network-error",
         httpStatus: null,
         reason: "network-error",
-        url,
+        url: ledgerUrl,
       });
       throw new YouTubeApiError({
         operationId,
@@ -677,7 +709,7 @@ export class YouTubeDataApiClient {
         outcome: "provider-error",
         httpStatus: response.status,
         reason,
-        url,
+        url: ledgerUrl,
       });
       if (response.status === 429 || (reason !== null && RATE_LIMIT_REASONS.has(reason))) {
         const retryAfterSeconds = parseRetryAfter(response.headers);
@@ -724,7 +756,7 @@ export class YouTubeDataApiClient {
       outcome: "success",
       httpStatus: response.status,
       reason: null,
-      url,
+      url: ledgerUrl,
     });
     return body as T;
   }

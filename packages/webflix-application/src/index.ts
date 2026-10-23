@@ -263,3 +263,36 @@ export * from "./in-memory-ad-memory-stores";
 // telemetry.
 export * from "./guest-session";
 export * from "./guest-capabilities";
+
+// WFX-PROVIDER-SLICE-1 (WFX-DESKTOP-WEBFLIX-UX-1, freeze §9): the
+// media-producer vertical slice over the official YouTube Data API engine.
+// The engine seam is the app-owned YouTubeCatalogSource port
+// (media/youtube-source-port.ts — structurally satisfied by the
+// connectors-side YouTubeCatalogSourceAdapter, compatibility pinned by the
+// connectors integration suite); the deterministic en-US label helpers +
+// frozen card builders (media/media-labels.ts, media/media-cards.ts — the
+// shorts-classification rule is documented there); the WebFlix-owned local
+// history seam (media/media-history-port.ts) and the subscriptions account
+// seam (media/subscriptions-account-port.ts — the real OAuth transport is a
+// later order); the eight frozen media-views port producers (home feed with
+// the compositionNote law, search page, channel surface with forHandle,
+// trending, the documented honest shorts compose, the subscriptions
+// degradeNote compose, the local-history groups, and the
+// ChannelResolutionPort behind the agent's resolveChannel — the MrBeast
+// journey data path, newest-first binding) + the one-factory composition
+// bundle assembling them over one engine handle. Honest states are DATA
+// (MediaViewPhase), never thrown errors at the port boundary.
+export * from "./media/media-labels";
+export * from "./media/media-cards";
+export * from "./media/media-history-port";
+export * from "./media/subscriptions-account-port";
+export * from "./media/youtube-source-port";
+export * from "./media/home-feed-producer";
+export * from "./media/search-page-producer";
+export * from "./media/channel-producer";
+export * from "./media/channel-resolution-producer";
+export * from "./media/trending-producer";
+export * from "./media/shorts-producer";
+export * from "./media/subscriptions-producer";
+export * from "./media/history-producer";
+export * from "./media/youtube-media-composition";

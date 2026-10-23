@@ -368,7 +368,12 @@ describe("data api client: quota ledger & search budget", () => {
       dayKey: "2025-03-04",
     });
     expect(ledger[0]?.url).toContain("q=container+gardening");
-    expect(ledger[0]?.url).toContain("key=FIXTURE-KEY");
+    // WFX-PROVIDER-SLICE-1 (freeze §9.5 key law): ledger URLs redact the key —
+    // the ledger is a log surface; the real key only ever rides the wire request.
+    expect(ledger[0]?.url).toContain("key=REDACTED");
+    expect(ledger[0]?.url).not.toContain("key=FIXTURE-KEY");
+    // The wire request itself still carries the real key (official API auth).
+    expect(fetch.calls[0]).toContain("key=FIXTURE-KEY");
     expect(client.getUnitsUsedToday()).toBe(100);
 
     const video = await client.getVideo("FIXVID00001");

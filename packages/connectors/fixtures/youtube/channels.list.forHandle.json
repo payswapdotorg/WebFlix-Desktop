@@ -1,0 +1,39 @@
+{
+  "_fixture": "FIXTURE-ONLY: abridged YouTube Data API v3 channels.list?forHandle= response envelope; synthetic values, never a live capture; no credentials",
+  "kind": "youtube#channelListResponse",
+  "etag": "fixture-etag-channels-forhandle-1",
+  "pageInfo": { "totalResults": 1, "resultsPerPage": 1 },
+  "items": [
+    {
+      "kind": "youtube#channel",
+      "etag": "fixture-etag-channel-forhandle-1",
+      "id": "UCFIXCH0000000000000002",
+      "snippet": {
+        "title": "Fixture Shorts Lab",
+        "description": "Fixture-only abridged description (shorts lab).",
+        "customUrl": "@fixtureshortslab",
+        "publishedAt": "2022-08-08T00:00:00Z",
+        "country": "US",
+        "thumbnails": {
+          "default": {
+            "url": "https://yt3.ggpht.com/fixture-shorts-lab-avatar=s88",
+            "width": 88,
+            "height": 88
+          }
+        }
+      },
+      "contentDetails": {
+        "relatedPlaylists": {
+          "likes": "LLFIXCH0000000000000002",
+          "uploads": "UUFIXCH0000000000000002"
+        }
+      },
+      "statistics": { "viewCount": "987654321", "subscriberCount": "1048576", "videoCount": "312" },
+      "brandingSettings": {
+        "image": {
+          "bannerExternalUrl": "https://yt3.googleusercontent.com/fixture-shorts-lab-banner"
+        }
+      }
+    }
+  ]
+}

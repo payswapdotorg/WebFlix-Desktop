@@ -1,0 +1,64 @@
+{
+  "_fixture": "FIXTURE-ONLY: abridged YouTube Data API v3 search.list?type=channel response envelope; synthetic values, never a live capture; no credentials",
+  "kind": "youtube#searchListResponse",
+  "etag": "fixture-etag-search-channels-1",
+  "regionCode": "US",
+  "pageInfo": { "totalResults": 3, "resultsPerPage": 8 },
+  "items": [
+    {
+      "kind": "youtube#searchResult",
+      "etag": "fixture-etag-search-channel-1",
+      "id": { "kind": "youtube#channel", "channelId": "UCFIXCH0000000000000001" },
+      "snippet": {
+        "publishedAt": "2019-05-05T00:00:00Z",
+        "channelId": "UCFIXCH0000000000000001",
+        "title": "Fixture Channel",
+        "description": "Fixture-only abridged channel description.",
+        "channelTitle": "Fixture Channel",
+        "customUrl": "@fixturechannel",
+        "thumbnails": {
+          "default": {
+            "url": "https://yt3.ggpht.com/fixture-channel-avatar=s88",
+            "width": 88,
+            "height": 88
+          }
+        },
+        "liveBroadcastContent": "none"
+      }
+    },
+    {
+      "kind": "youtube#searchResult",
+      "etag": "fixture-etag-search-channel-2",
+      "id": { "kind": "youtube#channel", "channelId": "UCFIXCH0000000000000009" },
+      "snippet": {
+        "publishedAt": "2021-01-01T00:00:00Z",
+        "channelId": "UCFIXCH0000000000000009",
+        "title": "Fixture Channel Gaming",
+        "description": "Fixture-only abridged channel description (gaming).",
+        "channelTitle": "Fixture Channel Gaming",
+        "liveBroadcastContent": "none"
+      }
+    },
+    {
+      "kind": "youtube#searchResult",
+      "etag": "fixture-etag-search-channel-3",
+      "id": { "kind": "youtube#channel", "channelId": "UCFIXCH0000000000000002" },
+      "snippet": {
+        "publishedAt": "2022-08-08T00:00:00Z",
+        "channelId": "UCFIXCH0000000000000002",
+        "title": "Fixture Shorts Lab",
+        "description": "Fixture-only abridged channel description (shorts lab).",
+        "channelTitle": "Fixture Shorts Lab",
+        "customUrl": "@fixtureshortslab",
+        "thumbnails": {
+          "default": {
+            "url": "https://yt3.ggpht.com/fixture-shorts-lab-avatar=s88",
+            "width": 88,
+            "height": 88
+          }
+        },
+        "liveBroadcastContent": "none"
+      }
+    }
+  ]
+}

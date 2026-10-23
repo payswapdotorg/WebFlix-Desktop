@@ -1,0 +1,47 @@
+{
+  "_fixture": "FIXTURE-ONLY: abridged YouTube Data API v3 playlistItems.list response envelope for the fixture shorts-lab channel's uploads playlist; items deliberately in NON-newest-first publishedAt order (the client-side newest-first re-sort is binding and must be proven against out-of-order API rows); synthetic values, never a live capture; no credentials",
+  "kind": "youtube#playlistItemListResponse",
+  "etag": "fixture-etag-playlistItems-shortslab-1",
+  "pageInfo": { "totalResults": 3, "resultsPerPage": 3 },
+  "items": [
+    {
+      "kind": "youtube#playlistItem",
+      "etag": "fixture-etag-playlistItem-sl-1",
+      "id": "UUPIFIX0000000000000011",
+      "snippet": {
+        "publishedAt": "2026-09-01T12:00:00Z",
+        "channelId": "UCFIXCH0000000000000002",
+        "title": "Fixture: shorts lab september warmup",
+        "playlistId": "UUFIXCH0000000000000002",
+        "position": 0,
+        "resourceId": { "kind": "youtube#video", "videoId": "FIXVID10001" }
+      }
+    },
+    {
+      "kind": "youtube#playlistItem",
+      "etag": "fixture-etag-playlistItem-sl-2",
+      "id": "UUPIFIX0000000000000012",
+      "snippet": {
+        "publishedAt": "2026-10-20T09:00:00Z",
+        "channelId": "UCFIXCH0000000000000002",
+        "title": "Fixture: shorts lab newest upload #shorts",
+        "playlistId": "UUFIXCH0000000000000002",
+        "position": 1,
+        "resourceId": { "kind": "youtube#video", "videoId": "FIXVID10003" }
+      }
+    },
+    {
+      "kind": "youtube#playlistItem",
+      "etag": "fixture-etag-playlistItem-sl-3",
+      "id": "UUPIFIX0000000000000013",
+      "snippet": {
+        "publishedAt": "2026-09-15T18:30:00Z",
+        "channelId": "UCFIXCH0000000000000002",
+        "title": "Fixture: shorts lab mid september long form",
+        "playlistId": "UUFIXCH0000000000000002",
+        "position": 2,
+        "resourceId": { "kind": "youtube#video", "videoId": "FIXVID10002" }
+      }
+    }
+  ]
+}
