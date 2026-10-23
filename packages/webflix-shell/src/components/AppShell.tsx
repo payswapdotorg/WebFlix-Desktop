@@ -1,10 +1,20 @@
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { theme } from "../theme";
 import type {
   CatalogItem,
+  ChannelView,
   Collection,
   EvaluationResult,
+  HistoryView,
+  HomeFeedView,
+  MediaRoute,
   ProviderAccountRecord,
+  RouteParams,
+  SearchPageData,
+  ShortsView,
+  SubscriptionsView,
+  TrendingView,
+  VideoCardView,
 } from "webflix-contracts";
 import type {
   AdsQualificationItemOutcome,
@@ -14,37 +24,64 @@ import type {
   ResetLocalDataResult,
 } from "webflix-application";
 import type { SearchState } from "../states";
-import { HomeScreen } from "./HomeScreen";
-import { SearchScreen } from "./SearchScreen";
-import { LibraryScreen } from "./LibraryScreen";
-import { AccountsScreen } from "./AccountsScreen";
-import { AdCenterPanel } from "./AdCenterPanel";
-import { EvaluationPanel } from "./EvaluationPanel";
-import { RankerAdapterSelector } from "./RankerAdapterSelector";
-import { SettingsScreen } from "./SettingsScreen";
+import type { PlayerControlsView } from "../states";
+import { NAV_ITEMS, isNarrowViewport, paramsEqual } from "../routes";
+import type { LoadMoreSurface, NavRoute, RetrySurface } from "../routes";
+import { WatchScreen, DEFAULT_WATCH_ACTIONS } from "./WatchScreen";
+import type { WatchActionView, WatchQueueEntryView } from "./WatchScreen";
+import {
+  AgentPanelSlot,
+  useAgentPanelState,
+} from "./AgentPanel";
+import type { AgentPanelApi, AgentPanelViewState, PanelPersistence } from "./AgentPanel";
+import { ScreenRouter } from "./shell/ScreenRouter";
+import { Sidebar } from "./shell/Sidebar";
+import { TopChrome } from "./shell/TopChrome";
+import { FOCUS_STYLES, shellStyles } from "./shell/shell-styles";
 
-export type ScreenId =
-  | "home"
-  | "search"
-  | "library"
-  | "accounts"
-  | "ads"
-  | "evaluation"
-  | "settings";
+/**
+ * The shell's screen vocabulary (WFX-UX-SHELL-1): the frozen MediaRoute set
+ * minus the two CONTENT routes (watch/channel — reached through card
+ * actions, deep links and the agent bridge, never the sidebar). Additive
+ * over the legacy ScreenId union: every legacy id is still valid.
+ */
+export type ScreenId = NavRoute;
 
-export const NAV_ITEMS: readonly { id: ScreenId; label: string }[] = [
-  { id: "home", label: "Home" },
-  { id: "search", label: "Search" },
-  { id: "library", label: "Library" },
-  { id: "accounts", label: "Accounts" },
-  { id: "ads", label: "Ad Center" },
-  { id: "evaluation", label: "MI Evaluation" },
-  // P7-COMPOSE-1 (WF-021 surface): the retention/settings screen.
-  { id: "settings", label: "Settings" },
-];
+// Re-exported for the barrel (the composition tests pin NAV_ITEMS' labels).
+export { NAV_ITEMS };
+
+/**
+ * The watch surface state the host passes to keep the persistent player
+ * mounted (freeze §9.6 — the player may persist across route transitions
+ * within the visible window; the queue is WebFlix-local data).
+ */
+export interface WatchSurfaceState {
+  readonly title: string;
+  readonly plan: import("webflix-contracts").PlaybackPlan;
+  readonly controls?: PlayerControlsView | null;
+  /** The item's card view (metadata band facts). */
+  readonly card?: VideoCardView | null;
+  readonly related?: readonly VideoCardView[];
+  readonly queue?: readonly WatchQueueEntryView[];
+  /** The action row; defaults to the honest-unavailable trio. */
+  readonly actions?: readonly WatchActionView[];
+  /** Host-side theater preference (the shell tracks its own toggle too). */
+  readonly theater?: boolean;
+}
 
 export interface AppShellProps {
   readonly initialScreen?: ScreenId;
+  /** WFX: mount-time route (wins over initialScreen) + route params. */
+  readonly initialRoute?: MediaRoute;
+  readonly initialRouteParams?: RouteParams;
+  /**
+   * Controlled route (the agent bridge's openRoute path): when provided it
+   * wins over the internal route state; user navigation still reports
+   * through onNavigate so a controlled host can echo it back.
+   */
+  readonly route?: { readonly route: MediaRoute; readonly params: RouteParams } | null;
+  /** Reports every route change (nav, global search, tabs). */
+  readonly onNavigate?: (route: MediaRoute, params?: RouteParams) => void;
   readonly accounts?: readonly ProviderAccountRecord[];
   readonly recentItems?: readonly CatalogItem[];
   readonly collections?: readonly Collection[];
@@ -99,68 +136,60 @@ export interface AppShellProps {
    * AccountsScreen's honest status line. null = no attempt yet.
    */
   readonly connectOutcome?: { providerId: string; ok: boolean; reason: string } | null;
-}
 
-const styles: Record<string, React.CSSProperties> = {
-  root: {
-    minHeight: "100vh",
-    boxSizing: "border-box",
-    display: "grid",
-    gridTemplateRows: "auto auto 1fr auto",
-    gap: theme.spacing.md,
-    padding: theme.spacing.md,
-    fontFamily: theme.typography.fontFamily,
-    background: theme.colors.background,
-    color: theme.colors.text,
-  },
-  header: { display: "flex", alignItems: "baseline", gap: theme.spacing.sm },
-  brand: {
-    fontSize: theme.typography.sizes.display,
-    fontWeight: 700,
-    letterSpacing: "0.5px",
-    color: theme.colors.accent,
-  },
-  tagline: { color: theme.colors.textMuted },
-  // P6-SHELL-RESPONSIVE-1: the nav carries its own responsive truth —
-  // it wraps on narrow viewports (flexWrap was previously unset; the
-  // host composed it in apps/web-client — that debt is now paid here).
-  nav: { display: "flex", flexWrap: "wrap", gap: theme.spacing.sm },
-  navButton: {
-    background: "transparent",
-    color: theme.colors.textMuted,
-    border: `1px solid ${theme.colors.border}`,
-    borderRadius: theme.radii.sm,
-    padding: "8px 14px",
-    // P6-SHELL-RESPONSIVE-1: the 44px touch-target bar is the shell's own
-    // guarantee now (previously host-composed; additive prop only).
-    minHeight: 44,
-    cursor: "pointer",
-    fontSize: theme.typography.sizes.md,
-  },
-  navButtonActive: {
-    background: theme.colors.accent,
-    borderColor: theme.colors.accent,
-    color: "#08211b",
-    fontWeight: 600,
-  },
-  main: { display: "block" },
-  // The evaluation screen stack: RankerAdapterSelector above EvaluationPanel.
-  screenStack: {
-    display: "flex",
-    flexDirection: "column",
-    gap: theme.spacing.md,
-  },
-  footer: {
-    borderTop: `1px solid ${theme.colors.border}`,
-    paddingTop: theme.spacing.sm,
-    color: theme.colors.textMuted,
-    fontSize: theme.typography.sizes.sm,
-  },
-};
+  // ---- WFX-UX-SHELL-1 (freeze §9 media-view seam): the HOST produces,
+  // the shell renders. Every surface is flat-optional with an honest
+  // not-provided state — never fabricated rows. ----
+  /** The frozen home feed view (the media-first Home). */
+  readonly homeFeed?: HomeFeedView | null;
+  /** The frozen search page data (card results + channels + cursor). */
+  readonly searchPage?: SearchPageData | null;
+  readonly channelView?: ChannelView | null;
+  readonly trendingView?: TrendingView | null;
+  readonly shortsView?: ShortsView | null;
+  readonly subscriptionsView?: SubscriptionsView | null;
+  readonly historyView?: HistoryView | null;
+  /** Surfaces currently appending a page (the honest in-flight fact). */
+  readonly loadingMoreSurfaces?: readonly LoadMoreSurface[];
+  /** Shared card play path — the same planning the buttons use. */
+  readonly onPlayCard?: (card: VideoCardView) => void;
+  /** Cursor paging reports (one flat callback for every growing surface). */
+  readonly onLoadMorePage?: (surface: LoadMoreSurface, cursor: string) => void;
+  /** Honest retry reports from the phase panels. */
+  readonly onRetrySurface?: (surface: RetrySurface) => void;
+  /** Chip filter reports (home feed + trending chart). */
+  readonly onSelectChip?: (surface: "home" | "trending", chip: string | null) => void;
+  /** Channel tab selection (the route's channelTab param). */
+  readonly onSelectChannelTab?: (tab: string) => void;
+  /** Channel navigation from cards/headers. */
+  readonly onOpenChannel?: (channel: { channelId?: string; handle?: string }) => void;
+
+  // ---- WFX watch surface (freeze §9.6 persistent player). ----
+  readonly watchState?: WatchSurfaceState | null;
+  readonly onWatchClose?: () => void;
+  readonly onWatchToggleTheater?: () => void;
+  readonly onWatchAction?: (id: string) => void;
+
+  // ---- WFX agent panel slot (deliverable 7; content is Worker 3's). ----
+  /** Lazy panel content: a node, or a render-prop receiving the close api. */
+  readonly agentPanelContent?: React.ReactNode | ((api: AgentPanelApi) => React.ReactNode);
+  /** Host-injected persistence; default: in-memory (session-only). */
+  readonly agentPanelPersistence?: PanelPersistence;
+  /** Mount-time panel state (used before/without persistence). */
+  readonly agentPanelInitial?: AgentPanelViewState;
+  /** External visibility control (the agent bridge's toggleAgentPanel). */
+  readonly agentPanelVisible?: boolean;
+  /** Reports every committed panel state change (toggle/close/resize). */
+  readonly onAgentPanelStateChange?: (state: AgentPanelViewState) => void;
+}
 
 export function AppShell(props: AppShellProps) {
   const {
     initialScreen = "home",
+    initialRoute,
+    initialRouteParams,
+    route: routeProp,
+    onNavigate,
     accounts = [],
     recentItems = [],
     collections = [],
@@ -191,96 +220,288 @@ export function AppShell(props: AppShellProps) {
     onRetrySearch,
     onImportLocalFiles,
     connectOutcome = null,
+    // WFX media-view seam (honest not-provided defaults: null everywhere).
+    homeFeed = null,
+    searchPage = null,
+    channelView = null,
+    trendingView = null,
+    shortsView = null,
+    subscriptionsView = null,
+    historyView = null,
+    loadingMoreSurfaces = [],
+    onPlayCard,
+    onLoadMorePage,
+    onRetrySurface,
+    onSelectChip,
+    onSelectChannelTab,
+    onOpenChannel,
+    watchState = null,
+    onWatchClose,
+    onWatchToggleTheater,
+    onWatchAction,
+    agentPanelContent,
+    agentPanelPersistence,
+    agentPanelInitial,
+    agentPanelVisible,
+    onAgentPanelStateChange,
   } = props;
 
-  const [screen, setScreen] = useState<ScreenId>(initialScreen);
+  // ---- route model (the frozen MediaRoute set + params) ----
+  const [internalRoute, setInternalRoute] = useState<{
+    route: MediaRoute;
+    params: RouteParams;
+  }>(() => ({
+    route: initialRoute ?? initialScreen,
+    params: initialRouteParams ?? {},
+  }));
+  const activeRoute = routeProp ?? internalRoute;
+  const { route, params } = activeRoute;
+
+  const navigate = useCallback(
+    (nextRoute: MediaRoute, nextParams: RouteParams = {}) => {
+      setInternalRoute({ route: nextRoute, params: nextParams });
+      onNavigate?.(nextRoute, nextParams);
+    },
+    [onNavigate],
+  );
+
+  // Controlled-route sync (the agent bridge's openRoute path): the prop
+  // wins whenever it changes; equal-by-value routes are a no-op so a host
+  // echoing our own onNavigate reports cannot loop.
+  useEffect(() => {
+    if (routeProp === undefined || routeProp === null) return;
+    setInternalRoute((current) =>
+      current.route === routeProp.route && paramsEqual(current.params, routeProp.params)
+        ? current
+        : { route: routeProp.route, params: routeProp.params },
+    );
+  }, [routeProp]);
+
+  // ---- responsive sidebar (auto-collapse on narrow viewports) ----
+  const [userCollapsed, setUserCollapsed] = useState<boolean | null>(null);
+  const [autoNarrow, setAutoNarrow] = useState<boolean>(() => isNarrowViewport());
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") return;
+    try {
+      const mql = window.matchMedia(`(max-width: ${theme.layout.narrowViewportPx}px)`);
+      const onChange = () => setAutoNarrow(mql.matches);
+      onChange();
+      if (typeof mql.addEventListener === "function") {
+        mql.addEventListener("change", onChange);
+        return () => mql.removeEventListener("change", onChange);
+      }
+      mql.addListener(onChange);
+      return () => mql.removeListener(onChange);
+    } catch {
+      // matchMedia present but refused: keep the probe's honest answer.
+      return;
+    }
+  }, []);
+  const sidebarCollapsed = userCollapsed ?? autoNarrow;
+
+  // ---- agent panel (the SLOT; content is Worker 3's lane) ----
+  const panel = useAgentPanelState({
+    persistence: agentPanelPersistence,
+    initial: agentPanelInitial,
+    onStateChange: onAgentPanelStateChange,
+  });
+  const { toggle: togglePanel, setVisible: setPanelVisible } = panel;
+  const panelStateRef = useRef(panel.state);
+  panelStateRef.current = panel.state;
+  const prevPanelVisibleRef = useRef(agentPanelVisible);
+  useEffect(() => {
+    if (
+      agentPanelVisible !== undefined &&
+      agentPanelVisible !== prevPanelVisibleRef.current &&
+      agentPanelVisible !== panelStateRef.current.visible
+    ) {
+      setPanelVisible(agentPanelVisible);
+    }
+    prevPanelVisibleRef.current = agentPanelVisible;
+  }, [agentPanelVisible, setPanelVisible]);
+
+  // The documented keyboard shortcut: Ctrl+J / Cmd+J (SHORTCUTS block in
+  // AgentPanel.tsx). Window-scoped; cleaned up with the shell.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && !event.altKey && event.key.toLowerCase() === "j") {
+        event.preventDefault();
+        togglePanel();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [togglePanel]);
+
+  // ---- global search (top chrome) ----
+  const [globalQuery, setGlobalQuery] = useState(params.query ?? "");
+  useEffect(() => {
+    if (params.query !== undefined) setGlobalQuery(params.query);
+  }, [params.query]);
+  const handleGlobalSearchSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+    const trimmed = globalQuery.trim();
+    if (trimmed.length === 0) {
+      navigate("search");
+      return;
+    }
+    navigate("search", { query: trimmed });
+    onSearchSubmit?.(trimmed);
+  };
+
+  // ---- theater state (the shell tracks the toggle; the host is informed) ----
+  const [theater, setTheater] = useState(watchState?.theater ?? false);
+  const handleToggleTheater = useCallback(() => {
+    setTheater((current) => !current);
+    onWatchToggleTheater?.();
+  }, [onWatchToggleTheater]);
+
+  // ---- watch route facts ----
+  const watchMounted = watchState !== null && watchState !== undefined;
+  const onWatchRoute = route === "watch";
+
+  const connectedCount = useMemo(
+    () => accounts.filter((account) => account.status === "connected").length,
+    [accounts],
+  );
+
+  const handlePlayCard = useCallback(
+    (card: VideoCardView) => {
+      onPlayCard?.(card);
+    },
+    [onPlayCard],
+  );
+
+  const handleOpenChannel = useCallback(
+    (channel: { channelId?: string; handle?: string }) => {
+      onOpenChannel?.(channel);
+    },
+    [onOpenChannel],
+  );
 
   return (
-    <div style={styles.root}>
-      <header style={styles.header}>
-        <span style={styles.brand}>{theme.name}</span>
-        <span style={styles.tagline}>{theme.tagline}</span>
-      </header>
+    <div className="wfx-shell" style={shellStyles.root} data-testid="app-shell-root">
+      <style data-testid="wfx-shell-styles">{FOCUS_STYLES}</style>
+      <a
+        href={onWatchRoute && watchMounted ? "#watch-dock" : "#shell-main"}
+        data-testid="skip-to-content"
+        style={shellStyles.skipLink}
+      >
+        Skip to content
+      </a>
 
-      <nav aria-label="Primary" style={styles.nav}>
-        {NAV_ITEMS.map((navItem) => (
-          <button
-            key={navItem.id}
-            type="button"
-            data-testid={`nav-${navItem.id}`}
-            aria-current={screen === navItem.id ? "page" : undefined}
-            style={
-              screen === navItem.id
-                ? { ...styles.navButton, ...styles.navButtonActive }
-                : styles.navButton
-            }
-            onClick={() => setScreen(navItem.id)}
-          >
-            {navItem.label}
-          </button>
-        ))}
-      </nav>
+      <TopChrome
+        globalQuery={globalQuery}
+        onGlobalQueryChange={setGlobalQuery}
+        onGlobalSearchSubmit={handleGlobalSearchSubmit}
+        connectedCount={connectedCount}
+        onOpenAccounts={() => navigate("accounts")}
+        panelVisible={panel.state.visible}
+        onTogglePanel={() => togglePanel()}
+      />
 
-      <main style={styles.main}>
-        {screen === "home" && (
-          <HomeScreen
+      <div style={shellStyles.body} data-testid="shell-body">
+        <Sidebar
+          collapsed={sidebarCollapsed}
+          onToggleCollapsed={() => setUserCollapsed(!sidebarCollapsed)}
+          activeRoute={route}
+          onNavigate={(navRoute) => navigate(navRoute)}
+        />
+
+        <main
+          id="shell-main"
+          data-testid="shell-main"
+          style={onWatchRoute && watchMounted ? shellStyles.mainHidden : shellStyles.main}
+        >
+          <ScreenRouter
+            route={route}
+            params={params}
+            navigate={navigate}
             accounts={accounts}
             recentItems={recentItems}
-            onNavigate={setScreen}
-            onPlay={onPlay}
-          />
-        )}
-        {screen === "search" && (
-          <SearchScreen
-            state={searchState}
-            onQueryChange={onSearchQuery}
-            onSubmit={onSearchSubmit}
-            onRetry={onRetrySearch}
-            onConnect={onConnect}
-            onSelectItem={onPlay}
-          />
-        )}
-        {screen === "library" && (
-          <LibraryScreen
             collections={collections}
             localEntries={localEntries}
+            searchState={searchState}
             onPlay={onPlay}
-            onImportLocalFiles={onImportLocalFiles}
-          />
-        )}
-        {screen === "accounts" && (
-          <AccountsScreen
-            accounts={accounts}
             onConnect={onConnect}
             onDisconnect={onDisconnect}
-            connectOutcome={connectOutcome}
-          />
-        )}
-        {screen === "settings" && (
-          <SettingsScreen
+            onSearchQuery={onSearchQuery}
+            onSearchSubmit={onSearchSubmit}
+            onRetrySearch={onRetrySearch}
+            onImportLocalFiles={onImportLocalFiles}
+            adCenterResults={adCenterResults}
+            evaluationResult={evaluationResult}
+            rankerAdapterEntries={rankerAdapterEntries}
+            rankerSelectedAdapterId={rankerSelectedAdapterId}
+            onRankerAdapterSelectionChange={onRankerAdapterSelectionChange}
+            rankerStatusNote={rankerStatusNote}
             retentionState={retentionState}
-            resetResult={retentionResetResult}
+            retentionResetResult={retentionResetResult}
             onPauseHistoryTracking={onPauseHistoryTracking}
             onResumeHistoryTracking={onResumeHistoryTracking}
             onResetLocalData={onResetLocalData}
+            connectOutcome={connectOutcome}
+            homeFeed={homeFeed}
+            searchPage={searchPage}
+            channelView={channelView}
+            trendingView={trendingView}
+            shortsView={shortsView}
+            subscriptionsView={subscriptionsView}
+            historyView={historyView}
+            watchMounted={watchMounted}
+            loadingMoreSurfaces={loadingMoreSurfaces}
+            onPlayCard={onPlayCard === undefined ? undefined : handlePlayCard}
+            onLoadMorePage={onLoadMorePage}
+            onRetrySurface={onRetrySurface}
+            onSelectChip={onSelectChip}
+            onSelectChannelTab={onSelectChannelTab}
+            onOpenChannel={onOpenChannel}
           />
-        )}
-        {screen === "ads" && <AdCenterPanel results={adCenterResults} />}
-        {screen === "evaluation" && (
-          <div style={styles.screenStack} data-testid="screen-evaluation">
-            <RankerAdapterSelector
-              entries={rankerAdapterEntries}
-              selectedAdapterId={rankerSelectedAdapterId}
-              onSelectionChange={(adapterId) => onRankerAdapterSelectionChange?.(adapterId)}
-              statusNote={rankerStatusNote}
+        </main>
+
+        {watchMounted && (
+          <aside
+            id="watch-dock"
+            data-testid="watch-dock"
+            aria-label="Now playing"
+            style={onWatchRoute ? shellStyles.watchAreaMain : shellStyles.watchAreaDocked}
+          >
+            <WatchScreen
+              title={watchState.title}
+              plan={watchState.plan}
+              controls={watchState.controls ?? null}
+              compact={!onWatchRoute}
+              theater={theater}
+              onToggleTheater={handleToggleTheater}
+              card={watchState.card ?? null}
+              related={watchState.related}
+              queue={watchState.queue}
+              actions={watchState.actions ?? DEFAULT_WATCH_ACTIONS}
+              onAction={onWatchAction}
+              onClose={onWatchClose}
+              onPlayCard={onPlayCard === undefined ? undefined : handlePlayCard}
+              onOpenChannel={
+                onOpenChannel === undefined
+                  ? undefined
+                  : (channelId) => handleOpenChannel({ channelId })
+              }
             />
-            <EvaluationPanel result={evaluationResult} />
-          </div>
+          </aside>
         )}
-      </main>
+
+        <AgentPanelSlot
+          visible={panel.state.visible}
+          widthPx={panel.state.widthPx}
+          onRequestClose={() => setPanelVisible(false)}
+          onRequestResize={(widthPx) => panel.resize(widthPx)}
+        >
+          {agentPanelContent}
+        </AgentPanelSlot>
+      </div>
 
       {/* ADR-0003: the independent-value notice is permanent shell chrome. */}
-      <footer data-testid="independent-value-notice" style={styles.footer}>
+      <footer data-testid="independent-value-notice" style={shellStyles.footer}>
         {theme.notice.text}
       </footer>
     </div>

@@ -1,13 +1,20 @@
 import React from "react";
 import { theme } from "../theme";
-import type { PlaybackPlan } from "webflix-contracts";
-import { PLAYER_CONTROL_IDS_VIEW, PLAYER_CONTROL_LABELS, seekBoundLine } from "../states";
-import type {
-  PlayerControlAvailabilityView,
-  PlayerControlsView,
-  PlayerNonSeekControlIdView,
-  PlayerSeekAvailabilityView,
-} from "../states";
+import type { PlaybackPlan, VideoCardView } from "webflix-contracts";
+import type { PlayerControlsView } from "../states";
+import { MediaCardGrid } from "./media/MediaCardGrid";
+import { ControlsStrip } from "./watch/ControlsStrip";
+import {
+  DEFAULT_WATCH_ACTIONS,
+  MetadataBand,
+  QueueStrip,
+  WatchActionRow,
+} from "./watch/WatchChrome";
+import type { WatchActionView, WatchQueueEntryView } from "./watch/WatchChrome";
+
+// Public re-exports (the barrel + the existing battery pin these names here).
+export type { WatchActionView, WatchQueueEntryView };
+export { DEFAULT_WATCH_ACTIONS };
 
 export interface WatchScreenProps {
   /** The item's title — canonical plans carry no title (ownership is
@@ -23,6 +30,35 @@ export interface WatchScreenProps {
    * not-derived-yet state; NOTHING is invented in the meantime.
    */
   readonly controls?: PlayerControlsView | null;
+  // ---- WFX-UX-SHELL-1 additions (all optional; the standalone surface
+  // keeps its legacy contract EXACTLY when these are absent) ----
+  /** Theater layout (controlled by the host when a handler is wired). */
+  readonly theater?: boolean;
+  /** Fires on the theater/normal toggle. Absent + theater given → the
+   *  toggle renders disabled with its reason; both absent → no toggle. */
+  readonly onToggleTheater?: () => void;
+  /**
+   * The docked persistent-player variant (freeze §9.6): player + title +
+   * now-playing + close only. The full metadata/action/queue/related
+   * chrome renders in the normal/theater variants. The player element
+   * itself NEVER remounts between variants — see the tree-stability note
+   * inside the component.
+   */
+  readonly compact?: boolean;
+  /** The item's card view — the metadata band's facts (labels verbatim). */
+  readonly card?: VideoCardView | null;
+  /** The related rail's video cards. */
+  readonly related?: readonly VideoCardView[];
+  /** The WebFlix-local queue (items + now-playing marker). */
+  readonly queue?: readonly WatchQueueEntryView[];
+  /** The action row (defaults handled by the host; see DEFAULT_WATCH_ACTIONS). */
+  readonly actions?: readonly WatchActionView[];
+  /** Fires for an available action row entry. */
+  readonly onAction?: (id: string) => void;
+  /** Plays a related/queue card. */
+  readonly onPlayCard?: (card: VideoCardView) => void;
+  /** Opens the channel from the metadata band (needs card.channelId). */
+  readonly onOpenChannel?: (channelId: string) => void;
 }
 
 const styles: Record<string, React.CSSProperties> = {
@@ -31,16 +67,48 @@ const styles: Record<string, React.CSSProperties> = {
     flexDirection: "column",
     gap: theme.spacing.md,
     color: theme.colors.text,
+    minWidth: 0,
   },
+  // The columns row: primary + (full variants only) the related rail aside.
+  // NORMAL = row; THEATER and COMPACT stack (the rail moves below / is
+  // omitted). The style MUTATES between variants on the SAME DOM node.
+  columns: {
+    display: "flex",
+    flexDirection: "row",
+    gap: theme.spacing.lg,
+    alignItems: "flex-start",
+    minWidth: 0,
+  },
+  columnsStacked: { flexDirection: "column", gap: theme.spacing.md },
+  // The primary column: heading + PLAYER + variant chrome, in that order,
+  // in EVERY variant. The heading and the player occupy children[0] and
+  // children[1] of this same element whether the surface is compact,
+  // normal or theater — React therefore NEVER remounts the player element
+  // (iframe or <video>) when the variant flips, which is exactly the
+  // freeze §9.6 persistent-player posture (the docked shell keeps this
+  // component mounted across non-watch routes; only the later chrome
+  // children swap).
+  primary: { flex: "1 1 auto", minWidth: 0, display: "flex", flexDirection: "column", gap: theme.spacing.md },
+  secondary: {
+    width: 360,
+    flexShrink: 0,
+    display: "flex",
+    flexDirection: "column",
+    gap: theme.spacing.md,
+    minWidth: 0,
+  },
+  secondaryStacked: { width: "100%" },
   heading: { margin: 0, fontSize: theme.typography.sizes.xl },
+  headingCompact: { margin: 0, fontSize: theme.typography.sizes.md, lineHeight: 1.4 },
   frame: {
     width: "100%",
     aspectRatio: "16 / 9",
     border: "none",
     borderRadius: theme.radii.lg,
     background: "#000000",
+    display: "block",
   },
-  player: { width: "100%", borderRadius: theme.radii.lg, background: "#000000" },
+  player: { width: "100%", borderRadius: theme.radii.lg, background: "#000000", display: "block" },
   note: { margin: 0, color: theme.colors.textMuted },
   panel: {
     background: theme.colors.surface,
@@ -61,32 +129,35 @@ const styles: Record<string, React.CSSProperties> = {
     border: "none",
     borderRadius: theme.radii.sm,
     padding: "10px 16px",
+    minHeight: 44,
     fontWeight: 600,
     cursor: "pointer",
+    font: "inherit",
   },
-  controlsRoot: {
-    display: "flex",
-    flexDirection: "column",
-    gap: theme.spacing.sm,
+  toolbar: { display: "flex", flexWrap: "wrap", gap: theme.spacing.sm, alignItems: "center" },
+  toolbarButton: {
     background: theme.colors.surface,
+    color: theme.colors.text,
     border: `1px solid ${theme.colors.border}`,
-    borderRadius: theme.radii.lg,
-    padding: theme.spacing.md,
+    borderRadius: theme.radii.sm,
+    padding: "8px 14px",
+    minHeight: 44,
+    cursor: "pointer",
+    font: "inherit",
   },
-  controlsHeading: { margin: 0, fontSize: theme.typography.sizes.lg },
-  controlsList: {
-    listStyle: "none",
+  toolbarButtonDisabled: {
+    color: theme.colors.textMuted,
+    cursor: "default",
+  },
+  toolbarReason: { margin: 0, color: theme.colors.textMuted, fontSize: theme.typography.sizes.sm },
+  relatedHeading: { margin: 0, fontSize: theme.typography.sizes.lg, fontWeight: 600 },
+  dockNowPlaying: {
     margin: 0,
-    padding: 0,
-    display: "flex",
-    flexDirection: "column",
-    gap: theme.spacing.xs,
+    color: theme.colors.accent,
+    fontSize: theme.typography.sizes.sm,
+    fontWeight: 600,
   },
-  controlRow: { display: "flex", flexWrap: "wrap", gap: theme.spacing.xs, alignItems: "baseline" },
-  controlLabel: { fontWeight: 600, minWidth: 140 },
-  stateOk: { color: theme.colors.ok, fontWeight: 600 },
-  stateNotOk: { color: theme.colors.warning, fontWeight: 600 },
-  controlMeta: { color: theme.colors.textMuted, lineHeight: 1.5 },
+  dockCloseRow: { display: "flex", gap: theme.spacing.sm },
 };
 
 /*
@@ -104,14 +175,32 @@ function embedUrlOf(plan: Extract<PlaybackPlan, { kind: "official-embed" }>): st
   return typeof embedUrl === "string" && embedUrl.length > 0 ? embedUrl : undefined;
 }
 
-export function WatchScreen(props: WatchScreenProps) {
-  const { title, plan, onClose, controls } = props;
+export function WatchScreen(props: WatchScreenProps): React.ReactElement {
+  const {
+    title,
+    plan,
+    onClose,
+    controls,
+    theater,
+    onToggleTheater,
+    compact = false,
+    card = null,
+    related,
+    queue,
+    actions,
+    onAction,
+    onPlayCard,
+    onOpenChannel,
+  } = props;
   const embedUrl = plan.kind === "official-embed" ? embedUrlOf(plan) : undefined;
 
-  return (
-    <section aria-label="Watch" style={styles.root}>
-      <h1 style={styles.heading}>{title}</h1>
-
+  // The player block is ALWAYS the second child (after the heading) of the
+  // SAME primary column in every variant (compact, normal, theater): the
+  // persistent-player layout relies on its stable tree position, so
+  // route/mode changes never remount the iframe or the local <video>
+  // element (freeze §9.6 compliance).
+  const playerBlock = (
+    <>
       {plan.kind === "official-embed" && (
         <>
           {embedUrl ? (
@@ -166,100 +255,116 @@ export function WatchScreen(props: WatchScreenProps) {
           )}
         </div>
       )}
+      {plan.kind === "external-deep-link" && (
+        <div data-testid="watch-external-deep-link" role="status" style={styles.panel}>
+          <p style={styles.panelTitle}>Opens outside WebFlix</p>
+          <p style={styles.recovery}>
+            This item is planned as an external deep link — the host decides whether (and how) to
+            open it. WebFlix does not fake an in-app player for it.
+          </p>
+        </div>
+      )}
+
+      {plan.kind === "isolated-website" && (
+        <div data-testid="watch-isolated-website" role="status" style={styles.panel}>
+          <p style={styles.panelTitle}>Isolated website view</p>
+          <p style={styles.recovery}>
+            This item is planned as an isolated website embed — no website host surface is mounted
+            here, so nothing is pretended to play.
+          </p>
+        </div>
+      )}
+    </>
+  );
+
+  const nowPlaying = queue?.find((entry) => entry.nowPlaying);
+  const showTheaterToggle = !compact && (theater !== undefined || onToggleTheater !== undefined);
+  const theaterDisabled = onToggleTheater === undefined;
+  const columnsStyle = compact || theater ? { ...styles.columns, ...styles.columnsStacked } : styles.columns;
+
+  return (
+    <section
+      aria-label="Watch"
+      style={styles.root}
+      data-testid={compact ? "watch-compact-root" : "watch-full-root"}
+    >
+      <div style={columnsStyle}>
+        <div style={styles.primary}>
+          <h1 style={compact ? styles.headingCompact : styles.heading}>{title}</h1>
+          {playerBlock}
+
+          {compact ? (
+            <>
+              {nowPlaying && (
+                <p data-testid="watch-dock-now-playing" style={styles.dockNowPlaying}>
+                  Now playing in your queue: {nowPlaying.card.title}
+                </p>
+              )}
+              {onClose && (
+                <div style={styles.dockCloseRow}>
+                  <button
+                    type="button"
+                    data-testid="watch-dock-close"
+                    aria-label={`Close the persistent player for ${title}`}
+                    style={styles.button}
+                    onClick={onClose}
+                  >
+                    Close player
+                  </button>
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              {showTheaterToggle && (
+                <div style={styles.toolbar}>
+                  <button
+                    type="button"
+                    data-testid="watch-theater-toggle"
+                    disabled={theaterDisabled}
+                    aria-label={theater ? "Switch to the default layout" : "Switch to theater layout"}
+                    style={{
+                      ...styles.toolbarButton,
+                      ...(theaterDisabled ? styles.toolbarButtonDisabled : undefined),
+                    }}
+                    onClick={() => onToggleTheater?.()}
+                  >
+                    {theater ? "Default view" : "Theater mode"}
+                  </button>
+                  {theaterDisabled && (
+                    <p data-testid="watch-theater-toggle-reason" style={styles.toolbarReason}>
+                      Layout switching is not wired by this host.
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {card !== null && <MetadataBand card={card} onOpenChannel={onOpenChannel} />}
+
+              {actions !== undefined && (
+                <WatchActionRow actions={actions} onAction={onAction} testId="watch-action-row" />
+              )}
+
+              {queue !== undefined && queue.length > 0 && (
+                <QueueStrip queue={queue} onPlayCard={onPlayCard} />
+              )}
+            </>
+          )}
+        </div>
+
+        {!compact && related !== undefined && related.length > 0 && (
+          <aside
+            aria-label="Related videos"
+            data-testid="watch-related"
+            style={theater ? { ...styles.secondary, ...styles.secondaryStacked } : styles.secondary}
+          >
+            <h2 style={styles.relatedHeading}>Up next</h2>
+            <MediaCardGrid cards={related} onPlay={onPlayCard} layout="rail" />
+          </aside>
+        )}
+      </div>
 
       <ControlsStrip controls={controls} />
     </section>
-  );
-}
-
-/**
- * The WF-006 controls strip (P7-COMPOSE-1): every one of the seven controls
- * renders its TYPED state — available with the capability facts that back
- * it, or unavailable with its typed reason and honest explanation. There
- * are NO dead controls: no command handlers exist at this surface (the
- * hosts wire commands in their own rows), so no button is ever rendered —
- * the typed truth is the whole strip. mini-player / PiP default to
- * unavailable with the host-surface-not-declared reason when the model was
- * derived without host declarations (the engine's own honest default).
- */
-function ControlsStrip(props: { controls?: PlayerControlsView | null }) {
-  const { controls } = props;
-
-  if (controls == null) {
-    return (
-      <section
-        aria-label="Player controls"
-        data-testid="watch-controls"
-        style={styles.controlsRoot}
-      >
-        <h2 style={styles.controlsHeading}>Player controls</h2>
-        <p data-testid="watch-controls-empty" style={styles.note}>
-          No player-controls model has been derived for this plan yet. Control states appear when
-          the host derives them — nothing is assumed in the meantime.
-        </p>
-      </section>
-    );
-  }
-
-  return (
-    <section aria-label="Player controls" data-testid="watch-controls" style={styles.controlsRoot}>
-      <h2 style={styles.controlsHeading}>Player controls</h2>
-      <p data-testid="watch-controls-plankind" style={styles.note}>
-        Control states for this plan: {controls.planKind}
-        {controls.unavailableReason ? ` (${controls.unavailableReason})` : ""} — every control
-        states exactly what it can and cannot do.
-      </p>
-      <ul style={styles.controlsList}>
-        {PLAYER_CONTROL_IDS_VIEW.map((id) =>
-          id === "seek" ? (
-            <SeekControlRow key={id} seek={controls.seek} />
-          ) : (
-            <ControlRow key={id} id={id} control={controls[id]} />
-          ),
-        )}
-      </ul>
-    </section>
-  );
-}
-
-/** One typed control row: label + available-with-facts, or unavailable-with-reason. */
-function ControlRow(props: {
-  id: PlayerNonSeekControlIdView;
-  control: PlayerControlAvailabilityView;
-}) {
-  const { id, control } = props;
-  return (
-    <li data-testid={`watch-control-${id}`} style={styles.controlRow}>
-      <span style={styles.controlLabel}>{PLAYER_CONTROL_LABELS[id]}</span>
-      {control.state === "available" ? (
-        <span style={styles.controlMeta}>
-          <span style={styles.stateOk}>Available</span> — {control.facts.join(" · ")}
-        </span>
-      ) : (
-        <span style={styles.controlMeta}>
-          <span style={styles.stateNotOk}>Unavailable</span> — {control.reason}: {control.detail}
-        </span>
-      )}
-    </li>
-  );
-}
-
-/** The seek row adds the honest position bound when the control is available. */
-function SeekControlRow(props: { seek: PlayerSeekAvailabilityView }) {
-  const { seek } = props;
-  return (
-    <li data-testid="watch-control-seek" style={styles.controlRow}>
-      <span style={styles.controlLabel}>{PLAYER_CONTROL_LABELS.seek}</span>
-      {seek.state === "available" ? (
-        <span style={styles.controlMeta}>
-          <span style={styles.stateOk}>Available</span> — {seek.facts.join(" · ")} ·{" "}
-          {seekBoundLine(seek)}
-        </span>
-      ) : (
-        <span style={styles.controlMeta}>
-          <span style={styles.stateNotOk}>Unavailable</span> — {seek.reason}: {seek.detail}
-        </span>
-      )}
-    </li>
   );
 }
