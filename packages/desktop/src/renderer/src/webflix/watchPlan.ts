@@ -42,7 +42,18 @@ export function resolvePlayPlan(item: CatalogItem, localLibrary: LocalLibrarySes
     };
   }
   if (item.providerId === YOUTUBE_PROVIDER_ID) {
-    const videoId = item.metadata?.videoId;
+    // The canonical key is metadata.externalIds.youtube (connectors'
+    // catalogMapping shape — WFX-PROVIDER-SLICE-1); the legacy top-level
+    // metadata.videoId (searchFlow's synthetic link items) stays honored.
+    const externalIds = item.metadata?.externalIds;
+    const externalVideoId =
+      typeof externalIds === "object" && externalIds !== null
+        ? (externalIds as Record<string, unknown>).youtube
+        : undefined;
+    const videoId =
+      typeof externalVideoId === "string" && externalVideoId !== ""
+        ? externalVideoId
+        : item.metadata?.videoId;
     if (typeof videoId === "string" && videoId !== "") {
       const outcome = resolveSearchQuery(videoId);
       if (outcome.kind === "youtube-link") {

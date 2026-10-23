@@ -202,6 +202,12 @@ export interface WebflixUiMcpServerConfigParams {
   workspacePath: string;
   /** The WebFlix data root (response discovery: `<root>/tmp/paste-attachments`). */
   dataRoot: string;
+  /**
+   * TL2 integration (additive): extra env merged into the server record —
+   * the packaged build runs the entry through the app binary itself with
+   * ELECTRON_RUN_AS_NODE=1 (plain-Node behavior) instead of a system node.
+   */
+  extraEnv?: Record<string, string>;
 }
 
 /**
@@ -222,6 +228,7 @@ export function buildWebflixUiMcpServerConfig(
     env: {
       WEBFLIX_UI_RENDEZVOUS_DIR: params.workspacePath,
       WEBFLIX_UI_RESPONSE_ROOT: params.dataRoot,
+      ...(params.extraEnv ?? {}),
     },
   };
 }

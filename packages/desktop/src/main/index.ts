@@ -212,6 +212,7 @@ import { registerRemoteIpcHandlers } from "./desktopMainIpcRemote.js";
 // disconnect composition; registration itself is a NO-OP outside the baked
 // webflix flavor (zero ZCode-build surface).
 import { registerWebFlixAccountIpc } from "./webflixAccountIpc.js";
+import { registerWebFlixAgentWorkspaceIpc } from "./webflixAgentWorkspaceIpc.js";
 import {
   configureDesktopStabilityTelemetry,
   getStabilityLifecycleScene,
@@ -2186,6 +2187,11 @@ app.whenReady().then(async () => {
   // by construction: without OS secure storage the status surface answers
   // with the typed refusal; tokens never cross the boundary.
   registerWebFlixAccountIpc({ logger });
+
+  // WFX-AGENT-BRIDGE-1 integration (TL2 lane): the agent-workspace bootstrap
+  // + YouTube Data API key IPC (webflix flavor only — no-ops otherwise). The
+  // renderer supplies the artifact content; this process validates and writes.
+  registerWebFlixAgentWorkspaceIpc({ logger });
 
   registerRemoteIpcHandlers({
     logger,

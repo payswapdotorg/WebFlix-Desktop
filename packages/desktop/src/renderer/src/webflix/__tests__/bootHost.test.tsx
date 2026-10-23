@@ -145,8 +145,11 @@ describe("search is honest — no invented results (requirement 3/4)", () => {
     });
     fireEvent.submit(screen.getByTestId("search-input").closest("form")!);
 
-    const watch = screen.getByTestId("webflix-watch-view");
-    expect(watch).toBeTruthy();
+    // The WFX integration: the persistent watch dock hosts the player (the
+    // old host-level webflix-watch-view wrapper is gone — the shell's dock
+    // IS the watch view now; route "watch" renders it in the main area).
+    const dock = screen.getByTestId("watch-dock");
+    expect(dock).toBeTruthy();
     const embed = screen.getByTestId("watch-embed");
     expect(embed.getAttribute("src")).toContain(
       "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ",

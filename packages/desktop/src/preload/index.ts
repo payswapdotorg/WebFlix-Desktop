@@ -91,6 +91,7 @@ import { createOAuthCallbackHandler } from "./oauthCallbackBridge.js";
 // at import evaluation and is a NO-OP unless the baked product flavor is
 // "webflix", so ZCode production/preview preloads gain nothing.
 import "./webflixAccountBridge.js";
+import "./webflixAgentBridge.js";
 
 if (shouldEnableE2ETestBridge(process.env)) {
   contextBridge.exposeInMainWorld("__zcodeFinalArmsCustomEventsE2E", {
