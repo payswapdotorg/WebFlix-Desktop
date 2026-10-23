@@ -145,3 +145,31 @@ When Phase 1 is accepted, commit an evidence-backed status update naming:
 - remaining failure modes, blocked requirements and next lane owners.
 
 Update README links only if the authoritative docs move. The implementation repository and this handoff must remain sufficient for any subsequent TL to continue.
+
+## WFX wave completion record (2026-10-23 — WFX-DESKTOP-WEBFLIX-UX-1 / GitHub issue #3)
+
+The media-first transformation landed as five ledger lanes (freeze + three
+workers + TL2 integration), all closed in `docs/plans/work-claims.md`:
+
+- Freeze e1dd80f — contracts 0.14.0 (`ui-actions.ts` + `media-views.ts`) + freeze §9.
+- WFX-UX-SHELL-1 c95de42 — the media-first shell (sidebar/top chrome/every
+  surface/persistent watch dock/agent-panel slot).
+- WFX-PROVIDER-SLICE-1 8e31071 — the official Data-API producers +
+  ChannelResolutionPort + policy-matrix rows.
+- WFX-AGENT-BRIDGE-1 9f45149 — the agent runtime admission + AgentPanel +
+  the typed UI-action bridge + the webflix_ui MCP tool.
+- WFX-INTEGRATE-1 6e25669/9383f35/a3f3d29 — the integrated host + the GUI
+  journey (17 PASS / 0 FAIL / 3 honest BLOCKED) + the parity/evidence matrix
+  (`docs/testing/wfx-parity-evidence.md` — the wave's authoritative status,
+  including the BLOCKED gates and the F2 dev-path follow-up).
+
+Standing BLOCKED gates (honest, with unblock steps): the live MrBeast
+journey needs the operator's official Data API key (`WEBFLIX_YOUTUBE_API_KEY`
+env or `<dataRoot>/youtube-api-key` — zero code changes once provisioned);
+the packaged-tier chat-surface mount + live provider round-trips need the
+packaging run (the P9 workflow) + provider credentials. Native desktop
+YouTube OAuth remains BLOCKED on the operator-provisioned client (AS-Q3).
+
+Next continuation candidates: the operator provisions the key → the live
+journey gate; the packaging workflow re-run with the WFX GUI tier; the F2
+dev-path CLI-home follow-up; the durable local-library/history bridge.
