@@ -27,6 +27,12 @@ export default defineConfig({
   test: {
     globals: true,
     environment: "node",
-    include: ["src/webflix/__tests__/**/*.{test,spec}.{ts,tsx}"],
+    include: [
+      "src/webflix/__tests__/**/*.{test,spec}.{ts,tsx}",
+      // WFX-AGENT-BRIDGE-1: the agent bridge battery (admission handshake,
+      // dispatch table, tool schema round-trip, rendezvous, panel states) —
+      // same conventions, same defines, jsdom per-file where needed.
+      "src/agent/__tests__/**/*.{test,spec}.{ts,tsx}",
+    ],
   },
 });
