@@ -1,0 +1,105 @@
+[
+  {
+    "name": "build:flavor-baked",
+    "ok": true,
+    "detail": "the preload bakes the webflix flavor"
+  },
+  {
+    "name": "build:main",
+    "ok": true,
+    "detail": "tsup out/main/index.js produced"
+  },
+  {
+    "name": "launch:window",
+    "ok": true,
+    "detail": "primary window created"
+  },
+  {
+    "name": "launch:renderer",
+    "ok": true,
+    "detail": "renderer dom-ready fired"
+  },
+  {
+    "name": "wfx-home:shell",
+    "ok": true,
+    "detail": "media-first shell chrome rendered"
+  },
+  {
+    "name": "wfx-home:sidebar",
+    "ok": true,
+    "detail": "media-first sidebar rendered"
+  },
+  {
+    "name": "wfx-home:honest-state",
+    "ok": true,
+    "detail": "the home feed renders an honest phase state (no fabricated rows)"
+  },
+  {
+    "name": "wfx-home:no-zcode-leak",
+    "ok": true,
+    "detail": "no ZCode/Z.ai identity leak"
+  },
+  {
+    "name": "wfx-watch:official-embed",
+    "ok": true,
+    "detail": "the official IFrame embed mounted (the approved playback path)"
+  },
+  {
+    "name": "wfx-agent:panel-open",
+    "ok": true,
+    "detail": "the agent panel opened with the chat surface or its honest state"
+  },
+  {
+    "name": "wfx-agent:bridge-live",
+    "ok": true,
+    "detail": "the typed UI-action bridge is live (the e2e hook)"
+  },
+  {
+    "name": "wfx-agent:player-survives-close",
+    "ok": true,
+    "detail": "the persistent player survived panel close"
+  },
+  {
+    "name": "wfx-agent:reopen",
+    "ok": true,
+    "detail": "the panel reopened without losing app state"
+  },
+  {
+    "name": "wfx-journey:mrbeast-live",
+    "ok": null,
+    "detail": "resolveChannel answered the typed honest BLOCKED gate (No official YouTube Data API v3 key is configured — every Data-API-backed surface answers requires-auth until one is. Co…) — the full path is wired and unit-pinned; it goes live the moment the operator provisions the official Data API key (env WEBFLIX_YOUTUBE_API_KEY or <dataRoot>/youtube-api-key), zero code changes needed",
+    "blocked": true
+  },
+  {
+    "name": "wfx-journey:context-verification",
+    "ok": true,
+    "detail": "getVisibleMediaContext verified the watch surface + playing item + panel state from host state"
+  },
+  {
+    "name": "wfx-journey:hallucination-typed-failure",
+    "ok": true,
+    "detail": "a hallucinated itemId answers the typed item-not-found failure"
+  },
+  {
+    "name": "wfx-journey:action-trace",
+    "ok": true,
+    "detail": "the action trace holds 3 typed entries"
+  },
+  {
+    "name": "wfx-agent:composer-mounted",
+    "ok": null,
+    "detail": "the chat composer did not mount within the journey window — the panel state reached: \"Agent panel | ✕ | Agent | agent runtime unavailable | Close | Agent runtime unavailable |  | The ZCode agent runtime did not deliver its service port to this window within th…\" (the runtime admission + the lazy @zcode/ui chunk under the dev renderer's on-demand compilation; the packaged tier's prebuilt bundle is this gate's proper venue — see wfx-05 screenshot)",
+    "blocked": true
+  },
+  {
+    "name": "wfx-agent:live-chat-roundtrip",
+    "ok": null,
+    "detail": "live model/provider switching + long-task lifecycle need a configured provider credential in the profile — recorded BLOCKED per the work order's no-mock rule (unit-pinned: the panel composes the REAL V4ChatPane over the REAL runtime services)",
+    "blocked": true
+  },
+  {
+    "name": "shutdown:no-crash",
+    "ok": true,
+    "detail": "no crash markers"
+  }
+]

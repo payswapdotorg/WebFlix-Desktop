@@ -200,10 +200,13 @@ export function WebFlixHost(deps: WebFlixHostDeps) {
         localLibrary.markPlayed(outcome.catalogItem);
         setRecentItems([...localLibrary.recents()]);
         historySource.recordWatch(outcome.catalogItem, null, undefined);
+        registerCards([
+          { item: outcome.catalogItem, title: outcome.catalogItem.title },
+        ]);
         setWatchState({
           title: outcome.catalogItem.title,
           plan: outcome.plan,
-          card: null,
+          card: { item: outcome.catalogItem, title: outcome.catalogItem.title },
           related: [],
         });
         setRoute("watch", { itemId: outcome.catalogItem.id });

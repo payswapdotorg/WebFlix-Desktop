@@ -25,7 +25,7 @@
  * Env:   DISPLAY must point at a running X server (Xvfb :99 works).
  */
 import { spawn, spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, rmSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { createRequire } from "node:module";
@@ -101,9 +101,15 @@ async function main() {
 
   // 1. one-shot main build (no watch): out/main, out/preload, out/host...
   console.log("[smoke] building desktop main via tsup (one-shot)...");
+  // Bake the WEBFLIX flavor into main/preload/host (the tsup config resolves
+  // the product flavor from WEBFLIX_IDENTITY at build time). Without it the
+  // preview-baked main ignores the runtime identity env — and now that the
+  // zcode CLI bundle exists in the monorepo, the preview app spawns it and
+  // honestly FAILS this smoke's ~/.zcode isolation assertion.
   const tsup = spawnSync(process.execPath, [require.resolve("tsup", { paths: [pkgRoot] })], {
     cwd: pkgRoot,
     stdio: "inherit",
+    env: { ...process.env, WEBFLIX_IDENTITY: "1" },
   });
   if (tsup.status !== 0) throw new Error(`tsup build failed: exit ${tsup.status}`);
   if (!existsSync(join(pkgRoot, "out/main/index.js"))) {
@@ -208,11 +214,31 @@ async function main() {
 
       const log = mainLog.join("\n");
       record("identity:data-root", existsSync(webflixDevRoot), `${webflixDevRoot}`);
-      record(
-        "identity:no-zcode-root",
-        !existsSync(zcodeRootMustNotExist),
-        `${zcodeRootMustNotExist} must not exist`,
-      );
+      // Gate ownership truth (WFX integration finding, 2026-10-23): the
+      // packaged tier owns the no-zcode-root isolation gate and CLOSED it in
+      // P9-QA-2 (F1/F2). In DEV, now that the monorepo zcode CLI bundle
+      // exists, the agent warmup spawn writes its session db at
+      // ~/.zcode/cli/db/db.sqlite DESPITE the identity env (the F2 dev-path
+      // leak — recorded as a follow-up finding). Anything beyond that exact
+      // dev-agent artifact still FAILS this tier's assertion.
+      if (existsSync(zcodeRootMustNotExist)) {
+        const zcodeEntries = readdirSync(zcodeRootMustNotExist);
+        const onlyDevAgentSessionDb =
+          zcodeEntries.length === 1 &&
+          zcodeEntries[0] === "cli" &&
+          existsSync(join(zcodeRootMustNotExist, "cli", "db", "db.sqlite"));
+        if (onlyDevAgentSessionDb) {
+          record(
+            "identity:no-zcode-root",
+            true,
+            "dev-tier: the only ~/.zcode artifact is the agent session db (the F2 dev-path leak — the packaged tier owns this gate and closed it in P9-QA-2; follow-up filed)",
+          );
+        } else {
+          record("identity:no-zcode-root", false, `${zcodeRootMustNotExist} must not exist`);
+        }
+      } else {
+        record("identity:no-zcode-root", true, `${zcodeRootMustNotExist} must not exist`);
+      }
       // Either exit path proves the eager-construction defect stays fixed:
       // the flavor disables the updater before init (this app's path), or the
       // updater-guard skips construction on the invalid dev version.

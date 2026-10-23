@@ -131,7 +131,7 @@ export async function createDefaultMediaProducers(
 ): Promise<YouTubeMediaProducers> {
   if (agentWorkspaceBridge === null) {
     return createYouTubeMediaProducers({
-      clock: () => Date.now(),
+      clock: { now: () => new Date() },
       source: {
         kind: "requires-auth",
         detail:
@@ -150,7 +150,7 @@ export async function createDefaultMediaProducers(
       ? { kind: "source" as const, source: composition.source }
       : { kind: "requires-auth" as const, detail: composition.detail };
   return createYouTubeMediaProducers({
-    clock: () => Date.now(),
+    clock: { now: () => new Date() },
     source: handle,
     history: historySource,
     account: createNotConnectedAccountSource(),
