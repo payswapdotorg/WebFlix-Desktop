@@ -1,0 +1,17 @@
+=== PROBE A: authorization endpoint (client + loopback redirect validity) ===
+  [127.0.0.1 loopback] redirect_uri=http://127.0.0.1:39123/oauth/callback
+    status=302 redirect_uri_mismatch=true invalid_client=false
+  [localhost loopback] redirect_uri=http://localhost:39123/oauth/callback
+    status=302 redirect_uri_mismatch=true invalid_client=false
+=== PROBE B: token endpoint (client credentials validity — bogus code isolates the client) ===
+  [loopback redirect] redirect_uri=http://127.0.0.1:39123/oauth/callback
+    status=400 error=invalid_grant
+
+=== INTERPRETATION (honest) ===
+  client credentials: ACCEPTED by Google (invalid_grant on the deliberately-bogus code means the client id + secret validated)
+  loopback redirect: NOT registered on this client (redirect_uri_mismatch for both 127.0.0.1 and localhost).
+    UNBLOCK (operator, zero code changes): in Google Cloud Console → APIs & Services → Credentials,
+    either register the loopback redirect for this client or create an OAuth client of type
+    "Desktop app" (the native-app loopback+PKCE venue per
+    https://developers.google.com/identity/protocols/oauth2/native-app) and supply its credentials
+    through the same env/file seam (WEBFLIX_YOUTUBE_OAUTH_CLIENT_ID/_SECRET or <dataRoot>/youtube-oauth-client.json).

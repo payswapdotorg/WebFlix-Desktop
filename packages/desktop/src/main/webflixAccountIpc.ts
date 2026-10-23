@@ -18,11 +18,14 @@
  *     is absent, the status surface answers with the typed
  *     `{ available: false, reason }` refusal — a REAL error state the UI
  *     renders, never a fallback that pretends the vault was queried.
- *   - Honesty: connect is honestly UNAVAILABLE in this build — the YouTube
- *     OAuth client id is the pending-operator-provisioning placeholder
- *     (freeze AS-Q3; connectors/src/youtube/oauth.ts
- *     YOUTUBE_OAUTH_LOOPBACK_CLIENT_ID). No flow is started, no state is
- *     invented; the typed outcome says exactly that.
+ *   - Honesty: connect is honestly UNAVAILABLE when the environment has no
+ *     operator-provisioned OAuth client (freeze AS-Q3's provisioning half is
+ *     CLOSED by WFX-OAUTH-CONNECT-1: env WEBFLIX_YOUTUBE_OAUTH_CLIENT_ID +
+ *     WEBFLIX_YOUTUBE_OAUTH_CLIENT_SECRET, or <dataRoot>/youtube-oauth-client.json).
+ *     With the client provisioned, connect starts the REAL loopback+PKCE flow
+ *     (webflix/oauthConnectFlow.ts over the frozen YouTubeOAuthSession) and
+ *     the typed outcome says exactly what started — never "connected" until
+ *     the vault actually holds the record.
  *   - Registration is flavor-gated: the channels exist ONLY in the baked
  *     webflix flavor (zero ZCode-build surface).
  *
@@ -31,15 +34,29 @@
  * and packages/desktop/src/renderer/src/webflix/accountsBridge.ts (the
  * renderer accessor); the P9-UI-1 battery pins the mirrors agree.
  */
-import { ipcMain, safeStorage as electronSafeStorage } from "electron";
+import { ipcMain, safeStorage as electronSafeStorage, shell } from "electron";
 import type { ProviderAccountRecord } from "webflix-contracts";
 import { ZCODE_PRODUCT_FLAVOR } from "@zcode/shared";
-import { createOsVaultAccountStore, OsVaultError } from "./webflix/osVaultAccountStore.js";
+import { createOsVaultAccountStore, resolveWebFlixVaultDataRoot, OsVaultError } from "./webflix/osVaultAccountStore.js";
 import { disconnectProviderAccount } from "./providerDisconnectClear.js";
+import {
+  buildYouTubeLoopbackConfig,
+  createGoogleHttpTokenFetcher,
+  resolveYouTubeOAuthClient,
+  YouTubeConnectFlowManager,
+  type YouTubeOAuthClientCredentials,
+} from "./webflix/oauthConnectFlow.js";
 /** The typed IPC channels (namespaced; mirror-pinned by the battery). */
 export const WEBFLIX_ACCOUNTS_GET_STATUS_CHANNEL = "webflix:accounts:get-status";
 export const WEBFLIX_ACCOUNTS_CONNECT_CHANNEL = "webflix:accounts:connect";
 export const WEBFLIX_ACCOUNTS_DISCONNECT_CHANNEL = "webflix:accounts:disconnect";
+
+/**
+ * The canonical installation-local YouTube account id (frozen §2.5
+ * vocabulary; single-account-per-installation is the current honest scope).
+ * Mirrored by the preload bridge + renderer accessor; battery-pinned.
+ */
+export const WEBFLIX_YOUTUBE_PRIMARY_ACCOUNT_ID = "primary";
 
 // ---------------------------------------------------------------------------
 // Typed payload contracts — the renderer-safe mirror (accountsBridge.ts).
@@ -66,10 +83,16 @@ export interface WebFlixAccountsStatus {
   readonly accounts: readonly ProviderAccountRecord[];
 }
 
-/** The typed connect outcome (honestly unavailable in this build). */
+/** The typed connect outcome (WFX-OAUTH-CONNECT-1 vocabulary). */
 export interface WebFlixConnectOutcome {
   readonly ok: boolean;
-  readonly code: "connect-unavailable" | "invalid-provider";
+  readonly code:
+    | "connect-unavailable"
+    | "invalid-provider"
+    | "vault-unavailable"
+    | "authorization-started"
+    | "authorization-in-progress"
+    | "flow-error";
   readonly reason: string;
 }
 
@@ -95,6 +118,18 @@ export interface RegisterWebFlixAccountIpcOptions {
   readonly createVaultStore?: (providerId: string) => ReturnType<typeof createOsVaultAccountStore>;
   /** The baked product flavor (default: the ZCODE_PRODUCT_FLAVOR runtime constant). */
   readonly flavor?: string;
+  /** Injectable client resolution (tests); default: env then data-root file. */
+  readonly resolveClient?: () => YouTubeOAuthClientCredentials | null;
+  /** Injectable token fetcher factory (tests); default: the real Google HTTP fetcher. */
+  readonly createTokenFetcher?: (client: YouTubeOAuthClientCredentials) => ReturnType<typeof createGoogleHttpTokenFetcher>;
+  /** Injectable system-browser opener (tests); default: shell.openExternal. */
+  readonly openBrowser?: (url: string) => Promise<void>;
+  /** Injectable env (tests); default: process.env (reads WEBFLIX_YOUTUBE_OAUTH_OPEN). */
+  readonly env?: NodeJS.ProcessEnv;
+  /** Injectable connect-flow manager (tests); default: one shared manager. */
+  readonly connectManager?: YouTubeConnectFlowManager;
+  /** The bounded flow lifetime override (tests; default 300s). */
+  readonly flowTimeoutMs?: number;
 }
 
 /** The providers whose accounts this surface may ever address (the shell's known set — cited, not invented). */
@@ -141,16 +176,18 @@ function typedRefusalReason(error: unknown): string {
 }
 
 /**
- * The honest connect refusal wording for THIS build (freeze AS-Q3): the
- * operator-approved OAuth client does not exist yet, so no authorization
- * flow can start. Surfaced verbatim; never dressed up as supported.
+ * The honest connect refusal wording for an environment with NO provisioned
+ * operator OAuth client (WFX-OAUTH-CONNECT-1): no authorization flow can
+ * start. Surfaced verbatim; never dressed up as supported.
  */
 export function connectUnavailableReason(providerId: string): string {
   return (
-    `Connect for "${providerId}" is not available in this build: WebFlix has no ` +
-    "operator-provisioned OAuth client yet (the client id is a pending-provisioning " +
-    "placeholder), so no authorization flow can start and nothing was authorized. " +
-    "Official YouTube links still play through the public embed without an account."
+    `Connect for "${providerId}" is not available in this environment: WebFlix has no ` +
+    "operator-provisioned OAuth client configured (set WEBFLIX_YOUTUBE_OAUTH_CLIENT_ID + " +
+    "WEBFLIX_YOUTUBE_OAUTH_CLIENT_SECRET in the main-process environment, or write " +
+    "youtube-oauth-client.json under the WebFlix data root), so no authorization flow can " +
+    "start and nothing was authorized. Official YouTube links still play through the public " +
+    "embed without an account."
   );
 }
 
@@ -171,6 +208,29 @@ export function registerWebFlixAccountIpc(options: RegisterWebFlixAccountIpcOpti
     options.createVaultStore ??
     ((providerId: string) =>
       createOsVaultAccountStore(providerId, { safeStorage: backend, logger: options.logger }));
+  // The operator client resolution (WFX-OAUTH-CONNECT-1): env first, then the
+  // user-managed data-root file. An unavailable data-root env contract simply
+  // means the file source cannot exist → env-only (honest not-configured).
+  const resolveClient =
+    options.resolveClient ??
+    ((): YouTubeOAuthClientCredentials | null => {
+      let dataRoot: string | undefined;
+      try {
+        dataRoot = resolveWebFlixVaultDataRoot(options.env ?? process.env);
+      } catch {
+        dataRoot = undefined;
+      }
+      return resolveYouTubeOAuthClient({ env: options.env ?? process.env, dataRoot });
+    });
+  const createTokenFetcher =
+    options.createTokenFetcher ??
+    ((client: YouTubeOAuthClientCredentials) =>
+      createGoogleHttpTokenFetcher(client.clientId, client.clientSecret));
+  const connectManager =
+    options.connectManager ??
+    new YouTubeConnectFlowManager(
+      options.flowTimeoutMs !== undefined ? { flowTimeoutMs: options.flowTimeoutMs } : {},
+    );
 
   ipcMain.handle(
     WEBFLIX_ACCOUNTS_GET_STATUS_CHANNEL,
@@ -246,17 +306,59 @@ export function registerWebFlixAccountIpc(options: RegisterWebFlixAccountIpcOpti
           reason: `webflix-account-ipc: "${String(payload)}" is not a provider this build knows; nothing was authorized.`,
         };
       }
-      // The honest refusal (freeze AS-Q3): no operator OAuth client exists,
-      // so connect NEVER pretends a flow started.
-      options.logger.info(
-        "[webflix-accounts] connect requested but unavailable in this build (no operator OAuth client)",
-        { providerId },
-      );
-      return {
-        ok: false,
-        code: "connect-unavailable",
-        reason: connectUnavailableReason(providerId),
-      };
+      // Fail-closed vault gate FIRST: without OS secure storage the flow's
+      // tokens could never be persisted encrypted — refusing to even start is
+      // the honest state (never a plaintext fallback, never a doomed flow).
+      if (!backend.isEncryptionAvailable()) {
+        options.logger.warn(
+          "[webflix-accounts] connect refused: OS secure storage unavailable (fail-closed; no flow starts)",
+          { providerId },
+        );
+        return {
+          ok: false,
+          code: "vault-unavailable",
+          reason:
+            "os_vault_unavailable: Electron safeStorage is unavailable on this system (e.g. Linux " +
+            "without a keyring/secret-service backend) — connect cannot be offered because the " +
+            "authorization tokens could not be stored encrypted at rest; WebFlix never falls back " +
+            "to plaintext storage. Nothing was authorized.",
+        };
+      }
+      const client = resolveClient();
+      if (client === null) {
+        options.logger.info(
+          "[webflix-accounts] connect refused: no operator OAuth client is configured in this environment",
+          { providerId },
+        );
+        return {
+          ok: false,
+          code: "connect-unavailable",
+          reason: connectUnavailableReason(providerId),
+        };
+      }
+      // WFX-OAUTH-CONNECT-1: the REAL loopback+PKCE flow over the frozen
+      // YouTubeOAuthSession + the OS vault store + the real Google token
+      // exchange. The typed outcome carries only codes + human reasons —
+      // the client secret and every token stay main-process/vault-side.
+      const env = options.env ?? process.env;
+      const manualOpen = env.WEBFLIX_YOUTUBE_OAUTH_OPEN?.trim() === "manual";
+      const { outcome } = await connectManager.start(providerId, {
+        logger: options.logger,
+        store: createVaultStore(providerId),
+        config: buildYouTubeLoopbackConfig(client.clientId),
+        tokenFetcher: createTokenFetcher(client),
+        internalAccountId: WEBFLIX_YOUTUBE_PRIMARY_ACCOUNT_ID,
+        openBrowser: options.openBrowser ?? ((url: string) => shell.openExternal(url)),
+        manualOpen,
+        ...(options.flowTimeoutMs !== undefined ? { flowTimeoutMs: options.flowTimeoutMs } : {}),
+      });
+      if (!outcome.ok) {
+        options.logger.warn("[webflix-accounts] connect flow refused/failed (typed; nothing authorized)", {
+          providerId,
+          code: outcome.code,
+        });
+      }
+      return outcome;
     },
   );
 

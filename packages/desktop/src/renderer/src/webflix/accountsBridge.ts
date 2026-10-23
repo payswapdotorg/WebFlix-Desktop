@@ -46,10 +46,16 @@ export interface WebFlixAccountsStatus {
   readonly accounts: readonly ProviderAccountRecord[];
 }
 
-/** The typed connect outcome. In this build connect is honestly UNAVAILABLE (no operator OAuth client). */
+/** The typed connect outcome. WFX-OAUTH-CONNECT-1: with the operator client provisioned the flow really starts; every code below is an honest typed state. */
 export interface WebFlixConnectOutcome {
   readonly ok: boolean;
-  readonly code: "connect-unavailable" | "invalid-provider";
+  readonly code:
+    | "connect-unavailable"
+    | "invalid-provider"
+    | "vault-unavailable"
+    | "authorization-started"
+    | "authorization-in-progress"
+    | "flow-error";
   /** The honest human-readable reason, verbatim from the main process. */
   readonly reason: string;
 }
@@ -68,6 +74,13 @@ export interface WebFlixAccountsBridge {
   connect(providerId: string): Promise<WebFlixConnectOutcome>;
   disconnect(pointer: WebFlixAccountPointer): Promise<WebFlixDisconnectOutcome>;
 }
+
+/**
+ * The canonical installation-local YouTube account id — the pointer the host
+ * asks getStatus about (mirrors the main/preload constants; battery-pinned).
+ * Single-account-per-installation is the current honest scope.
+ */
+export const WEBFLIX_YOUTUBE_PRIMARY_ACCOUNT_ID = "primary";
 
 declare global {
   interface Window {

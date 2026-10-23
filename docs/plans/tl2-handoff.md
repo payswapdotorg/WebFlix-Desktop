@@ -173,3 +173,40 @@ YouTube OAuth remains BLOCKED on the operator-provisioned client (AS-Q3).
 Next continuation candidates: the operator provisions the key → the live
 journey gate; the packaging workflow re-run with the WFX GUI tier; the F2
 dev-path CLI-home follow-up; the durable local-library/history bridge.
+
+## WFX-OAUTH-CONNECT-1 continuation record (2026-10-23 — TL3 takeover lane)
+
+The operator supplied the Google OAuth client credentials (the standing
+AS-Q3 unblock). Executed as a single TL lane per
+`docs/plans/work-orders/WFX-OAUTH-CONNECT-1.md` (base 950a80c):
+
+- The connect action is now the REAL per-user loopback+PKCE flow over the
+  frozen `YouTubeOAuthSession` and the OS vault: env/file client provisioning
+  (`WEBFLIX_YOUTUBE_OAUTH_CLIENT_ID`/`_SECRET` or
+  `<dataRoot>/youtube-oauth-client.json` — never baked, never committed,
+  never renderer-visible), the real Google token exchange in the main
+  process, system-browser consent, bounded single-flight lifetime, and the
+  additive typed outcome vocabulary (`authorization-started` etc.) mirrored
+  and battery-pinned across main/preload/renderer.
+- Gates: full battery 1863/1863 (83 files), renderer 187/187 (16 files),
+  `pnpm typecheck` exit 0, oxlint 0 errors/0 warnings on the touched paths.
+- LIVE probes (the operator's credentials against Google's real endpoints,
+  verbatim evidence in
+  `packages/desktop/scripts/e2e/evidence/wfx/oauth-connect-probe-2026-10-23.log`):
+  the token endpoint ACCEPTS the client id + secret (invalid_grant on a
+  deliberately-bogus code — a bad secret would answer invalid_client); the
+  authorization endpoint answers redirect_uri_mismatch for the app's
+  loopback redirect (both 127.0.0.1 and localhost shapes) — the client
+  exists and validates, but the loopback redirect is NOT registered on it.
+- Standing BLOCKED gate (narrowed, honest): the live consent round-trip now
+  needs only the operator's Cloud Console step — register the loopback
+  redirect for this client or create an OAuth client of type "Desktop app"
+  (https://developers.google.com/identity/protocols/oauth2/native-app) and
+  supply its credentials through the same env/file seam. ZERO code changes.
+  Until then the app's honest behavior is battery-pinned: Connect starts
+  the flow, Google renders its own mismatch notice, the bounded timeout
+  settles typed (nothing authorized).
+- Continuation candidates (unchanged): the operator's Data API key
+  (`WEBFLIX_YOUTUBE_API_KEY`) → the live MrBeast journey; the packaging
+  workflow re-run with the WFX GUI tier; the F2 dev-path CLI-home follow-up;
+  the durable local-library/history bridge.

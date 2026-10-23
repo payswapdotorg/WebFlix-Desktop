@@ -33,6 +33,12 @@ export const WEBFLIX_ACCOUNTS_GET_STATUS_CHANNEL = "webflix:accounts:get-status"
 export const WEBFLIX_ACCOUNTS_CONNECT_CHANNEL = "webflix:accounts:connect";
 export const WEBFLIX_ACCOUNTS_DISCONNECT_CHANNEL = "webflix:accounts:disconnect";
 
+/**
+ * The canonical installation-local YouTube account id — MUST equal the main
+ * module's exported constant (battery-pinned, same law as the channels).
+ */
+export const WEBFLIX_YOUTUBE_PRIMARY_ACCOUNT_ID = "primary";
+
 /** One account pointer the renderer knows about (provider + internal id). */
 export interface WebFlixAccountPointer {
   readonly providerId: string;
@@ -51,10 +57,16 @@ export interface WebFlixAccountsStatus {
   readonly accounts: readonly unknown[];
 }
 
-/** The typed connect outcome (honestly unavailable in this build). */
+/** The typed connect outcome (WFX-OAUTH-CONNECT-1 vocabulary — mirrored). */
 export interface WebFlixConnectOutcome {
   readonly ok: boolean;
-  readonly code: "connect-unavailable" | "invalid-provider";
+  readonly code:
+    | "connect-unavailable"
+    | "invalid-provider"
+    | "vault-unavailable"
+    | "authorization-started"
+    | "authorization-in-progress"
+    | "flow-error";
   readonly reason: string;
 }
 

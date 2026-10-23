@@ -2,6 +2,7 @@
 
 Status: TL2 integration report (the wave's §6A deliverable). Date: 2026-10-23.
 Base: d384dfb (pre-wave main) → freeze e1dd80f → merged lanes c95de42/8e31071/9f45149 → integration 6e25669 → evidence 9383f35 (HEAD at report time).
+**WFX-OAUTH-CONNECT-1 addendum (2026-10-23, same day)**: the AS-Q3 operator client landed and the connect flow is now REAL (see section F) — gates: full battery 1863/1863 (83 files), renderer 187/187 (16 files), typecheck exit 0, lint 0 errors/0 warnings on the touched paths.
 Gates at merge: full battery 1853/1853 (83 files), renderer battery 180/180 (15 files, +11 WFX integration pins), typecheck clean (`pnpm typecheck`, exit 0), lint 0 errors on every touched path (`pnpm exec oxlint …`).
 GUI evidence: `packages/desktop/scripts/e2e/webflix-wfx-journey.mjs` — 17 PASS / 0 FAIL / 3 BLOCKED; screenshots `scripts/e2e/evidence/wfx/wfx-0*.png`; dev smoke 11/11 (gate-aware).
 
@@ -18,7 +19,7 @@ GUI evidence: `packages/desktop/scripts/e2e/webflix-wfx-journey.mjs` — 17 PASS
 | Subscriptions | `/subscriptions` | `SubscriptionsScreen` (channel rail + videos + degradeNote display) over `YouTubeSubscriptionsProducer` | requires-auth without an account; connected compose = per-channel uploads polling (mandatory degradeNote, frozen law) | subscriptions tests | unit tier | No third-party subscriptions-feed API exists — the degrade is the honest product behavior |
 | History | `/history` | `HistoryScreen` grouped continue-watching over `LocalHistoryProducer` | WebFlix-owned session history (durable store = later order) | history tests | unit tier | Session-scoped (stated in UI) |
 | Library/You | `/you`, `/playlists` | `LibraryScreen` (local entries + collections, card visuals) | session local library (P9-UI-1 path preserved) | library tests + bootHost | wfx-01 (sidebar) | Durable local-library bridge is a later order |
-| Accounts/Settings | `/settings`, `/account` | `AccountsScreen` + `SettingsScreen` (retention controls) preserved | OS-vault account bridge (fail-closed; connect honestly unavailable — freeze AS-Q3) | accounts tests + bootHost | wfx-01 vault banner path | Native OAuth BLOCKED (no operator-provisioned desktop client) |
+| Accounts/Settings | `/settings`, `/account` | `AccountsScreen` + `SettingsScreen` (retention controls) preserved | OS-vault account bridge (fail-closed; WFX-OAUTH-CONNECT-1: connect is now the REAL loopback+PKCE flow over the frozen `YouTubeOAuthSession` — env/file client provisioning, system-browser consent, OS-vault token storage) | accounts tests + bootHost + the 27-test account IPC battery (incl. the full round-trip pin) | wfx-01 vault banner path | Live consent round-trip BLOCKED on the operator's client redirect registration (see C/AS-Q3); credentials themselves live-verified |
 | Agent panel | (no web equivalent — the desktop's own layer) | The right-docked resizable slot (W1) + `AgentPanel` (W3: the REAL ZCode chat over the runtime admission) | The host utility process (already running in this flavor) + the frozen UI-action bridge | agent bridge tests (169 suite) + bootIntegration | wfx-03/04/05 | The chat surface mount in dev hits sandbox compile limits (see C) |
 
 ## B. The agent↔UI action bridge (freeze §9.1) — verified paths
@@ -40,6 +41,7 @@ Consent law: no account mutation action exists in the frozen union (contract-pin
 1. **The live MrBeast journey** (`wfx-journey:mrbeast-live`): every code path is wired (resolveChannel → newest-first uploads → playCatalogItem → the official embed) and unit-pinned with fixtures; the GUI answers the typed `requires-auth` BLOCKED gate because the operator's official YouTube Data API v3 key is not provisioned. Unblock: set `WEBFLIX_YOUTUBE_API_KEY` (main-process env) or write `<dataRoot>/youtube-api-key` — zero code changes.
 2. **The agent chat surface live mount** (`wfx-agent:composer-mounted`): the panel + bridge are LIVE in the GUI; the V4ChatPane mount needs the runtime port delivery to complete — in the dev sandbox the lazy `@zcode/ui` chunk under vite's on-demand compilation does not settle in the window (and a window reload exhausts Chromium's resource budget — ERR_INSUFFICIENT_RESOURCES). The PACKAGED tier (prebuilt bundle — the P9 packaging workflow) is this gate's proper venue; recorded BLOCKED pending that run.
 3. **Live model/provider switching + long-task lifecycle** (`wfx-agent:live-chat-roundtrip`): the real provider services + task lifecycle are composed (unit-pinned composition; the panel rides the REAL V4ChatPane over the REAL runtime services); a live round-trip needs provider credentials in the profile. BLOCKED per the work order's no-mock rule.
+4. **The live OAuth consent round-trip (AS-Q3 — narrowed 2026-10-23 by WFX-OAUTH-CONNECT-1)**: the operator's client credentials are provisioned and **live-verified** (Google's token endpoint accepts the client id + secret — verbatim probe in section F), and the desktop connect flow is fully real (loopback+PKCE consent through the system browser → OS-vault token storage → renderer-safe record, battery-pinned end-to-end including the CSRF/state-mismatch and access_denied refusals). What still BLOCKS the live round trip: Google answers **redirect_uri_mismatch** for the app's loopback redirect (`http://127.0.0.1:<ephemeral>/oauth/callback`) on THIS client — the client exists and the credentials validate, but the loopback redirect is not registered on it. Unblock (operator, zero code changes): in Google Cloud Console → APIs & Services → Credentials, register the loopback redirect for this client or create an OAuth client of type **"Desktop app"** (the native-app loopback+PKCE venue per https://developers.google.com/identity/protocols/oauth2/native-app) and supply its credentials through the same env/file seam. Until then the app behaves honestly: Connect starts the flow, Google renders its own mismatch notice, the bounded flow times out typed (nothing authorized).
 
 ## D. Known issues / follow-ups
 
@@ -50,10 +52,25 @@ Consent law: no account mutation action exists in the frozen union (contract-pin
 
 ## E. Commands (exact, with exit codes)
 
-- `pnpm exec vitest run` → 83 files / 1853 tests passed (exit 0)
-- `pnpm exec vitest run --config packages/desktop/src/renderer/vitest.config.ts` → 15 files / 180 tests (exit 0)
+- `pnpm exec vitest run` → 83 files / 1853 tests passed (exit 0) at the WFX merge; **1863/1863 after WFX-OAUTH-CONNECT-1** (exit 0)
+- `pnpm exec vitest run --config packages/desktop/src/renderer/vitest.config.ts` → 15 files / 180 tests (exit 0) at the WFX merge; **16 files / 187 tests** after WFX-OAUTH-CONNECT-1 (exit 0)
 - `pnpm typecheck` → exit 0
-- `pnpm exec oxlint <touched paths>` → 0 errors (warnings only, non-gating style suggestions)
+- `pnpm exec oxlint <touched paths>` → 0 errors (warnings only, non-gating style suggestions); **0 errors / 0 warnings** on the WFX-OAUTH-CONNECT-1 paths
 - `DISPLAY=:99 node scripts/e2e/webflix-wfx-journey.mjs` → 17 PASS / 0 FAIL / 3 BLOCKED (exit 0)
 - `DISPLAY=:99 node scripts/e2e/webflix-smoke.mjs` → 11/11 (exit 0)
+- `WEBFLIX_YOUTUBE_OAUTH_CLIENT_ID=… WEBFLIX_YOUTUBE_OAUTH_CLIENT_SECRET=… node packages/desktop/scripts/e2e/webflix-oauth-probe.mjs` → the live client probe (exit 0; evidence `scripts/e2e/evidence/wfx/oauth-connect-probe-2026-10-23.log`)
 - Environment: Linux sandbox, 2 vCPU / 4GB, Xvfb :99 1440x900x24, node v24.21.0, pnpm 10.33.2.
+
+## F. WFX-OAUTH-CONNECT-1 — the operator client + the real connect flow (2026-10-23 addendum)
+
+Trigger: the operator supplied the Google OAuth client credentials for the desktop app (the standing AS-Q3 unblock named in `docs/plans/tl2-handoff.md`). Work order: `docs/plans/work-orders/WFX-OAUTH-CONNECT-1.md`.
+
+Delivered (source paths):
+- `packages/desktop/src/main/webflix/oauthConnectFlow.ts` (NEW) — client resolution (env `WEBFLIX_YOUTUBE_OAUTH_CLIENT_ID`/`_SECRET` then `<dataRoot>/youtube-oauth-client.json`), the real Google HTTP token fetcher (secret only ever in the token-endpoint POST body; Google error codes surface as typed `reason`s so the frozen session's invalid_grant→revoked transition fires), and the single-flight bounded flow manager (real loopback listener on 127.0.0.1 ephemeral, system-browser consent via shell.openExternal, `WEBFLIX_YOUTUBE_OAUTH_OPEN=manual` fallback, 300s timeout).
+- `webflixAccountIpc.ts` — the connect handler composes the REAL flow over the OS vault store (fail-closed order: vault gate → client resolution → single-flight start); the typed outcome vocabulary extended additively (`authorization-started`, `authorization-in-progress`, `flow-error`, `vault-unavailable`); `WEBFLIX_YOUTUBE_PRIMARY_ACCOUNT_ID` mirrored + battery-pinned across main/preload/renderer.
+- `useAccountRetentionHandlers.ts` — getStatus now queries the canonical primary pointer (a connected account renders at boot) and an authorization-started outcome runs the bounded completion poll (the connected card appears when consent lands; late failures leave no record — the main log carries the typed detail).
+- Battery: `webflixAccountIpc.test.ts` grew to 27 tests — the REAL round-trip pin (Google's simulated redirect over the REAL loopback listener → the REAL frozen session's PKCE exchange → the vault store double → getStatus answers the record), CSRF state-mismatch refusal, access_denied refusal, single-flight, browser-failure typing, manual mode, bounded timeout, and the secret-never-on-any-surface pin. New renderer pins: the mirror vocabulary + the poll lifecycle (`useAccountRetentionHandlers.test.tsx`, 4 tests).
+
+Live probe evidence (verbatim, redacted — `oauth-connect-probe-2026-10-23.log`):
+- Token endpoint (bogus code, real credentials): `status=400 error=invalid_grant` → **the client id + secret are accepted by Google** (a bad secret would answer `invalid_client` 401).
+- Authorization endpoint (real client id, the app's loopback redirect shape, both 127.0.0.1 and localhost hosts): `status=302 redirect_uri_mismatch=true` → the client exists, the credentials validate, but **the loopback redirect is not registered on this client** — the remaining operator step is the Cloud Console registration / Desktop-app-type client (see C.4). Until then the app's honest behavior is pinned by test: the flow starts, nothing is authorized, the bounded timeout settles typed.

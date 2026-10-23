@@ -9,9 +9,11 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
  */
 
 import {
+  WEBFLIX_YOUTUBE_PRIMARY_ACCOUNT_ID,
   bridgeUnavailableStatus,
   getWebFlixAccountsBridge,
   type WebFlixAccountsBridge,
+  type WebFlixConnectOutcome,
 } from "../accountsBridge.js";
 
 function installBridge(partial: Partial<WebFlixAccountsBridge> | null): void {
@@ -71,5 +73,41 @@ describe("bridgeUnavailableStatus — the typed honest state (requirement 5)", (
 
   it("the reason carries no credential-shaped material", () => {
     expect(bridgeUnavailableStatus().vault.reason ?? "").not.toMatch(/token|secret|password/i);
+  });
+});
+
+describe("WFX-OAUTH-CONNECT-1 — the canonical pointer + the extended connect vocabulary", () => {
+  it("the canonical primary account id is the pinned mirror constant", () => {
+    expect(WEBFLIX_YOUTUBE_PRIMARY_ACCOUNT_ID).toBe("primary");
+  });
+
+  it("the extended connect codes typecheck through the mirror union (authorization-started reaches the host)", () => {
+    const started: WebFlixConnectOutcome = {
+      ok: true,
+      code: "authorization-started",
+      reason: "Google sign-in opened in your system browser.",
+    };
+    expect(started.code).toBe("authorization-started");
+    const pending: WebFlixConnectOutcome = {
+      ok: false,
+      code: "authorization-in-progress",
+      reason: "A sign-in is already waiting.",
+    };
+    expect(pending.ok).toBe(false);
+    const vaultRefusal: WebFlixConnectOutcome = {
+      ok: false,
+      code: "vault-unavailable",
+      reason: "os_vault_unavailable",
+    };
+    expect(vaultRefusal.code).toBe("vault-unavailable");
+  });
+
+  it("the authorization-started reason carries no credential-shaped material (the law survives the new vocabulary)", () => {
+    const started: WebFlixConnectOutcome = {
+      ok: true,
+      code: "authorization-started",
+      reason: "Google sign-in opened in your system browser — complete the consent there.",
+    };
+    expect(started.reason).not.toMatch(/token|secret|password/i);
   });
 });
