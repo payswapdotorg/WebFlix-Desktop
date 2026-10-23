@@ -161,7 +161,7 @@ export async function playlistVideosCatalog(
  */
 export async function channelUploadsCatalog(
   client: YouTubeDataApiClient,
-  params: { channelId: string; maxResults?: number },
+  params: { channelId: string; maxResults?: number; pageToken?: string },
   context: YouTubeBrowseContext = {},
 ): Promise<YouTubeCatalogPage & { playlistId: string | null }> {
   const channel = await client.getChannel({
@@ -180,7 +180,7 @@ export async function channelUploadsCatalog(
   }
   const page = await playlistVideosCatalog(
     client,
-    { playlistId: uploadsId, maxResults: params.maxResults },
+    { playlistId: uploadsId, maxResults: params.maxResults, pageToken: params.pageToken },
     context,
   );
   return { ...page, playlistId: uploadsId };

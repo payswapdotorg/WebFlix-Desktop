@@ -16,6 +16,15 @@ export * from "./youtube/playback";
 export * from "./youtube/catalogMapping";
 export * from "./youtube/service";
 export * from "./youtube/substitutes";
+// WFX-PROVIDER-SLICE-1 (Worker 2): the media-producer vertical slice over the
+// official Data API engine — the engine adapter (structurally compatible with
+// webflix-application's YouTubeCatalogSource port; compatibility pinned by the
+// integration suite's compile-time assignments), the LIVE composition root
+// (freeze §9.5 key law: injected key source, real fetch, typed requires-auth
+// outcome without a key), and the real-transport federated-search source.
+export * from "./youtube/mediaSource";
+export * from "./youtube/liveComposition";
+export * from "./youtube/searchSourceAdapter";
 // TikTok — second platform on the same frozen contracts (TIKTOK-CONNECT).
 // NOTE: tiktok/oauth.ts deliberately does NOT re-export the provider-neutral
 // OAuth substrate it imports from ./youtube/oauth (PKCE pair, state guard,
