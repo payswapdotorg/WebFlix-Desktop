@@ -34,6 +34,13 @@ The inspected initial commit was 29628c9acdb81b703bbd4080c207a0e7ce5e276e, also 
 
 ## Execute in this order
 
+## Priority product UX order (added 2026-10-23)
+
+The next visible-product goal is to make the desktop experience media-first and WebFlix-native, while preserving ZCode's agent, model-provider and long-running task capabilities. Read and execute `docs/plans/work-orders/WFX-DESKTOP-WEBFLIX-UX-1.md` as the dedicated source-of-truth work order. It is based on source review of both this desktop fork and the current WebFlix 2.0 reference; it defines the code landmarks, safe OAuth/media boundaries, TL + three-worker ownership, agent-to-UI action contract, and actual Electron GUI acceptance.
+
+Before dispatch, refresh both repo SHAs and reconcile `docs/plans/work-claims.md`. Do not overwrite or double-claim ongoing work. Treat the web app as a behavioral/visual reference, not a Next.js site to wrap or a backend to trust blindly. Merge only after real desktop GUI evidence; report live OAuth or source tests as BLOCKED when credentials or authorization are absent.
+
+
 ### A. Verify repository and baseline
 
 - Confirm current origin, upstream remote, default branch, HEAD and ancestry.
