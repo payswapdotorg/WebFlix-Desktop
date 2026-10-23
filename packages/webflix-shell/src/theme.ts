@@ -28,6 +28,25 @@ export const theme = {
   radii: { sm: "4px", md: "8px", lg: "14px" },
   spacing: { xs: 4, sm: 8, md: 16, lg: 24, xl: 40 },
 
+  // WFX-UX-SHELL-1 (media-first shell): the layout geometry tokens. Additive
+  // — every value the shell chrome needs so breakpoints stay in ONE place.
+  layout: {
+    /** Expanded sidebar width (px). */
+    sidebarWidth: 232,
+    /** Collapsed icon-rail width (px). */
+    sidebarRailWidth: 72,
+    /** Below this viewport width the sidebar auto-collapses to the rail. */
+    narrowViewportPx: 1024,
+    /** The agent panel's default/min/max widths (px; min per the work order). */
+    agentPanelDefaultWidth: 380,
+    agentPanelMinWidth: 320,
+    agentPanelMaxWidth: 720,
+    /** The docked persistent-watch column width (px; freeze §9.6 position). */
+    watchDockWidth: 340,
+    /** Watch dock shrinks to this before the layout gives up width (px). */
+    watchDockMinWidth: 240,
+  },
+
   typography: {
     fontFamily: "'Inter', 'Segoe UI', system-ui, sans-serif",
     monoFamily: "'JetBrains Mono', 'Cascadia Code', monospace",

@@ -1,7 +1,6 @@
 import React from "react";
 import { theme } from "../theme";
 import type { CatalogItem, Collection } from "webflix-contracts";
-
 export interface LibraryScreenProps {
   readonly collections?: readonly Collection[];
   readonly localEntries?: readonly CatalogItem[];
@@ -51,6 +50,45 @@ const styles: Record<string, React.CSSProperties> = {
   },
   list: { listStyle: "none", margin: 0, padding: 0, width: "100%" },
   collectionName: { margin: 0, fontWeight: 600 },
+  // WFX-UX-SHELL-1 (visual upgrade): local entries render as card tiles —
+  // the media-first grid pattern. Local files carry no thumbnails, so the
+  // tile shows an honest placeholder plate with the media kind, never a
+  // fabricated image.
+  localGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fill, minmax(min(260px, 100%), 1fr))",
+    gap: theme.spacing.md,
+    listStyle: "none",
+    margin: 0,
+    padding: 0,
+    minWidth: 0,
+  },
+  localTile: {
+    display: "flex",
+    flexDirection: "column",
+    gap: theme.spacing.xs,
+    minWidth: 0,
+  },
+  localTilePlate: {
+    width: "100%",
+    aspectRatio: "16 / 9",
+    borderRadius: theme.radii.md,
+    background: theme.colors.surfaceRaised,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    color: theme.colors.textMuted,
+    fontSize: theme.typography.sizes.sm,
+  },
+  localTileTitle: {
+    margin: 0,
+    fontSize: theme.typography.sizes.md,
+    fontWeight: 600,
+    lineHeight: 1.35,
+    overflowWrap: "anywhere",
+  },
+  localTileMeta: { margin: 0, color: theme.colors.textMuted, fontSize: theme.typography.sizes.sm },
+  localTileActions: { display: "flex", gap: theme.spacing.sm },
   ghostButton: {
     background: "transparent",
     color: theme.colors.accent,
@@ -133,21 +171,26 @@ export function LibraryScreen(props: LibraryScreenProps) {
             </p>
           </div>
         ) : (
-          <ul style={styles.list}>
+          <ul data-testid="library-local-grid" style={styles.localGrid}>
             {localEntries.map((item) => (
-              <li key={item.id} style={styles.row}>
-                <span>
-                  {item.title}
-                  <span style={styles.muted}> · local file</span>
-                </span>
-                <button
-                  type="button"
-                  style={styles.ghostButton}
-                  aria-label={`Play ${item.title}`}
-                  onClick={() => onPlay?.(item)}
-                >
-                  Play
-                </button>
+              <li key={item.id} style={styles.localTile} data-testid={`library-local-tile-${item.id}`}>
+                <div style={styles.localTilePlate} aria-hidden="true">
+                  local {item.mediaKind}
+                </div>
+                <p style={styles.localTileTitle}>{item.title}</p>
+                <p style={styles.localTileMeta}>
+                  {item.providerId} · local file
+                </p>
+                <div style={styles.localTileActions}>
+                  <button
+                    type="button"
+                    style={styles.ghostButton}
+                    aria-label={`Play ${item.title}`}
+                    onClick={() => onPlay?.(item)}
+                  >
+                    Play
+                  </button>
+                </div>
               </li>
             ))}
           </ul>

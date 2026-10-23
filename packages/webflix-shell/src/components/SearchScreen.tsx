@@ -1,13 +1,14 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { theme } from "../theme";
-import type { CatalogItem } from "webflix-contracts";
+import type { CatalogItem, SearchPageData, VideoCardView } from "webflix-contracts";
+import { HONEST_COPY } from "../states";
+import type { SearchState } from "../states";
 import {
-  HONEST_COPY,
-  budgetLine,
-  federatedCoverageSummaryLine,
-  federatedSourceRows,
-} from "../states";
-import type { SearchBudgetView, SearchState } from "../states";
+  BudgetLine,
+  CardResultsArea,
+  FederatedResultsArea,
+  searchResultsStyles as shared,
+} from "./search/SearchResults";
 
 export interface SearchScreenProps {
   readonly state: SearchState;
@@ -16,6 +17,18 @@ export interface SearchScreenProps {
   readonly onRetry?: () => void;
   readonly onConnect?: (providerId: string) => void;
   readonly onSelectItem?: (item: CatalogItem) => void;
+  // WFX-UX-SHELL-1 (card results, ADDITIVE): the frozen §9 SearchPageData.
+  // Present (alongside the results/degraded phase) → the results render as
+  // the reference's card list — video cards + channel cards + load-more
+  // paging. Absent → the legacy item rows render exactly as before.
+  readonly pageData?: SearchPageData | null;
+  /** Prefills the input (the global-search navigation path). */
+  readonly initialQuery?: string;
+  readonly onPlayCard?: (card: VideoCardView) => void;
+  readonly onOpenChannel?: (channel: { channelId: string; handle?: string }) => void;
+  /** Cursor "load more" paging for the card results. */
+  readonly onLoadMore?: (cursor: string) => void;
+  readonly loadingMore?: boolean;
 }
 
 const styles: Record<string, React.CSSProperties> = {
@@ -49,73 +62,32 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 600,
     cursor: "pointer",
   },
-  ghostButton: {
-    background: "transparent",
-    color: theme.colors.accent,
-    border: `1px solid ${theme.colors.accent}`,
-    borderRadius: theme.radii.sm,
-    padding: "8px 14px",
-    cursor: "pointer",
-  },
-  panel: {
-    background: theme.colors.surface,
-    border: `1px solid ${theme.colors.border}`,
-    borderRadius: theme.radii.lg,
-    padding: theme.spacing.md,
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "flex-start",
-    gap: theme.spacing.sm,
-  },
-  panelTitle: { margin: 0, fontSize: theme.typography.sizes.lg },
-  muted: { margin: 0, color: theme.colors.textMuted, lineHeight: 1.5 },
-  row: {
-    width: "100%",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: theme.spacing.sm,
-    padding: `${theme.spacing.xs}px 0`,
-    borderBottom: `1px solid ${theme.colors.border}`,
-  },
-  list: { listStyle: "none", margin: 0, padding: 0, width: "100%" },
-  sourceRow: {
-    width: "100%",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "flex-start",
-    gap: 2,
-    padding: `${theme.spacing.xs}px 0`,
-    borderBottom: `1px solid ${theme.colors.border}`,
-  },
-  sourceLine: { display: "flex", flexWrap: "wrap", gap: theme.spacing.xs, alignItems: "baseline" },
-  outcomeOk: { color: theme.colors.ok, fontWeight: 600 },
-  outcomeNotOk: { color: theme.colors.warning, fontWeight: 600 },
-  sourceMeta: { color: theme.colors.textMuted },
-  sourcesHeading: {
-    margin: 0,
-    marginTop: theme.spacing.sm,
-    fontSize: theme.typography.sizes.md,
-    fontWeight: 600,
-  },
-  noItems: { margin: 0, color: theme.colors.textMuted },
+  row: shared.row,
+  list: shared.list,
 };
 
-function BudgetLine(props: { budget?: SearchBudgetView }) {
-  // YOUTUBE-EXPAND: remaining-quota is surfaced honestly next to the results
-  // it paid for (and in the states where it matters). Absent budget = the
-  // app layer had no snapshot to show — nothing is invented here.
-  if (!props.budget) return null;
-  return (
-    <p data-testid="search-budget" style={styles.muted}>
-      {budgetLine(props.budget)}
-    </p>
-  );
-}
-
 export function SearchScreen(props: SearchScreenProps) {
-  const { state, onQueryChange, onSubmit, onRetry, onConnect, onSelectItem } = props;
-  const [query, setQuery] = useState("");
+  const {
+    state,
+    onQueryChange,
+    onSubmit,
+    onRetry,
+    onConnect,
+    onSelectItem,
+    pageData,
+    initialQuery,
+    onPlayCard,
+    onOpenChannel,
+    onLoadMore,
+    loadingMore = false,
+  } = props;
+  const [query, setQuery] = useState(initialQuery ?? "");
+
+  // The global-search navigation path prefill: syncs when the host-driven
+  // route param changes (a no-op when it already matches).
+  useEffect(() => {
+    if (initialQuery !== undefined) setQuery(initialQuery);
+  }, [initialQuery]);
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
@@ -150,6 +122,11 @@ export function SearchScreen(props: SearchScreenProps) {
         onRetry={onRetry}
         onConnect={onConnect}
         onSelectItem={onSelectItem}
+        pageData={pageData ?? null}
+        onPlayCard={onPlayCard}
+        onOpenChannel={onOpenChannel}
+        onLoadMore={onLoadMore}
+        loadingMore={loadingMore}
       />
     </section>
   );
@@ -160,14 +137,29 @@ function ResultsArea(props: {
   onRetry?: () => void;
   onConnect?: (providerId: string) => void;
   onSelectItem?: (item: CatalogItem) => void;
+  pageData: SearchPageData | null;
+  onPlayCard?: (card: VideoCardView) => void;
+  onOpenChannel?: (channel: { channelId: string; handle?: string }) => void;
+  onLoadMore?: (cursor: string) => void;
+  loadingMore: boolean;
 }) {
-  const { state, onRetry, onConnect, onSelectItem } = props;
+  const {
+    state,
+    onRetry,
+    onConnect,
+    onSelectItem,
+    pageData,
+    onPlayCard,
+    onOpenChannel,
+    onLoadMore,
+    loadingMore,
+  } = props;
 
   switch (state.phase) {
     case "idle":
       return (
-        <div data-testid="search-idle" role="status" style={styles.panel}>
-          <p style={styles.muted}>
+        <div data-testid="search-idle" role="status" style={shared.panel}>
+          <p style={shared.muted}>
             Type a query to search your connected providers. WebFlix will show only what it can
             honestly deliver — never filler, never fake results.
           </p>
@@ -176,16 +168,31 @@ function ResultsArea(props: {
 
     case "loading":
       return (
-        <div data-testid="search-loading" role="status" style={styles.panel}>
-          <p style={styles.panelTitle}>{HONEST_COPY.loading.title}</p>
-          <p style={styles.muted}>Searching for “{state.query}”…</p>
+        <div data-testid="search-loading" role="status" style={shared.panel}>
+          <p style={shared.panelTitle}>{HONEST_COPY.loading.title}</p>
+          <p style={shared.muted}>Searching for “{state.query}”…</p>
         </div>
       );
 
     case "results":
+      if (pageData !== null) {
+        return (
+          <CardResultsArea
+            pageData={pageData}
+            query={state.query}
+            budget={state.budget}
+            onPlayCard={onPlayCard}
+            onSelectItem={onSelectItem}
+            onOpenChannel={onOpenChannel}
+            onLoadMore={onLoadMore}
+            loadingMore={loadingMore}
+            degraded={false}
+          />
+        );
+      }
       return (
-        <div data-testid="search-results" style={styles.panel}>
-          <p style={styles.panelTitle}>
+        <div data-testid="search-results" style={shared.panel}>
+          <p style={shared.panelTitle}>
             {state.items.length} result{state.items.length === 1 ? "" : "s"} for “{state.query}”
           </p>
           <BudgetLine budget={state.budget} />
@@ -194,14 +201,14 @@ function ResultsArea(props: {
               <li key={item.id} style={styles.row}>
                 <span>
                   {item.title}
-                  <span style={styles.muted}>
+                  <span style={shared.muted}>
                     {" "}
                     · {item.providerId} · {item.mediaKind}
                   </span>
                 </span>
                 <button
                   type="button"
-                  style={styles.ghostButton}
+                  style={shared.ghostButton}
                   aria-label={`Play ${item.title}`}
                   onClick={() => onSelectItem?.(item)}
                 >
@@ -215,18 +222,18 @@ function ResultsArea(props: {
 
     case "empty":
       return (
-        <div data-testid="search-empty" role="status" style={styles.panel}>
-          <p style={styles.panelTitle}>{HONEST_COPY.empty.title}</p>
-          <p style={styles.muted}>{HONEST_COPY.empty.message}</p>
+        <div data-testid="search-empty" role="status" style={shared.panel}>
+          <p style={shared.panelTitle}>{HONEST_COPY.empty.title}</p>
+          <p style={shared.muted}>{HONEST_COPY.empty.message}</p>
           <BudgetLine budget={state.budget} />
         </div>
       );
 
     case "requires-auth":
       return (
-        <div data-testid="search-requires-auth" role="status" style={styles.panel}>
-          <p style={styles.panelTitle}>{HONEST_COPY["requires-auth"].title}</p>
-          <p style={styles.muted}>{HONEST_COPY["requires-auth"].message}</p>
+        <div data-testid="search-requires-auth" role="status" style={shared.panel}>
+          <p style={shared.panelTitle}>{HONEST_COPY["requires-auth"].title}</p>
+          <p style={shared.muted}>{HONEST_COPY["requires-auth"].message}</p>
           <button type="button" style={styles.button} onClick={() => onConnect?.(state.providerId)}>
             {HONEST_COPY["requires-auth"].actionLabel}
           </button>
@@ -235,16 +242,16 @@ function ResultsArea(props: {
 
     case "rate-limited":
       return (
-        <div data-testid="search-rate-limited" role="status" style={styles.panel}>
-          <p style={styles.panelTitle}>{HONEST_COPY["rate-limited"].title}</p>
-          <p style={styles.muted}>{HONEST_COPY["rate-limited"].message}</p>
+        <div data-testid="search-rate-limited" role="status" style={shared.panel}>
+          <p style={shared.panelTitle}>{HONEST_COPY["rate-limited"].title}</p>
+          <p style={shared.muted}>{HONEST_COPY["rate-limited"].message}</p>
           {/* §2.3: the reset hint arrives as OperationCapability.detail text
               (the frozen shapes carry no structured retryAfterSeconds —
               freeze-deviation MR-FD1). */}
-          {state.detail && <p style={styles.muted}>{state.detail}</p>}
+          {state.detail && <p style={shared.muted}>{state.detail}</p>}
           <BudgetLine budget={state.budget} />
           {onRetry && (
-            <button type="button" style={styles.ghostButton} onClick={onRetry}>
+            <button type="button" style={shared.ghostButton} onClick={onRetry}>
               Retry
             </button>
           )}
@@ -253,10 +260,10 @@ function ResultsArea(props: {
 
     case "unsupported":
       return (
-        <div data-testid="search-unsupported" role="status" style={styles.panel}>
-          <p style={styles.panelTitle}>{HONEST_COPY.unsupported.title}</p>
-          <p style={styles.muted}>{HONEST_COPY.unsupported.message}</p>
-          {state.detail && <p style={styles.muted}>Reason: {state.detail}</p>}
+        <div data-testid="search-unsupported" role="status" style={shared.panel}>
+          <p style={shared.panelTitle}>{HONEST_COPY.unsupported.title}</p>
+          <p style={shared.muted}>{HONEST_COPY.unsupported.message}</p>
+          {state.detail && <p style={shared.muted}>Reason: {state.detail}</p>}
           {/* Honest by design: 'unsupported' renders no play control. A button
               here would be dead — the state explains itself instead. */}
         </div>
@@ -264,12 +271,12 @@ function ResultsArea(props: {
 
     case "unavailable":
       return (
-        <div data-testid="search-unavailable" role="status" style={styles.panel}>
-          <p style={styles.panelTitle}>{HONEST_COPY.unavailable.title}</p>
-          <p style={styles.muted}>{HONEST_COPY.unavailable.message}</p>
-          {state.detail && <p style={styles.muted}>Reason: {state.detail}</p>}
+        <div data-testid="search-unavailable" role="status" style={shared.panel}>
+          <p style={shared.panelTitle}>{HONEST_COPY.unavailable.title}</p>
+          <p style={shared.muted}>{HONEST_COPY.unavailable.message}</p>
+          {state.detail && <p style={shared.muted}>Reason: {state.detail}</p>}
           {onRetry && (
-            <button type="button" style={styles.ghostButton} onClick={onRetry}>
+            <button type="button" style={shared.ghostButton} onClick={onRetry}>
               {HONEST_COPY.unavailable.actionLabel}
             </button>
           )}
@@ -277,11 +284,27 @@ function ResultsArea(props: {
       );
 
     case "degraded":
+      if (pageData !== null) {
+        return (
+          <CardResultsArea
+            pageData={pageData}
+            query={state.query}
+            budget={state.budget}
+            detail={state.detail}
+            onPlayCard={onPlayCard}
+            onSelectItem={onSelectItem}
+            onOpenChannel={onOpenChannel}
+            onLoadMore={onLoadMore}
+            loadingMore={loadingMore}
+            degraded
+          />
+        );
+      }
       return (
-        <div data-testid="search-degraded" role="status" style={styles.panel}>
-          <p style={styles.panelTitle}>{HONEST_COPY.degraded.title}</p>
-          <p style={styles.muted}>{HONEST_COPY.degraded.message}</p>
-          {state.detail && <p style={styles.muted}>{state.detail}</p>}
+        <div data-testid="search-degraded" role="status" style={shared.panel}>
+          <p style={shared.panelTitle}>{HONEST_COPY.degraded.title}</p>
+          <p style={shared.muted}>{HONEST_COPY.degraded.message}</p>
+          {state.detail && <p style={shared.muted}>{state.detail}</p>}
           <BudgetLine budget={state.budget} />
           {state.items.length > 0 && (
             <ul style={styles.list}>
@@ -289,14 +312,14 @@ function ResultsArea(props: {
                 <li key={item.id} style={styles.row}>
                   <span>
                     {item.title}
-                    <span style={styles.muted}>
+                    <span style={shared.muted}>
                       {" "}
                       · {item.providerId} · {item.mediaKind}
                     </span>
                   </span>
                   <button
                     type="button"
-                    style={styles.ghostButton}
+                    style={shared.ghostButton}
                     aria-label={`Play ${item.title}`}
                     onClick={() => onSelectItem?.(item)}
                   >
@@ -311,12 +334,12 @@ function ResultsArea(props: {
 
     case "status-unknown":
       return (
-        <div data-testid="search-status-unknown" role="status" style={styles.panel}>
-          <p style={styles.panelTitle}>{HONEST_COPY["status-unknown"].title}</p>
-          <p style={styles.muted}>{HONEST_COPY["status-unknown"].message}</p>
-          {state.detail && <p style={styles.muted}>{state.detail}</p>}
+        <div data-testid="search-status-unknown" role="status" style={shared.panel}>
+          <p style={shared.panelTitle}>{HONEST_COPY["status-unknown"].title}</p>
+          <p style={shared.muted}>{HONEST_COPY["status-unknown"].message}</p>
+          {state.detail && <p style={shared.muted}>{state.detail}</p>}
           {onRetry && (
-            <button type="button" style={styles.ghostButton} onClick={onRetry}>
+            <button type="button" style={shared.ghostButton} onClick={onRetry}>
               {HONEST_COPY["status-unknown"].actionLabel}
             </button>
           )}
@@ -326,91 +349,4 @@ function ResultsArea(props: {
     case "federated":
       return <FederatedResultsArea state={state} onSelectItem={onSelectItem} />;
   }
-}
-
-/**
- * The WF-009 federated coverage view (P7-COMPOSE-1): the merged item list
- * PLUS one honest row per fanned-out source. NEVER hides a failed source —
- * every coverage row renders with its outcome class, its row tally, its
- * elapsed time, and (for every non-ok class) the outcome's own reason.
- * Partial-failure sources keep BOTH their salvaged count and their reason;
- * a federation with no merged items still shows every source's answer.
- */
-function FederatedResultsArea(props: {
-  state: Extract<SearchState, { phase: "federated" }>;
-  onSelectItem?: (item: CatalogItem) => void;
-}) {
-  const { state, onSelectItem } = props;
-  const { result } = state;
-  const rows = federatedSourceRows(result);
-
-  return (
-    <div data-testid="search-federated" style={styles.panel}>
-      <p style={styles.panelTitle}>
-        {result.items.length} merged {result.items.length === 1 ? "item" : "items"} for “
-        {state.query}”
-      </p>
-      <BudgetLine budget={state.budget} />
-      <p data-testid="search-federated-summary" style={styles.muted}>
-        {federatedCoverageSummaryLine(result)}
-      </p>
-      {result.items.length === 0 ? (
-        <p data-testid="search-federated-no-items" style={styles.noItems}>
-          The federation returned no merged items — every source’s answer is listed below, failures
-          included.
-        </p>
-      ) : (
-        <ul data-testid="search-federated-items" style={styles.list}>
-          {result.items.map((merged) => (
-            <li key={merged.item.id} style={styles.row}>
-              <span>
-                {merged.item.title}
-                <span style={styles.muted}>
-                  {" "}
-                  · {merged.item.providerId} · {merged.item.mediaKind} · from{" "}
-                  {merged.sources.join(", ")}
-                </span>
-              </span>
-              <button
-                type="button"
-                style={styles.ghostButton}
-                aria-label={`Play ${merged.item.title}`}
-                onClick={() => onSelectItem?.(merged.item)}
-              >
-                Play
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-      <h3 style={styles.sourcesHeading}>Sources</h3>
-      <ul data-testid="search-federated-coverage" style={styles.list}>
-        {rows.map((row) => (
-          <li
-            key={row.source}
-            style={styles.sourceRow}
-            data-testid={`search-federated-source-${row.source}`}
-          >
-            <span style={styles.sourceLine}>
-              <strong>{row.source}</strong>
-              <span style={row.outcome === "ok" ? styles.outcomeOk : styles.outcomeNotOk}>
-                {row.outcome}
-              </span>
-              <span style={styles.sourceMeta}>
-                {row.returned} {row.returned === 1 ? "row" : "rows"} returned · {row.elapsedMs}ms
-              </span>
-            </span>
-            {row.reason && (
-              <span
-                data-testid={`search-federated-source-reason-${row.source}`}
-                style={styles.muted}
-              >
-                Reason: {row.reason}
-              </span>
-            )}
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
 }
