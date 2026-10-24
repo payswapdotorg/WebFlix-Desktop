@@ -1,8 +1,14 @@
 import { randomUUID } from "node:crypto";
-import { ipcMain, type BrowserWindow, type UtilityProcess } from "electron";
+import {
+  ipcMain,
+  MessageChannelMain,
+  type BrowserWindow,
+  type UtilityProcess,
+} from "electron";
 import {
   HostMessageTypes,
   InternalChannels,
+  ZCODE_PRODUCT_FLAVOR,
   databaseStartupControlSchema,
   type DatabaseStartupState,
 } from "@zcode/shared";
@@ -29,10 +35,20 @@ export function getDatabaseStartupPortPayload(
   return databaseStartupId ? { databaseStartupId } : undefined;
 }
 
+export interface DatabaseStartupRelayOptions {
+  /**
+   * The baked product flavor (default: the ZCODE_PRODUCT_FLAVOR runtime
+   * constant). Test seam mirroring webflixAgentWorkspaceIpc.ts — production
+   * never passes it.
+   */
+  readonly flavor?: typeof ZCODE_PRODUCT_FLAVOR;
+}
+
 export function bindDatabaseStartupRelay(
   win: BrowserWindow,
   child: UtilityProcess,
   startupId = randomUUID(),
+  options: DatabaseStartupRelayOptions = {},
 ) {
   // 同窗口重建 Host 时，旧监听不能继续重放 ready 或接收用户控制命令。
   windowBindings.get(win)?.();
@@ -40,6 +56,7 @@ export function bindDatabaseStartupRelay(
   let disposed = false;
   let latest: DatabaseStartupState | undefined;
   let exited = false;
+  let readyPortRedelivered = false;
   const forward = (state: DatabaseStartupState) => {
     if (!disposed && !win.isDestroyed() && !win.webContents.isDestroyed())
       win.webContents.send(InternalChannels.DatabaseStartupState, state);
@@ -58,6 +75,19 @@ export function bindDatabaseStartupRelay(
       for (const listener of readyListeners) listener();
       readyListeners.clear();
     }
+    // WFX-AGENT-PORT-REDELIVER-1 (companion path): a snapshot control can
+    // arrive BEFORE the host reaches ready (the renderer's boot chunk came
+    // up while storage preparation was still running) — at that moment the
+    // re-delivery is a no-op because `latest.phase !== "ready"`. This
+    // once-per-generation hook covers that ordering: the FIRST ready
+    // transition re-delivers the port alongside the state forward, so the
+    // renderer pairs state+port whichever side of the transition its boot
+    // chunk evaluated on. Bounded: exactly one extra attachment per relay
+    // generation (reload-reattach adds the same cost on every reload).
+    if (state.phase === "ready" && !readyPortRedelivered) {
+      readyPortRedelivered = true;
+      redeliverServicePort();
+    }
   };
   const receive = (state: DatabaseStartupState) => {
     if (disposed || exited || state.startupId !== startupId) return;
@@ -71,9 +101,53 @@ export function bindDatabaseStartupRelay(
       quit?.();
       return;
     }
-    if (result.data.action === "snapshot" && latest) forward(latest);
+    if (result.data.action === "snapshot" && latest) {
+      forward(latest);
+      // WFX-AGENT-PORT-REDELIVER-1: the renderer asks for a snapshot exactly
+      // when its startup listener comes up (zcodeBoot.tsx / the WebFlix
+      // runtimeAdmission module both send it at module evaluation). The
+      // initial ServicePort was posted at host-spawn / reload-reattach —
+      // BEFORE the renderer's dynamically-imported boot chunk evaluated —
+      // so a slow (dev) or racing (packaged) module graph can drop that
+      // MessageEvent with no listener installed. Re-deliver the port here so
+      // admission pairs state+port regardless of boot-chunk timing. The
+      // re-delivery runs the SAME AttachServicePort flow a renderer reload
+      // takes; both boots ignore duplicate ports after admission
+      // (appInitialized / the admission handle guard) and the pending-port
+      // swap closes the superseded port (databaseStartupAdmission.acceptPort).
+      redeliverServicePort();
+    }
     if (!exited)
       child.postMessage({ type: HostMessageTypes.DatabaseStartupControl, control: result.data });
+  };
+  /**
+   * WFX-AGENT-PORT-REDELIVER-1 — flavor-gated (freeze: WEBFLIX_IDENTITY unset
+   * ⇒ zero ZCode impact): only the WebFlix product re-delivers its service
+   * port on snapshot. The inherited ZCode flavors keep exactly-once port
+   * delivery verbatim.
+   */
+  const redeliverServicePort = (): void => {
+    const flavor = options.flavor ?? ZCODE_PRODUCT_FLAVOR;
+    if (flavor !== "webflix") return;
+    if (disposed || exited || !latest || latest.phase !== "ready") return;
+    const { port1, port2 } = new MessageChannelMain();
+    child.postMessage(
+      {
+        type: HostMessageTypes.AttachServicePort,
+        requestId: randomUUID(),
+        attachmentId: randomUUID(),
+        clientMode: "desktop-continuous",
+        scope: { kind: "local" },
+      },
+      [port2],
+    );
+    if (!win.isDestroyed() && !win.webContents.isDestroyed()) {
+      win.webContents.postMessage(
+        InternalChannels.ServicePort,
+        { databaseStartupId: startupId },
+        [port1],
+      );
+    }
   };
   const onExit = () => {
     exited = true;
