@@ -482,9 +482,16 @@ describe("honest-state vocabulary (freeze §2.3)", () => {
 });
 
 describe("theme", () => {
-  it("the WebFlix identity is present and visibly not YouTube", () => {
+  it("the WebFlix identity is present and carries the web product's visual system (WFX-WEB-LOOK-1)", () => {
     expect(theme.name).toBe("WebFlix");
-    expect(theme.colors.accent.toLowerCase()).not.toBe("#ff0000");
+    // WFX-WEB-LOOK-1 (operator directive 2026-10-24): the desktop shell
+    // wears the webflix-2.0 web product's visual system — the red primary
+    // (#ff0000, the web product's --primary) on the #0f0f0f canvas. The
+    // earlier "visibly not YouTube" accent rule is superseded; the
+    // independent-VALUE doctrine (the notice below) is unchanged.
+    expect(theme.colors.accent.toLowerCase()).toBe("#ff0000");
+    expect(theme.colors.background.toLowerCase()).toBe("#0f0f0f");
+    expect(theme.colors.surfaceRaised.toLowerCase()).toBe("#272727");
     expect(theme.notice.text).toMatch(/independent/i);
     expect(theme.notice.text).toMatch(/not affiliated/i);
   });

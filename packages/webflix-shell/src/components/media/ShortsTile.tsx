@@ -2,6 +2,9 @@
 // vertical tile for short-form shelves and the Shorts feed. Same honesty
 // laws as VideoCard: no invented thumbnails/labels, playable only with a
 // real handler, decorative glyph semantics.
+//
+// WFX-WEB-LOOK-1: the tile carries the web product's shorts idiom — the
+// rounded-xl tile with the hover scale.
 
 import React from "react";
 import { theme } from "../../theme";
@@ -22,7 +25,7 @@ const styles: Record<string, React.CSSProperties> = {
     width: "100%",
     aspectRatio: "9 / 16",
     background: theme.colors.surfaceRaised,
-    borderRadius: theme.radii.lg,
+    borderRadius: theme.radii.xl,
     overflow: "hidden",
     display: "flex",
     flexDirection: "column",
@@ -102,7 +105,7 @@ export function ShortsTile(props: ShortsTileProps): React.ReactElement {
 
   if (onPlay === undefined) {
     return (
-      <div data-testid={tileId} style={tileStyle} aria-label={short.title} role="img">
+      <div data-testid={tileId} className="wfx-card" style={tileStyle} aria-label={short.title} role="img">
         {inner}
       </div>
     );
@@ -112,6 +115,7 @@ export function ShortsTile(props: ShortsTileProps): React.ReactElement {
     <button
       type="button"
       data-testid={tileId}
+      className="wfx-card"
       aria-label={`Play ${short.title}`}
       style={tileStyle}
       onClick={() => onPlay(short)}

@@ -3,6 +3,12 @@
 // rendered from the route model's NAV_GROUPS, with the user collapse toggle
 // and the icon-rail collapsed form. Extracted from AppShell.tsx for the
 // repo's max-lines law.
+//
+// WFX-WEB-LOOK-1: the rail now carries the webflix-2.0 web product's guide
+// ladder — the 240px column on the shared canvas (no divider), the
+// rounded-lg 44px rows with 24px icon gutters, the active row's secondary
+// fill, the uppercase 11px section headers and the hairline group dividers.
+// Every data-testid / aria / collapse contract is unchanged.
 
 import React from "react";
 import { theme } from "../../theme";
@@ -36,13 +42,13 @@ const NAV_ICONS: Record<NavRoute, IconName> = {
 };
 
 const styles: Record<string, React.CSSProperties> = {
+  // The web product's guide: the shared canvas background, no divider.
   sidebar: {
     width: theme.layout.sidebarWidth,
     flexShrink: 0,
     display: "flex",
     flexDirection: "column",
-    borderRight: `1px solid ${theme.colors.border}`,
-    background: theme.colors.surface,
+    background: theme.colors.background,
     overflowY: "auto",
     overflowX: "hidden",
     transition: "width 150ms ease",
@@ -51,18 +57,19 @@ const styles: Record<string, React.CSSProperties> = {
     width: theme.layout.sidebarRailWidth,
   },
   sidebarHeader: {
-    padding: theme.spacing.sm,
+    padding: `${theme.spacing.sm}px ${theme.spacing.md}px ${theme.spacing.xs}px`,
     display: "flex",
     justifyContent: "flex-end",
   },
   sidebarHeaderCollapsed: { justifyContent: "center" },
+  // The web product's round ghost icon button.
   collapseToggle: {
     background: "transparent",
-    color: theme.colors.textMuted,
-    border: `1px solid ${theme.colors.border}`,
-    borderRadius: theme.radii.sm,
-    width: 36,
-    height: 36,
+    color: theme.colors.text,
+    border: "none",
+    borderRadius: "50%",
+    width: 40,
+    height: 40,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -73,33 +80,42 @@ const styles: Record<string, React.CSSProperties> = {
     display: "flex",
     flexDirection: "column",
     flexWrap: "wrap",
-    gap: theme.spacing.xs,
-    padding: `0 ${theme.spacing.sm}px ${theme.spacing.sm}px`,
+    gap: 0,
+    padding: `0 ${theme.spacing.md}px ${theme.spacing.md}px`,
     margin: 0,
     minWidth: 0,
   },
-  navGroup: { display: "flex", flexDirection: "column", gap: 2, marginBottom: theme.spacing.xs },
+  navGroup: { display: "flex", flexDirection: "column", gap: 2 },
+  // The web product's hairline group divider (border-t border-border/70).
+  navGroupDivider: {
+    height: 1,
+    background: "rgba(48,48,48,0.70)",
+    margin: `${theme.spacing.sm}px ${theme.spacing.xs}px`,
+    flexShrink: 0,
+  },
+  // The web product's section header: 11px, semibold, uppercase, wide.
   navGroupLabel: {
-    margin: `${theme.spacing.xs}px ${theme.spacing.xs}px 0`,
+    margin: `${theme.spacing.sm}px ${theme.spacing.md}px ${theme.spacing.xs}px`,
     fontSize: 11,
     fontWeight: 600,
-    letterSpacing: "0.08em",
+    letterSpacing: "0.05em",
     textTransform: "uppercase",
     color: theme.colors.textMuted,
   },
   navButton: {
     display: "flex",
     alignItems: "center",
-    gap: theme.spacing.md,
+    gap: theme.spacing.lg,
     background: "transparent",
-    color: theme.colors.textMuted,
+    color: theme.colors.text,
     border: "none",
     borderRadius: theme.radii.md,
-    padding: "8px 12px",
+    padding: "10px 12px",
     minHeight: 44,
     cursor: "pointer",
     font: "inherit",
     fontSize: theme.typography.sizes.md,
+    fontWeight: 500,
     textAlign: "left",
     width: "100%",
     minWidth: 0,
@@ -109,7 +125,7 @@ const styles: Record<string, React.CSSProperties> = {
     color: theme.colors.text,
     fontWeight: 600,
   },
-  navButtonCollapsed: { justifyContent: "center", gap: 0, padding: "8px 0" },
+  navButtonCollapsed: { justifyContent: "center", gap: 0, padding: "10px 0" },
   // The visually-hidden label technique: collapsed buttons keep their
   // accessible name and textContent while only the glyph shows.
   navLabelHidden: {
@@ -134,23 +150,25 @@ export function Sidebar(props: SidebarProps): React.ReactElement {
   const navLabelStyle = collapsed ? styles.navLabelHidden : undefined;
 
   return (
-    <div data-testid="sidebar" style={sidebarStyle}>
+    <div data-testid="sidebar" className="wfx-scroll" style={sidebarStyle}>
       <div style={collapsed ? styles.sidebarHeaderCollapsed : styles.sidebarHeader}>
         <button
           type="button"
           data-testid="sidebar-collapse-toggle"
+          className="wfx-icon-btn"
           aria-expanded={!collapsed}
           aria-controls="primary-nav"
           aria-label={collapsed ? "Expand the sidebar" : "Collapse the sidebar"}
           style={styles.collapseToggle}
           onClick={onToggleCollapsed}
         >
-          <Icon name={collapsed ? "expand" : "collapse"} size={16} />
+          <Icon name={collapsed ? "expand" : "collapse"} size={20} />
         </button>
       </div>
       <nav id="primary-nav" aria-label="Primary" data-testid="primary-nav" style={styles.nav}>
-        {NAV_GROUPS.map((group) => (
+        {NAV_GROUPS.map((group, groupIndex) => (
           <div key={group.label} style={styles.navGroup}>
+            {groupIndex > 0 && !collapsed && <div aria-hidden="true" style={styles.navGroupDivider} />}
             <h3
               style={{
                 ...styles.navGroupLabel,
@@ -171,12 +189,13 @@ export function Sidebar(props: SidebarProps): React.ReactElement {
                   key={navItem.id}
                   type="button"
                   data-testid={`nav-${navItem.id}`}
+                  className="wfx-nav-item"
                   aria-current={isActive ? "page" : undefined}
                   title={navItem.label}
                   style={buttonStyle}
                   onClick={() => onNavigate(navItem.id)}
                 >
-                  <Icon name={NAV_ICONS[navItem.id]} size={20} />
+                  <Icon name={NAV_ICONS[navItem.id]} size={22} />
                   <span style={navLabelStyle}>{navItem.label}</span>
                 </button>
               );

@@ -29,7 +29,7 @@ import type { UiActionBridge, UiActionHandlers } from "../agent/uiActionBridge.j
 import { AgentPanel } from "../agent/AgentPanel.js";
 import { webflixAboutLine } from "./brand.js";
 import type { WebFlixAccountsStatus } from "./accountsBridge.js";
-import { hostStyles, ProductMarkRow, StartupReadyNotifier, VaultUnavailableBanner } from "./hostChrome.js";
+import { hostStyles, BrandMarkNode, StartupReadyNotifier, VaultUnavailableBanner } from "./hostChrome.js";
 
 export interface WebFlixHostBundle {
   readonly route: { route: MediaRoute; params: RouteParams };
@@ -103,11 +103,10 @@ export function WebFlixHostView(bundle: WebFlixHostBundle): ReactNode {
       />
 
       <div style={hostStyles.shell}>
-        <ProductMarkRow />
         {bundle.accountsStatus !== null && !bundle.accountsStatus.vault.available && (
           <VaultUnavailableBanner status={bundle.accountsStatus} />
         )}
-        <AppShell {...shellProps} />
+        <AppShell {...shellProps} brandMark={<BrandMarkNode />} />
       </div>
 
       {/* About/help copy (requirement 2) — the honest product line. */}

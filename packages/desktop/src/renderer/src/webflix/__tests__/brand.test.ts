@@ -56,20 +56,27 @@ describe("the frozen WebFlix product identity (freeze §6.1)", () => {
   });
 });
 
-describe("the WebFlix mark (requirement 2: a clearly distinct new mark)", () => {
-  it("is an original glyph in the shell theme colors — NOT the ZCode Z-glyph", () => {
+describe("the WebFlix mark (WFX-WEB-LOOK-1: the web product's own logo geometry)", () => {
+  it("is the webflix-2.0 web product's red play mark — NOT the ZCode Z-glyph", () => {
     expect(WEBFLIX_MARK_SVG).not.toContain(ZCODE_Z_GLYPH_GEOMETRY);
     expect(WEBFLIX_MARK_SVG).not.toContain("currentColor");
-    // The brand accent + shell background (webflix-shell theme.ts values).
-    expect(WEBFLIX_MARK_SVG).toContain("#2fd6b3");
-    expect(WEBFLIX_MARK_SVG).toContain("#0f1420");
+    // The operator-directed web-product mark (WFX-WEB-LOOK-1): the red
+    // rounded rect + white play triangle from webflix-2.0's own logo
+    // (src/components/app/logo.tsx / public/favicon.svg).
+    expect(WEBFLIX_MARK_SVG).toContain("#ff0000");
+    expect(WEBFLIX_MARK_SVG).toContain("#ffffff");
     expect(WEBFLIX_MARK_SVG).toContain('aria-label="WebFlix mark"');
+    // The superseded teal identity is fully gone.
+    expect(WEBFLIX_MARK_SVG.toLowerCase()).not.toContain("#2fd6b3");
+    expect(WEBFLIX_MARK_SVG.toLowerCase()).not.toContain("#0f1420");
   });
 
-  it("does not paste the YouTube play-button red (ADR-0003 independent value)", () => {
-    expect(WEBFLIX_MARK_SVG.toLowerCase()).not.toContain("#ff0000");
-    expect(WEBFLIX_MARK_SVG.toLowerCase()).not.toContain("#ff0033");
-    expect(WEBFLIX_MARK_SVG.toLowerCase()).not.toContain("red");
+  it("carries the web-product mark doctrine (operator directive 2026-10-24)", () => {
+    // WFX-WEB-LOOK-1 supersedes the earlier no-red visual rule: the desktop
+    // app wears the web app's look by the operator's explicit instruction.
+    // The ADR-0003 independent-VALUE doctrine (notice + honesty laws) stays.
+    expect(WEBFLIX_MARK_SVG).toMatch(/<rect[^>]*fill="#ff0000"/);
+    expect(WEBFLIX_MARK_SVG).toMatch(/<path[^>]*fill="#ffffff"/);
   });
 });
 

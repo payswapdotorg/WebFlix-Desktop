@@ -2,6 +2,12 @@
 // the global video-search form, the account/connection status control, and
 // the agent-panel toggle with its documented shortcut hint. Extracted from
 // AppShell.tsx for the repo's max-lines law.
+//
+// WFX-WEB-LOOK-1: the chrome now carries the webflix-2.0 web product's
+// topbar — the 56px bar, the brand mark + bold wordmark at the left, the
+// centered rounded-full search pill with its icon submit, and the
+// right-aligned status pills. Every data-testid / aria contract is
+// unchanged.
 
 import React from "react";
 import { theme } from "../../theme";
@@ -20,6 +26,12 @@ export interface TopChromeProps {
   /** The agent panel's visibility (the toggle's pressed state). */
   readonly panelVisible: boolean;
   readonly onTogglePanel: () => void;
+  /**
+   * WFX-WEB-LOOK-1: the host-supplied brand mark node (the WebFlix logo
+   * glyph), rendered at the topbar's left before the wordmark. Absent = the
+   * wordmark alone renders.
+   */
+  readonly brandMark?: React.ReactNode;
 }
 
 const styles: Record<string, React.CSSProperties> = {
@@ -27,89 +39,109 @@ const styles: Record<string, React.CSSProperties> = {
     display: "flex",
     alignItems: "center",
     flexWrap: "wrap",
-    gap: theme.spacing.md,
-    padding: `${theme.spacing.sm}px ${theme.spacing.md}px`,
-    borderBottom: `1px solid ${theme.colors.border}`,
-    background: theme.colors.surface,
+    gap: theme.spacing.sm,
+    // The web product's topbar: h-14, canvas background, no divider.
+    minHeight: 56,
+    padding: `${theme.spacing.xs}px ${theme.spacing.md}px`,
+    background: theme.colors.background,
     flexShrink: 0,
   },
-  brandBlock: { display: "flex", alignItems: "baseline", gap: theme.spacing.sm, flexShrink: 0 },
+  brandBlock: {
+    display: "flex",
+    alignItems: "center",
+    gap: theme.spacing.xs + 2,
+    flexShrink: 0,
+    minWidth: 0,
+  },
   brand: {
     fontSize: theme.typography.sizes.lg,
     fontWeight: 700,
-    letterSpacing: "0.5px",
-    color: theme.colors.accent,
+    letterSpacing: "-0.01em",
+    color: theme.colors.text,
+    whiteSpace: "nowrap",
   },
-  tagline: { color: theme.colors.textMuted, fontSize: theme.typography.sizes.sm },
+  // The web product's centered search pill: rounded-full, bordered, with the
+  // icon submit sewn onto the right edge.
   searchForm: {
     display: "flex",
-    gap: theme.spacing.sm,
+    height: 40,
     flex: "1 1 260px",
     minWidth: 220,
     maxWidth: 560,
+    borderRadius: 999,
+    border: `1px solid ${theme.colors.border}`,
+    background: "rgba(39,39,39,0.40)",
+    overflow: "hidden",
   },
   searchInput: {
     flex: 1,
-    background: theme.colors.background,
+    background: "transparent",
     color: theme.colors.text,
-    border: `1px solid ${theme.colors.border}`,
-    borderRadius: theme.radii.md,
-    padding: "8px 12px",
-    minHeight: 44,
+    border: "none",
+    outline: "none",
+    padding: `0 ${theme.spacing.md}px`,
     fontSize: theme.typography.sizes.md,
     minWidth: 0,
+    font: "inherit",
   },
   searchButton: {
-    background: theme.colors.accent,
-    color: "#08211b",
+    width: 64,
+    flexShrink: 0,
+    background: theme.colors.surfaceRaised,
+    color: theme.colors.text,
     border: "none",
-    borderRadius: theme.radii.sm,
-    padding: "8px 16px",
-    minHeight: 44,
-    fontWeight: 600,
+    borderLeft: `1px solid ${theme.colors.border}`,
     cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
     font: "inherit",
   },
   chromeSpacer: { flex: "1 1 auto" },
+  // The web product's right-side pill family (guest sign-in / create).
   accountStatus: {
     background: "transparent",
-    color: theme.colors.textMuted,
+    color: theme.colors.text,
     border: `1px solid ${theme.colors.border}`,
-    borderRadius: theme.radii.md,
-    padding: "8px 14px",
-    minHeight: 44,
+    borderRadius: 999,
+    padding: `0 ${theme.spacing.md + 2}px`,
+    minHeight: 36,
     cursor: "pointer",
     font: "inherit",
-    fontSize: theme.typography.sizes.sm,
+    fontSize: theme.typography.sizes.md,
+    fontWeight: 500,
     display: "flex",
     alignItems: "center",
-    gap: theme.spacing.xs,
+    gap: theme.spacing.sm,
     flexShrink: 0,
+    whiteSpace: "nowrap",
   },
   agentToggle: {
     background: "transparent",
-    color: theme.colors.accent,
-    border: `1px solid ${theme.colors.accent}`,
-    borderRadius: theme.radii.md,
-    padding: "8px 14px",
-    minHeight: 44,
+    color: theme.colors.text,
+    border: `1px solid ${theme.colors.border}`,
+    borderRadius: 999,
+    padding: `0 ${theme.spacing.md + 2}px`,
+    minHeight: 36,
     cursor: "pointer",
     font: "inherit",
-    fontSize: theme.typography.sizes.sm,
-    fontWeight: 600,
+    fontSize: theme.typography.sizes.md,
+    fontWeight: 500,
     display: "flex",
     alignItems: "center",
-    gap: theme.spacing.xs,
+    gap: theme.spacing.sm,
     flexShrink: 0,
+    whiteSpace: "nowrap",
   },
   agentToggleActive: {
     background: theme.colors.accent,
-    color: "#08211b",
+    color: "#ffffff",
+    borderColor: theme.colors.accent,
   },
   shortcutHint: {
     fontFamily: theme.typography.monoFamily,
     fontSize: 11,
-    opacity: 0.8,
+    opacity: 0.7,
   },
 };
 
@@ -122,18 +154,20 @@ export function TopChrome(props: TopChromeProps): React.ReactElement {
     onOpenAccounts,
     panelVisible,
     onTogglePanel,
+    brandMark,
   } = props;
 
   return (
     <header style={styles.chrome} data-testid="shell-top-chrome">
       <div style={styles.brandBlock}>
+        {brandMark}
         <span style={styles.brand}>{theme.name}</span>
-        <span style={styles.tagline}>{theme.tagline}</span>
       </div>
       <form
         role="search"
         aria-label="Global video search"
         data-testid="global-search-form"
+        className="wfx-search"
         style={styles.searchForm}
         onSubmit={onGlobalSearchSubmit}
       >
@@ -147,7 +181,22 @@ export function TopChrome(props: TopChromeProps): React.ReactElement {
           style={styles.searchInput}
         />
         <button type="submit" data-testid="global-search-submit" style={styles.searchButton}>
-          Search
+          <Icon name="search" size={20} title="Search" />
+          <span
+            style={{
+              position: "absolute",
+              width: 1,
+              height: 1,
+              padding: 0,
+              margin: -1,
+              overflow: "hidden",
+              clip: "rect(0 0 0 0)",
+              whiteSpace: "nowrap",
+              border: 0,
+            }}
+          >
+            Search
+          </span>
         </button>
       </form>
       <div style={styles.chromeSpacer} />
@@ -162,7 +211,7 @@ export function TopChrome(props: TopChromeProps): React.ReactElement {
         style={styles.accountStatus}
         onClick={onOpenAccounts}
       >
-        <Icon name="accounts" size={16} />
+        <Icon name="accounts" size={18} />
         {connectedCount > 0
           ? `${connectedCount} account${connectedCount === 1 ? "" : "s"} connected`
           : "Not signed in"}
@@ -179,7 +228,7 @@ export function TopChrome(props: TopChromeProps): React.ReactElement {
         }}
         onClick={onTogglePanel}
       >
-        <Icon name="agent" size={16} />
+        <Icon name="agent" size={18} />
         Agent
         <span style={styles.shortcutHint} aria-hidden="true">
           Ctrl+J

@@ -1,7 +1,7 @@
 // The video card atom (WFX-UX-SHELL-1) — the reference pattern's long-form
 // card, composed from the frozen §9 VideoCardView (which carries the
-// canonical CatalogItem VERBATIM — the card's play path resolves through
-// the same playback planning the buttons use, never a fabricated item).
+// canonical CatalogItem VERBATIM — the card's play path resolves through the
+// same playback planning the buttons use, never a fabricated item).
 //
 // Honesty laws encoded here:
 // - No thumbnailUrl → a quiet placeholder tile, NEVER an invented image.
@@ -11,6 +11,11 @@
 //   renders as plain non-interactive markup (no dead buttons).
 // - Progress overlay renders only when the caller passes progress facts
 //   (continue-watching cards carry them; plain cards do not).
+//
+// WFX-WEB-LOOK-1: the card now carries the webflix-2.0 web product's card
+// idiom — the rounded-xl 16:9 tile, the rgba(0,0,0,0.8) duration badge, the
+// channel avatar disc, the two-line medium title and the quiet meta lines.
+// Every data-testid contract is unchanged.
 
 import React from "react";
 import { theme } from "../../theme";
@@ -46,26 +51,29 @@ const BADGE_LABELS: Record<VideoBadge, string> = {
   progress: "In progress",
 };
 
+// The web product's badge tones: LIVE + Members carry the red fill; the
+// quiet facts stay muted (no invented colors).
 const BADGE_TONES: Record<VideoBadge, { color: string; background?: string }> = {
-  live: { color: "#ffffff", background: theme.colors.danger },
-  new: { color: "#08211b", background: theme.colors.accent },
-  verified: { color: theme.colors.ok },
-  "members-only": { color: theme.colors.warning },
-  progress: { color: theme.colors.accent },
+  live: { color: "#ffffff", background: theme.colors.accent },
+  new: { color: "#ffffff", background: theme.colors.surfaceRaised },
+  verified: { color: theme.colors.textMuted },
+  "members-only": { color: "#ffffff", background: theme.colors.accent },
+  progress: { color: theme.colors.textMuted },
 };
 
 const styles: Record<string, React.CSSProperties> = {
   article: {
     display: "flex",
     flexDirection: "column",
-    gap: theme.spacing.xs,
+    gap: theme.spacing.sm,
     minWidth: 0,
   },
-  articleRail: { width: 264, flexShrink: 0 },
+  // The web product's rail card width (w-[320px]).
+  articleRail: { width: 320, flexShrink: 0 },
   playTarget: {
     display: "flex",
     flexDirection: "column",
-    gap: theme.spacing.xs,
+    gap: theme.spacing.sm,
     textAlign: "left",
     background: "transparent",
     border: "none",
@@ -74,7 +82,7 @@ const styles: Record<string, React.CSSProperties> = {
     color: theme.colors.text,
     cursor: "pointer",
     font: "inherit",
-    borderRadius: theme.radii.md,
+    borderRadius: 0,
     minWidth: 0,
   },
   playTargetStatic: { cursor: "default" },
@@ -83,7 +91,7 @@ const styles: Record<string, React.CSSProperties> = {
     width: "100%",
     aspectRatio: "16 / 9",
     background: theme.colors.surfaceRaised,
-    borderRadius: theme.radii.md,
+    borderRadius: theme.radii.xl,
     overflow: "hidden",
     flexShrink: 0,
   },
@@ -97,6 +105,7 @@ const styles: Record<string, React.CSSProperties> = {
     color: theme.colors.textMuted,
     fontSize: theme.typography.sizes.sm,
   },
+  // The web product's duration badge: rgba(0,0,0,0.8), bottom-right, 11px.
   duration: {
     position: "absolute",
     right: 6,
@@ -104,10 +113,11 @@ const styles: Record<string, React.CSSProperties> = {
     background: "rgba(0,0,0,0.8)",
     color: "#ffffff",
     fontSize: 11,
+    fontWeight: 500,
     lineHeight: 1,
-    padding: "4px 6px",
-    borderRadius: theme.radii.sm,
-    fontFamily: theme.typography.monoFamily,
+    padding: "4px 5px",
+    borderRadius: 4,
+    fontVariantNumeric: "tabular-nums",
   },
   progressBarTrack: {
     position: "absolute",
@@ -115,7 +125,7 @@ const styles: Record<string, React.CSSProperties> = {
     right: 0,
     bottom: 0,
     height: 4,
-    background: "rgba(255,255,255,0.25)",
+    background: "rgba(255,255,255,0.30)",
   },
   progressBarFill: { height: "100%", background: theme.colors.accent },
   liveDot: {
@@ -125,13 +135,36 @@ const styles: Record<string, React.CSSProperties> = {
     width: 8,
     height: 8,
     borderRadius: "50%",
-    background: theme.colors.danger,
+    background: theme.colors.accent,
   },
+  // The web card's meta row: the channel avatar disc + the text column.
+  metaRow: {
+    display: "flex",
+    alignItems: "flex-start",
+    gap: theme.spacing.sm + 2,
+    minWidth: 0,
+  },
+  avatar: {
+    width: 36,
+    height: 36,
+    borderRadius: "50%",
+    background: theme.colors.surfaceRaised,
+    color: theme.colors.text,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: 15,
+    fontWeight: 600,
+    flexShrink: 0,
+    lineHeight: 1,
+    textAlign: "center",
+  },
+  textColumn: { display: "flex", flexDirection: "column", gap: 2, minWidth: 0 },
   title: {
     margin: 0,
     fontSize: theme.typography.sizes.md,
-    fontWeight: 600,
-    lineHeight: 1.35,
+    fontWeight: 500,
+    lineHeight: 1.4,
     display: "-webkit-box",
     WebkitLineClamp: 2,
     WebkitBoxOrient: "vertical",
@@ -160,8 +193,8 @@ const styles: Record<string, React.CSSProperties> = {
     textDecorationColor: "transparent",
   },
   badgeRow: { display: "flex", flexWrap: "wrap", gap: 6, marginTop: 2 },
-  badge: { fontSize: 11, lineHeight: 1, padding: "4px 6px", borderRadius: theme.radii.sm },
-  progressLabel: { margin: 0, color: theme.colors.accent, fontSize: theme.typography.sizes.sm },
+  badge: { fontSize: 11, fontWeight: 600, lineHeight: 1, padding: "4px 6px", borderRadius: 4 },
+  progressLabel: { margin: 0, color: theme.colors.textMuted, fontSize: theme.typography.sizes.sm },
 };
 
 function Thumb(props: { card: VideoCardView; progress?: VideoCardProgress }) {
@@ -213,32 +246,43 @@ export function VideoCard(props: VideoCardProps): React.ReactElement {
     card.item.mediaKind !== "video" ? card.item.mediaKind : undefined,
   ].filter((part): part is string => part !== undefined);
 
+  // The channel avatar disc: the channel's own initial when the producer
+  // named a channel, a quiet dot otherwise — never an invented image.
+  const avatarGlyph = card.channelTitle?.trim()?.charAt(0)?.toUpperCase() || "•";
+
   const content = (
     <>
       <Thumb card={card} progress={progress} />
-      <p style={styles.title}>{card.title}</p>
-      {metaParts.length > 0 && <p style={styles.meta}>{metaParts.join(" · ")}</p>}
-      {card.badges.length > 0 && (
-        <div style={styles.badgeRow}>
-          {card.badges.map((badge) => (
-            <span
-              key={badge}
-              data-testid={`${id}-badge-${badge}`}
-              style={{
-                ...styles.badge,
-                color: BADGE_TONES[badge].color,
-                background: BADGE_TONES[badge].background ?? "transparent",
-                border:
-                  BADGE_TONES[badge].background === undefined
-                    ? `1px solid ${BADGE_TONES[badge].color}`
-                    : "none",
-              }}
-            >
-              {BADGE_LABELS[badge]}
-            </span>
-          ))}
+      <div style={styles.metaRow}>
+        <span style={styles.avatar} aria-hidden="true">
+          {avatarGlyph}
+        </span>
+        <div style={styles.textColumn}>
+          <p style={styles.title}>{card.title}</p>
+          {metaParts.length > 0 && <p style={styles.meta}>{metaParts.join(" · ")}</p>}
+          {card.badges.length > 0 && (
+            <div style={styles.badgeRow}>
+              {card.badges.map((badge) => (
+                <span
+                  key={badge}
+                  data-testid={`${id}-badge-${badge}`}
+                  style={{
+                    ...styles.badge,
+                    color: BADGE_TONES[badge].color,
+                    background: BADGE_TONES[badge].background ?? "transparent",
+                    border:
+                      BADGE_TONES[badge].background === undefined
+                        ? `1px solid ${theme.colors.border}`
+                        : "none",
+                  }}
+                >
+                  {BADGE_LABELS[badge]}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
-      )}
+      </div>
       {progress?.label && <p style={styles.progressLabel}>{progress.label}</p>}
     </>
   );
@@ -248,7 +292,7 @@ export function VideoCard(props: VideoCardProps): React.ReactElement {
       onOpenChannel !== undefined && card.channelId !== undefined ? (
         <button
           type="button"
-          style={styles.channelButton}
+          style={{ ...styles.channelButton, marginLeft: 44 }}
           data-testid={`${id}-channel`}
           onClick={() => onOpenChannel({ channelId: card.channelId })}
         >
@@ -258,7 +302,7 @@ export function VideoCard(props: VideoCardProps): React.ReactElement {
           )}
         </button>
       ) : (
-        <span style={styles.channelRow} data-testid={`${id}-channel`}>
+        <span style={{ ...styles.channelRow, marginLeft: 44 }} data-testid={`${id}-channel`}>
           {card.channelTitle}
           {card.badges.includes("verified") && (
             <Icon name="verified" size={14} title="Verified channel" />

@@ -44,3 +44,21 @@ Current YouTube API Developer Policies say API clients that mimic YouTube experi
 ## Reconsideration
 
 Revisit the implementation method if official access limits a core operation. Record a new ADR describing the desired operation, user benefit, alternatives, policy evidence, risks and acceptance behavior. Do not silently weaken this ADR.
+
+## Addendum — WFX-WEB-LOOK-1 (2026-10-24): the visual doctrine, superseded
+
+The operator directed the desktop app to carry the webflix-2.0 web
+product's visual system (operator ruling, recorded in
+docs/plans/work-orders/WFX-WEB-LOOK-1.md): the #0f0f0f canvas, the red
+#ff0000 primary, the web shell geometry and the web product's own logo
+geometry as the mark. This supersedes the earlier visual-doctrine reading
+of this ADR — the "no red primary / no play-button mark / deliberately not
+YouTube-look" styling rule and the test pins that enforced it (theme.ts,
+brand.ts, brand.test.ts, splashSwap.test.ts, shell.test.tsx were re-frozen
+to the web palette in the same order).
+
+The independent-VALUE doctrine of this ADR is UNCHANGED and still binding:
+the permanent independent-value notice, the honest-state vocabulary, the
+no-fabricated-data laws, per-user authorization, and the frozen OS-level
+identity (appId/AUMID/scheme/data roots — freeze §6.1) all remain exactly
+as accepted. Only the visual identity moved to web parity.

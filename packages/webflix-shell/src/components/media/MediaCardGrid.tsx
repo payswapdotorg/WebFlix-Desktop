@@ -32,7 +32,9 @@ const styles: Record<string, React.CSSProperties> = {
   grid: {
     display: "grid",
     gridTemplateColumns: "repeat(auto-fill, minmax(min(320px, 100%), 1fr))",
-    gap: theme.spacing.md,
+    // The web product's grid rhythm: gap-x-4 (16) / gap-y-9 (36).
+    columnGap: theme.spacing.md,
+    rowGap: 36,
     minWidth: 0,
     maxWidth: "100%",
     padding: 0,
@@ -50,7 +52,7 @@ const styles: Record<string, React.CSSProperties> = {
     listStyle: "none",
     // The rail is the ONLY intended horizontal scroller; a little breathing
     // room so focus rings are not clipped by the scroll container.
-    paddingBottom: theme.spacing.xs,
+    paddingBottom: theme.spacing.sm,
     scrollSnapType: "x proximity",
   },
   skeletonTile: {
@@ -62,7 +64,7 @@ const styles: Record<string, React.CSSProperties> = {
   skeletonThumb: {
     width: "100%",
     aspectRatio: "16 / 9",
-    borderRadius: theme.radii.md,
+    borderRadius: theme.radii.xl,
     background: theme.colors.surfaceRaised,
     opacity: 0.7,
   },

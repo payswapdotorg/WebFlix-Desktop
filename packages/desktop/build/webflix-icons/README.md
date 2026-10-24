@@ -1,4 +1,4 @@
-# WebFlix product icon set (P9-UI-1)
+# WebFlix product icon set (P9-UI-1 → WFX-WEB-LOOK-1)
 
 The product-only icon assets for the WebFlix desktop flavor. ZCode's
 `build/icon.png`, `build/icon.ico`, `build/icon.icns` and `build/icons/**`
@@ -8,10 +8,13 @@ these files; that config is outside the P9-UI-1 grant).
 
 ## Contents
 
-- `icon.svg` — the single source mark: the "Fx" stream-forward monogram
-  (an `F` as ascending signal strokes, an `x` ligature, and a play chevron)
-  in the WebFlix brand accent `#2fd6b3` on the shell background `#0f1420`.
-  The geometry is EXACTLY the renderer mark
+- `icon.svg` — the single source mark: the webflix-2.0 WEB PRODUCT'S OWN
+  LOGO GEOMETRY — the red (`#ff0000`) rounded rect with the white play
+  triangle (webflix-2.0 `src/components/app/logo.tsx` /
+  `public/favicon.svg`) — redrawn on the square 64 viewBox this set
+  requires. WFX-WEB-LOOK-1 (operator directive 2026-10-24) supersedes the
+  earlier teal "Fx" monogram and the no-red visual rule. The geometry is
+  EXACTLY the renderer mark
   (`packages/desktop/src/renderer/src/webflix/brand.ts` →
   `WEBFLIX_MARK_SVG`); a pin test asserts the two stay in lockstep.
 - `icons/16x16.png` … `icons/1024x1024.png` — the rasterized Linux size set
@@ -24,13 +27,14 @@ these files; that config is outside the P9-UI-1 grant).
   dependency and the committed PNGs do not require it to exist. The
   recorded invocation used to produce the committed set:
   `/home/z/.venv/bin/python3 generate.py` (Playwright 1.57.0, Chromium,
-  2026-10-14, sandbox pod).
+  2026-10-14, sandbox pod; re-run 2026-10-24 for the WFX-WEB-LOOK-1 mark).
 
 ## Brand rules (binding for this set)
 
-- The mark is an original WebFlix design — NOT the ZCode "Z" glyph and NOT
-  a YouTube play-button pastiche (ADR-0003 independent-value doctrine; the
-  shell theme already bans YouTube red).
+- The mark is the web product's own logo geometry (WFX-WEB-LOOK-1) — still
+  NOT the ZCode "Z" glyph. The ADR-0003 independent-VALUE doctrine (the
+  in-app notice, the honesty laws) is unchanged; only the visual identity
+  moved to web parity by the operator's explicit directive.
 - No ZCode/Z.ai glyph, name, or identifier may appear in any file under
   this folder (pinned by the P9-UI-1 identity-leak battery test, which
   scans every asset in this folder).

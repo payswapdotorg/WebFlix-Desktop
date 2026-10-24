@@ -81,7 +81,7 @@ const styles: Record<string, React.CSSProperties> = {
   list: { listStyle: "none", margin: 0, padding: 0, width: "100%" },
   button: {
     background: theme.colors.accent,
-    color: "#08211b",
+    color: "#ffffff",
     border: "none",
     borderRadius: theme.radii.sm,
     padding: "8px 14px",

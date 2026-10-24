@@ -54,7 +54,7 @@ const styles: Record<string, React.CSSProperties> = {
   detail: { margin: 0, color: theme.colors.textMuted, lineHeight: 1.5, maxWidth: 640 },
   button: {
     background: theme.colors.accent,
-    color: "#08211b",
+    color: "#ffffff",
     border: "none",
     borderRadius: theme.radii.sm,
     padding: "8px 14px",

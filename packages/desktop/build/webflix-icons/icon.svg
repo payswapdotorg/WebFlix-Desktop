@@ -2,21 +2,20 @@
   <!--
     WebFlix product icon — the SINGLE source mark for the product icon set.
 
-    P9-UI-1 (order requirement 2): an original WebFlix mark — the "Fx"
-    stream-forward monogram (an F drawn as ascending signal strokes, an x
-    ligature, and a play chevron) in the WebFlix brand accent (#2fd6b3, the
-    webflix-shell theme accent) on the shell background (#0f1420, the
-    webflix-shell theme background). It is deliberately NOT the ZCode "Z"
-    glyph and NOT a YouTube play-button pastiche (ADR-0003 independent-value
-    doctrine; the shell theme already bans YouTube red).
+    WFX-WEB-LOOK-1 (operator directive 2026-10-24): the mark is now the
+    webflix-2.0 WEB PRODUCT'S OWN LOGO GEOMETRY — the red (#ff0000) rounded
+    rect with the white play triangle (webflix-2.0
+    src/components/app/logo.tsx / public/favicon.svg) — redrawn on the
+    square 64 viewBox this icon set requires. This supersedes the earlier
+    teal "Fx" monogram and the no-red visual rule; the ADR-0003
+    independent-VALUE doctrine (the in-app notice, the honesty laws) is
+    unchanged. It is still NOT the ZCode "Z" glyph (pinned by test).
 
     This file is the exact geometry of the renderer mark
     (packages/desktop/src/renderer/src/webflix/brand.ts WEBFLIX_MARK_SVG);
     the raster sizes in icons/ are generated from it — see generate.py and
     README.md in this folder.
   -->
-  <rect x="2" y="2" width="60" height="60" rx="14" fill="#0f1420"/>
-  <path d="M14 22h10.5v4.5H19v3.5h5v4.5h-5v7.5H14z" fill="#2fd6b3"/>
-  <path d="M27 22h5.5l3.5 6.5 3.5-6.5H45l-6.5 11 6.9 11.5h-5.7l-3.7-6.7-3.7 6.7H27l6.9-11.5z" fill="#2fd6b3" transform="translate(1 0)"/>
-  <path d="M48 24.5l9.5 5.5-9.5 5.5z" fill="#2fd6b3"/>
+  <rect x="2" y="8" width="60" height="48" rx="12" fill="#ff0000"/>
+  <path d="M25 22v20l17-10z" fill="#ffffff"/>
 </svg>

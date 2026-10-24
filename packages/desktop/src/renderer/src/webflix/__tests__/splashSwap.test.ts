@@ -55,7 +55,8 @@ describe("the WebFlix startup-surface swap (requirement 2)", () => {
     expect(logo).not.toBeNull();
     expect(logo?.getAttribute("class")).toContain("startup-logo");
     expect(logo?.outerHTML).not.toContain(ZCODE_Z_GLYPH_GEOMETRY);
-    expect(logo?.outerHTML).toContain("#2fd6b3");
+    // WFX-WEB-LOOK-1: the splash mark is the web product's red logo geometry.
+    expect(logo?.outerHTML).toContain("#ff0000");
   });
 
   it("leaves the startup-logo shell and #root intact (the animation/fade-out contract)", () => {

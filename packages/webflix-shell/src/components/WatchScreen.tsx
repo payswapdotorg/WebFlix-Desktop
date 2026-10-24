@@ -125,7 +125,7 @@ const styles: Record<string, React.CSSProperties> = {
   recovery: { margin: 0, color: theme.colors.textMuted, lineHeight: 1.5 },
   button: {
     background: theme.colors.accent,
-    color: "#08211b",
+    color: "#ffffff",
     border: "none",
     borderRadius: theme.radii.sm,
     padding: "10px 16px",

@@ -173,6 +173,8 @@ export interface AppShellProps {
   // ---- WFX agent panel slot (deliverable 7; content is Worker 3's). ----
   /** Lazy panel content: a node, or a render-prop receiving the close api. */
   readonly agentPanelContent?: React.ReactNode | ((api: AgentPanelApi) => React.ReactNode);
+  /** WFX-WEB-LOOK-1: the host-supplied brand mark node (topbar left). */
+  readonly brandMark?: React.ReactNode;
   /** Host-injected persistence; default: in-memory (session-only). */
   readonly agentPanelPersistence?: PanelPersistence;
   /** Mount-time panel state (used before/without persistence). */
@@ -240,6 +242,7 @@ export function AppShell(props: AppShellProps) {
     onWatchToggleTheater,
     onWatchAction,
     agentPanelContent,
+    brandMark,
     agentPanelPersistence,
     agentPanelInitial,
     agentPanelVisible,
@@ -399,6 +402,7 @@ export function AppShell(props: AppShellProps) {
         onOpenAccounts={() => navigate("accounts")}
         panelVisible={panel.state.visible}
         onTogglePanel={() => togglePanel()}
+        brandMark={brandMark}
       />
 
       <div style={shellStyles.body} data-testid="shell-body">
@@ -412,6 +416,7 @@ export function AppShell(props: AppShellProps) {
         <main
           id="shell-main"
           data-testid="shell-main"
+          className="wfx-scroll"
           style={onWatchRoute && watchMounted ? shellStyles.mainHidden : shellStyles.main}
         >
           <ScreenRouter

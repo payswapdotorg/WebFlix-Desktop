@@ -112,7 +112,7 @@ const styles: Record<string, React.CSSProperties> = {
   button: {
     alignSelf: "flex-start",
     background: theme.colors.accent,
-    color: "#08211b",
+    color: "#ffffff",
     border: "none",
     borderRadius: theme.radii.sm,
     padding: "8px 14px",

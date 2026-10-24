@@ -1,14 +1,36 @@
 // Shared shell-layout styles (WFX-UX-SHELL-1). Extracted from AppShell.tsx
-// for the repo's max-lines law; every value is unchanged. The shell chrome
-// (top chrome, sidebar) carries its own styles co-located in its component
-// files; this module owns the LAYOUT skeleton both share.
+// for the repo's max-lines law. WFX-WEB-LOOK-1: the shell chrome now carries
+// the webflix-2.0 web product's idioms — the slim scrollbar, the hover
+// surfaces for nav rows / chips / icon buttons, and the web gutters — all
+// mounted through the shell's single stylesheet so inline styles stay
+// test-stable.
 
 import { theme } from "../../theme";
 
-/** Focus-visible law: the shell's single focus stylesheet (mounted once). */
+/**
+ * Focus-visible law + the web product's interactive idioms: the shell's
+ * single stylesheet (mounted once). Hover surfaces live here because inline
+ * styles cannot express :hover — the classes are shell-scoped (.wfx-shell)
+ * and carry no product identity strings.
+ */
 export const FOCUS_STYLES = `
 .wfx-shell :focus-visible { outline: 2px solid ${theme.colors.focus}; outline-offset: 2px; }
 .wfx-shell [role="separator"]:focus-visible { outline-offset: -2px; }
+.wfx-shell .wfx-nav-item { transition: background-color 80ms ease; }
+.wfx-shell .wfx-nav-item:hover { background-color: ${theme.colors.surfaceRaised}; }
+.wfx-shell .wfx-chip { transition: background-color 80ms ease; }
+.wfx-shell .wfx-chip:hover { background-color: #3f3f3f; }
+.wfx-shell .wfx-chip[data-active="true"]:hover { background-color: ${theme.colors.text}; }
+.wfx-shell .wfx-icon-btn { transition: background-color 80ms ease; }
+.wfx-shell .wfx-icon-btn:hover { background-color: ${theme.colors.surfaceRaised}; }
+.wfx-shell .wfx-search { transition: border-color 80ms ease; }
+.wfx-shell .wfx-search:focus-within { border-color: rgba(241,241,241,0.40); }
+.wfx-shell .wfx-scroll { scrollbar-width: thin; scrollbar-color: #4d4d4d transparent; }
+.wfx-shell .wfx-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+.wfx-shell .wfx-scroll::-webkit-scrollbar-track { background: transparent; }
+.wfx-shell .wfx-scroll::-webkit-scrollbar-thumb { background: #4d4d4d; border-radius: 8px; }
+.wfx-shell .wfx-card { transition: transform 120ms ease; }
+.wfx-shell .wfx-card:hover { transform: scale(1.03); }
 `;
 
 export const shellStyles: Record<string, React.CSSProperties> = {
@@ -28,7 +50,7 @@ export const shellStyles: Record<string, React.CSSProperties> = {
     left: -9999,
     top: 0,
     background: theme.colors.accent,
-    color: "#08211b",
+    color: "#ffffff",
     padding: "8px 14px",
     borderRadius: theme.radii.sm,
     fontWeight: 600,
@@ -51,7 +73,8 @@ export const shellStyles: Record<string, React.CSSProperties> = {
     minHeight: 0,
     overflowY: "auto",
     overflowX: "hidden",
-    padding: theme.spacing.md,
+    // The web product's content gutters (px-4 sm:px-6).
+    padding: `${theme.spacing.sm}px ${theme.spacing.md}px ${theme.spacing.md}px`,
     display: "block",
   },
   mainHidden: { display: "none" },
@@ -70,9 +93,9 @@ export const shellStyles: Record<string, React.CSSProperties> = {
     minHeight: 0,
     overflowY: "auto",
     overflowX: "hidden",
-    padding: theme.spacing.md,
+    padding: `${theme.spacing.sm}px ${theme.spacing.md}px`,
     borderLeft: `1px solid ${theme.colors.border}`,
-    background: theme.colors.surface,
+    background: theme.colors.background,
     boxSizing: "border-box",
   },
   watchNothingPlaying: {
@@ -80,7 +103,7 @@ export const shellStyles: Record<string, React.CSSProperties> = {
     flexDirection: "column",
     alignItems: "flex-start",
     gap: theme.spacing.sm,
-    background: theme.colors.surface,
+    background: theme.colors.surfaceRaised,
     border: `1px dashed ${theme.colors.border}`,
     borderRadius: theme.radii.lg,
     padding: theme.spacing.lg,

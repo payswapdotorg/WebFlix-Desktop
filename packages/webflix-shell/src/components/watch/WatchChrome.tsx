@@ -141,7 +141,7 @@ export const watchChromeStyles: Record<string, React.CSSProperties> = {
     padding: "4px 8px",
     borderRadius: 999,
     background: theme.colors.accent,
-    color: "#08211b",
+    color: "#ffffff",
     fontWeight: 700,
   },
   queuePlayButton: {

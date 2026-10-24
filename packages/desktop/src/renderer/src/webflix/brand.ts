@@ -17,18 +17,21 @@ export const WEBFLIX_PRODUCT_NAME = "WebFlix";
 export const WEBFLIX_DOCUMENT_TITLE = "WebFlix";
 
 /**
- * The WebFlix mark — an original stream-forward glyph (three ascending
- * signal strokes over a play chevron), drawn with theme-matching brand
- * colors (packages/webflix-shell theme: background #0f1420, accent #2fd6b3).
- * Deliberately NOT the ZCode "Z" glyph and not a YouTube play-button
- * pastiche (ADR-0003 independent-value doctrine; the shell theme already
- * bans YouTube red).
+ * The WebFlix mark (WFX-WEB-LOOK-1, operator directive 2026-10-24): the
+ * webflix-2.0 WEB PRODUCT'S OWN LOGO GEOMETRY — the red rounded rect with
+ * the white play triangle (webflix-2.0 src/components/app/logo.tsx /
+ * public/favicon.svg) — redrawn on the square 64 viewBox the desktop icon
+ * set requires. This supersedes the earlier teal "Fx" monogram: the
+ * operator directed the desktop app to carry the web app's look. It is
+ * still NOT the ZCode "Z" glyph (pinned by test), and the ADR-0003
+ * independent-VALUE doctrine (the permanent notice, the honesty laws) is
+ * unchanged — only the visual identity moved to web parity.
  *
  * The same geometry drives packages/desktop/build/webflix-icons/ (the
  * product icon set + its generator) — see that folder's README.
  */
 export const WEBFLIX_MARK_SVG =
-  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="WebFlix mark"><rect x="2" y="2" width="60" height="60" rx="14" fill="#0f1420"/><path d="M14 22h10.5v4.5H19v3.5h5v4.5h-5v7.5H14z" fill="#2fd6b3"/><path d="M27 22h5.5l3.5 6.5 3.5-6.5H45l-6.5 11 6.9 11.5h-5.7l-3.7-6.7-3.7 6.7H27l6.9-11.5z" fill="#2fd6b3" transform="translate(1 0)"/><path d="M48 24.5l9.5 5.5-9.5 5.5z" fill="#2fd6b3"/></svg>` as const;
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="WebFlix mark"><rect x="2" y="8" width="60" height="48" rx="12" fill="#ff0000"/><path d="M25 22v20l17-10z" fill="#ffffff"/></svg>` as const;
 
 /** Alt text for the mark where it is embedded as an image. */
 export const WEBFLIX_MARK_ALT = "WebFlix";

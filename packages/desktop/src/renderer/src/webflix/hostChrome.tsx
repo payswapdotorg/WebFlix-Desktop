@@ -76,12 +76,18 @@ export const hostStyles: Record<string, React.CSSProperties> = {
     flexDirection: "column",
   },
   shell: { flex: 1, display: "flex", flexDirection: "column", minHeight: 0 },
-  mark: { width: 22, height: 22, flex: "0 0 auto" },
+  // The web product's logo size (h-20px) for the topbar mark.
+  mark: { width: 20, height: 20, flex: "0 0 auto", display: "inline-flex" },
   about: {
-    borderTop: `1px solid ${theme.colors.border}`,
-    padding: `${theme.spacing.sm}px ${theme.spacing.md}px`,
+    // WFX-WEB-LOOK-1: the about line continues the shell's notice footer —
+    // same block, second line, quiet.
+    borderTop: "none",
+    paddingTop: 2,
+    paddingBottom: theme.spacing.sm + 2,
+    paddingInline: theme.spacing.md,
     color: theme.colors.textMuted,
-    fontSize: theme.typography.sizes.sm,
+    fontSize: 12,
+    opacity: 0.85,
   },
   vaultBanner: {
     margin: `0 ${theme.spacing.md}px`,
@@ -109,25 +115,20 @@ export function StartupReadyNotifier(): ReactNode {
   return null;
 }
 
-/** The product mark header row — WebFlix chrome, never ZCode. */
-export function ProductMarkRow(): ReactNode {
+/**
+ * WFX-WEB-LOOK-1: the brand mark node the host injects into the shell's
+ * topbar (AppShell brandMark → TopChrome) — the web product's logo position.
+ * WebFlix chrome, never ZCode.
+ */
+export function BrandMarkNode(): ReactNode {
   return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: theme.spacing.sm,
-        padding: `${theme.spacing.sm}px ${theme.spacing.md}px 0`,
-      }}
-    >
-      <span
-        style={hostStyles.mark}
-        aria-label={WEBFLIX_MARK_ALT}
-        role="img"
-        data-testid="webflix-product-mark"
-        dangerouslySetInnerHTML={{ __html: WEBFLIX_MARK_SVG }}
-      />
-    </div>
+    <span
+      style={hostStyles.mark}
+      aria-label={WEBFLIX_MARK_ALT}
+      role="img"
+      data-testid="webflix-product-mark"
+      dangerouslySetInnerHTML={{ __html: WEBFLIX_MARK_SVG }}
+    />
   );
 }
 
