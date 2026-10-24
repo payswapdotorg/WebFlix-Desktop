@@ -15,6 +15,7 @@ import type {
   HomeFeedView,
   MediaRoute,
   NetflixHomeView,
+  NetflixTitleCard,
   NetflixTitleView,
   ProviderAccountRecord,
   RouteParams,
@@ -112,6 +113,10 @@ export interface ScreenRouterProps {
   readonly onSelectNetflixCountry?: (country: string) => void;
   /** The play hand-off's external open (the host owns the system-browser call). */
   readonly onOpenExternalUrl?: (url: string) => void;
+  /** WFX-NETFLIX-P45-LOOK-1: the session-scoped My List. */
+  readonly netflixMyList?: readonly NetflixTitleCard[];
+  /** WFX-NETFLIX-P45-LOOK-1: the My List toggle. */
+  readonly onToggleNetflixMyList?: (title: NetflixTitleCard) => void;
 }
 
 export function ScreenRouter(props: ScreenRouterProps): React.ReactElement {
@@ -162,6 +167,8 @@ export function ScreenRouter(props: ScreenRouterProps): React.ReactElement {
     onOpenChannel,
     onSelectNetflixCountry,
     onOpenExternalUrl,
+    netflixMyList = [],
+    onToggleNetflixMyList,
   } = props;
 
   const isLoadingMore = (surface: LoadMoreSurface): boolean =>
@@ -261,6 +268,9 @@ export function ScreenRouter(props: ScreenRouterProps): React.ReactElement {
     case "netflix":
       // WFX-NETFLIX-SOURCE-1: params.itemId selects the title detail; the
       // hub renders otherwise (params.region = the country view).
+      // WFX-NETFLIX-P45-LOOK-1: the session-scoped My List rides both
+      // surfaces (the billboard button, the cards' + circles, the title
+      // hero button).
       return params.itemId !== undefined ? (
         <NetflixTitleScreen
           view={netflixTitleView}
@@ -268,6 +278,8 @@ export function ScreenRouter(props: ScreenRouterProps): React.ReactElement {
           onOpenExternal={onOpenExternalUrl}
           onOpenTitle={(netflixId) => navigate("netflix", { itemId: String(netflixId) })}
           onRetry={() => onRetrySurface?.("netflix")}
+          myList={netflixMyList}
+          onToggleMyList={onToggleNetflixMyList}
         />
       ) : (
         <NetflixScreen
@@ -276,6 +288,8 @@ export function ScreenRouter(props: ScreenRouterProps): React.ReactElement {
           onOpenTitle={(netflixId) => navigate("netflix", { itemId: String(netflixId) })}
           onOpenExternal={onOpenExternalUrl}
           onRetry={() => onRetrySurface?.("netflix")}
+          myList={netflixMyList}
+          onToggleMyList={onToggleNetflixMyList}
         />
       );
     case "subscriptions":

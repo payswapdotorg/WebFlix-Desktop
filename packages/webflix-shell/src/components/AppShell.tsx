@@ -9,6 +9,7 @@ import type {
   HomeFeedView,
   MediaRoute,
   NetflixHomeView,
+  NetflixTitleCard,
   NetflixTitleView,
   ProviderAccountRecord,
   RouteParams,
@@ -175,6 +176,10 @@ export interface AppShellProps {
   readonly onSelectNetflixCountry?: (country: string) => void;
   /** The play hand-off's external open (the host owns the system-browser call). */
   readonly onOpenExternalUrl?: (url: string) => void;
+  /** WFX-NETFLIX-P45-LOOK-1: the session-scoped My List. */
+  readonly netflixMyList?: readonly NetflixTitleCard[];
+  /** WFX-NETFLIX-P45-LOOK-1: the My List toggle (billboard + cards + title). */
+  readonly onToggleNetflixMyList?: (title: NetflixTitleCard) => void;
 
   // ---- WFX watch surface (freeze §9.6 persistent player). ----
   readonly watchState?: WatchSurfaceState | null;
@@ -252,6 +257,8 @@ export function AppShell(props: AppShellProps) {
     onSelectChannelTab,
     onOpenChannel,
     onSelectNetflixCountry,
+    netflixMyList = [],
+    onToggleNetflixMyList,
     onOpenExternalUrl,
     watchState = null,
     onWatchClose,
@@ -482,6 +489,8 @@ export function AppShell(props: AppShellProps) {
             onOpenChannel={onOpenChannel}
             onSelectNetflixCountry={onSelectNetflixCountry}
             onOpenExternalUrl={onOpenExternalUrl}
+            netflixMyList={netflixMyList}
+            onToggleNetflixMyList={onToggleNetflixMyList}
           />
         </main>
 

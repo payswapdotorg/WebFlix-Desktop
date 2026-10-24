@@ -23,6 +23,10 @@ export interface NetflixTitleScreenProps {
   /** A "More like this" card click opens that title's detail. */
   readonly onOpenTitle?: (netflixId: number) => void;
   readonly onRetry?: () => void;
+  /** The session-scoped My List (drives the button + the cards' + circles). */
+  readonly myList?: readonly NetflixTitleCard[];
+  /** The My List toggle (the hero button + the cards' + circles). */
+  readonly onToggleMyList?: (title: NetflixTitleCard) => void;
 }
 
 const styles: Record<string, React.CSSProperties> = {
@@ -114,6 +118,24 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 600,
     cursor: "pointer",
   },
+  // WFX-NETFLIX-P45-LOOK-1 — the My List button (the web app's
+  // my-list-button.tsx hero variant, session-scoped here).
+  myListButton: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    height: 44,
+    padding: "0 16px",
+    borderRadius: theme.radii.md,
+    border: "1px solid rgba(255,255,255,0.25)",
+    background: "rgba(255,255,255,0.1)",
+    color: "#ffffff",
+    font: "inherit",
+    fontSize: theme.typography.sizes.sm,
+    fontWeight: 500,
+    cursor: "pointer",
+  },
+  myListButtonSaved: { borderColor: "rgba(229,9,20,0.6)" },
   section: { marginTop: theme.spacing.xl },
   sectionTitle: { margin: 0, fontSize: theme.typography.sizes.lg, fontWeight: 600 },
   rankPills: { display: "flex", flexWrap: "wrap", gap: 8, marginTop: theme.spacing.md },
@@ -135,7 +157,7 @@ const styles: Record<string, React.CSSProperties> = {
 };
 
 export function NetflixTitleScreen(props: NetflixTitleScreenProps): React.ReactElement {
-  const { view, onBack, onOpenExternal, onOpenTitle, onRetry } = props;
+  const { view, onBack, onOpenExternal, onOpenTitle, onRetry, myList, onToggleMyList } = props;
   const [handoffTitle, setHandoffTitle] = useState<NetflixTitleCard | null>(null);
   const [artBroken, setArtBroken] = useState(false);
 
@@ -148,6 +170,8 @@ export function NetflixTitleScreen(props: NetflixTitleScreenProps): React.ReactE
   }
 
   const title = view.title;
+  const myListSaved =
+    title !== null && (myList ?? []).some((m) => m.netflixId === title.netflixId);
 
   return (
     <section aria-label="Netflix title" style={styles.root} data-testid="netflix-title-root">
@@ -203,6 +227,23 @@ export function NetflixTitleScreen(props: NetflixTitleScreenProps): React.ReactE
                 >
                   ▶ Play on Netflix
                 </button>
+                {onToggleMyList !== undefined && (
+                  <button
+                    type="button"
+                    style={{
+                      ...styles.myListButton,
+                      ...(myListSaved ? styles.myListButtonSaved : undefined),
+                    }}
+                    data-testid="netflix-my-list-toggle"
+                    aria-pressed={myListSaved}
+                    aria-label={
+                      myListSaved ? `Remove ${title.title} from My List` : `Add ${title.title} to My List`
+                    }
+                    onClick={() => onToggleMyList(title)}
+                  >
+                    {myListSaved ? "✓ In My List" : "+ My List"}
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -226,13 +267,18 @@ export function NetflixTitleScreen(props: NetflixTitleScreenProps): React.ReactE
           {view.relatedTitles.length > 0 && (
             <div style={styles.section}>
               <h2 style={styles.sectionTitle}>More like this</h2>
-              <div className="wfx-scroll" style={styles.railRow}>
+              <div className="wfx-nf-scroll" style={styles.railRow}>
                 {view.relatedTitles.map((t) => (
                   <NetflixCardInline
                     key={t.netflixId}
                     title={t}
-                    rank={t.weeklyRank ?? t.allTimeRank ?? null}
+                    variant="default"
                     onOpen={() => onOpenTitle?.(t.netflixId)}
+                    onPlay={() => setHandoffTitle(t)}
+                    myListSaved={(myList ?? []).some((m) => m.netflixId === t.netflixId)}
+                    onToggleMyList={
+                      onToggleMyList === undefined ? undefined : () => onToggleMyList(t)
+                    }
                   />
                 ))}
               </div>

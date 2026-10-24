@@ -411,6 +411,8 @@ export function WebFlixHost(deps: WebFlixHostDeps) {
       onSelectNetflixCountry={netflixSupport.handleNetflixCountrySelect}
       onNetflixRetry={netflixSupport.handleNetflixRetry}
       onOpenExternalUrl={netflixSupport.handleOpenExternalUrl}
+      netflixMyList={netflixSupport.netflixMyList}
+      onToggleNetflixMyList={netflixSupport.handleNetflixMyListToggle}
       loadingMoreSurfaces={loadingMoreSurfaces}
       watchSurface={watchSurface}
       setWatchState={setWatchState}

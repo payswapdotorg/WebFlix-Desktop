@@ -1,73 +1,75 @@
-// WFX-NETFLIX-SOURCE-1 — the Netflix card + rail atoms (the web app's
-// netflix-card.tsx / netflix-rail.tsx, ported into the shell's inline-style
-// idiom): the 16:9 boxart tile, the big outlined rank numeral riding the
-// card's left edge (the Netflix Top-10 site idiom), the maturity badge, and
-// one horizontal rail per Tudum pool. Extracted from NetflixScreen.tsx for
-// the repo's max-lines law; NetflixTitleScreen consumes the card too.
+// WFX-NETFLIX-SOURCE-1 — the Netflix card atom (the web app's P45
+// netflix-card.tsx, ported into the shell's inline-style idiom).
+// Extracted from NetflixScreen.tsx for the repo's max-lines law;
+// NetflixTitleScreen and netflixRail.tsx consume the card too.
+//
+// WFX-NETFLIX-P45-LOOK-1 — the P45 card family, Netflix's own row look:
+// - ranked (the weekly Top-10 rows): the PORTRAIT silhouette — the 1200x675
+//   backdrop center-cropped 2:3, the giant outlined rank numeral (3px
+//   #575760 stroke, red on hover) riding the card's left edge;
+// - default (the Most Popular rows, My List, related): the 16:9 tile that
+//   expands on hover/focus (scale 1.08, ring 1px -> 2px white/70) with the
+//   SIBLING-overlay info sheet (Play circle + My List + circle + meta line)
+//   — no nested interactive elements.
 
 import React from "react";
 import { theme } from "../theme";
-import type { NetflixRailView, NetflixTitleCard } from "webflix-contracts";
+import type { NetflixTitleCard } from "webflix-contracts";
 import { NETFLIX_COLORS } from "./netflixColors";
 
-/** The hover idioms the inline-style system cannot express (rank stroke + card scale). */
+/**
+ * The hover/fade/paging idioms the inline-style system cannot express.
+ * Injected by whichever screen renders cards (the class contract is local
+ * to this module's family: the card, the rail, the my-list row).
+ */
 export const NETFLIX_HOVER_STYLES = `
-.wfx-nf-card:hover .wfx-nf-tile { transform: scale(1.03); }
-.wfx-nf-card:focus-visible .wfx-nf-tile { outline: 2px solid #e50914; outline-offset: 2px; }
-.wfx-nf-card:hover .wfx-nf-rank { -webkit-text-stroke: 2.5px #e50914; }
+.wfx-nf-tile { transition: transform 200ms ease, box-shadow 200ms ease; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.10); }
+.wfx-nf-default:hover .wfx-nf-tile, .wfx-nf-default:focus-within .wfx-nf-tile { transform: scale(1.08); box-shadow: inset 0 0 0 2px rgba(255,255,255,0.70); }
+.wfx-nf-tile:focus-visible { outline: 2px solid #e50914; outline-offset: 2px; }
+.wfx-nf-card:hover .wfx-nf-rank, .wfx-nf-card:focus-within .wfx-nf-rank { -webkit-text-stroke: 3px #e50914; }
+.wfx-nf-sheet { opacity: 0; transform: translateY(8px); transition: opacity 200ms ease, transform 200ms ease; }
+.wfx-nf-card:hover .wfx-nf-sheet, .wfx-nf-card:focus-within .wfx-nf-sheet { opacity: 1; transform: translateY(0); }
+.wfx-nf-sheet-btn { transition: transform 150ms ease; }
+.wfx-nf-sheet-btn:hover { transform: scale(1.10); }
+.wfx-nf-scroll { scrollbar-width: none; -ms-overflow-style: none; }
+.wfx-nf-scroll::-webkit-scrollbar { display: none; }
+.wfx-nf-chevron { opacity: 0; transition: opacity 200ms ease; }
+.wfx-nf-rail:hover .wfx-nf-chevron:not(:disabled) { opacity: 1; }
 `;
 
 const styles: Record<string, React.CSSProperties> = {
-  rail: { display: "flex", flexDirection: "column", gap: theme.spacing.md, marginTop: theme.spacing.xl },
-  railHeader: {
-    display: "flex",
-    alignItems: "baseline",
-    justifyContent: "space-between",
-    gap: theme.spacing.md,
-    minWidth: 0,
-  },
-  railTitle: { margin: 0, fontSize: theme.typography.sizes.lg, fontWeight: 600 },
-  railCountry: { marginLeft: 8, fontSize: theme.typography.sizes.md, fontWeight: 400, color: "rgba(255,255,255,0.5)" },
-  railWeek: { fontSize: 12, color: "rgba(255,255,255,0.4)", flexShrink: 0 },
-  railRow: { display: "flex", gap: theme.spacing.lg, overflowX: "auto", paddingBottom: 8 },
-  card: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "flex-start",
-    width: 232,
-    flexShrink: 0,
-    background: "transparent",
-    border: "none",
-    padding: 0,
-    cursor: "pointer",
-    textAlign: "left",
-    font: "inherit",
-    color: "inherit",
-  },
-  cardMediaRow: { display: "flex", alignItems: "flex-end", gap: 4, width: "100%" },
+  card: { position: "relative", display: "flex", flexDirection: "column", flexShrink: 0 },
+  cardDefault: { width: 232 },
+  cardRanked: { width: 170 },
+  mediaRow: { display: "flex", alignItems: "flex-end" },
+  mediaRowDefault: { gap: 4, width: "100%" },
   rank: {
-    fontSize: 64,
+    fontSize: 110,
     fontWeight: 900,
-    lineHeight: 0.8,
-    paddingBottom: 4,
-    color: NETFLIX_COLORS.rankFill,
-    WebkitTextStroke: `2.5px ${NETFLIX_COLORS.rankStroke}`,
-    marginRight: -12,
+    lineHeight: 0.78,
+    color: NETFLIX_COLORS.canvas,
+    WebkitTextStroke: `3px ${NETFLIX_COLORS.rankStroke}`,
+    marginRight: -16,
+    zIndex: 10,
     flexShrink: 0,
     userSelect: "none",
-    transition: "-webkit-text-stroke 150ms ease",
   },
   tile: {
     position: "relative",
-    aspectRatio: "16 / 9",
+    display: "block",
     width: "100%",
     overflow: "hidden",
-    borderRadius: theme.radii.lg,
+    borderRadius: 6,
     background: NETFLIX_COLORS.tile,
-    boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.10)",
-    transition: "transform 200ms ease",
+    padding: 0,
+    border: "none",
+    cursor: "pointer",
+    font: "inherit",
     minWidth: 0,
+    textAlign: "left",
   },
+  tileRanked: { aspectRatio: "2 / 3" },
+  tileDefault: { aspectRatio: "16 / 9" },
   tileImg: { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" },
   tileFallback: {
     position: "absolute",
@@ -82,6 +84,19 @@ const styles: Record<string, React.CSSProperties> = {
     color: "rgba(255,255,255,0.8)",
     background: `linear-gradient(135deg, ${NETFLIX_COLORS.tile}, ${NETFLIX_COLORS.tileDeep})`,
   },
+  logoStrip: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: "40%",
+    display: "flex",
+    alignItems: "flex-end",
+    justifyContent: "center",
+    paddingBottom: 8,
+    background: "linear-gradient(to top, rgba(0,0,0,0.8), transparent)",
+  },
+  logoImg: { maxHeight: 40, width: "auto", maxWidth: "85%", objectFit: "contain" },
   maturity: {
     position: "absolute",
     top: 6,
@@ -95,18 +110,82 @@ const styles: Record<string, React.CSSProperties> = {
     textTransform: "uppercase",
     color: "rgba(255,255,255,0.9)",
   },
-  cardTitle: {
+  sheet: { position: "absolute", left: 0, right: 0, bottom: 0, zIndex: 10, pointerEvents: "none" },
+  sheetInner: {
+    background: "linear-gradient(to top, rgba(0,0,0,0.95), rgba(0,0,0,0.7) 60%, transparent)",
+    padding: "10px 10px 10px",
+    paddingTop: 32,
+  },
+  sheetRow: { display: "flex", alignItems: "center", gap: 6 },
+  circleBtn: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: 28,
+    height: 28,
+    borderRadius: 999,
+    border: "none",
+    font: "inherit",
+    fontSize: 13,
+    lineHeight: 1,
+    cursor: "pointer",
+    pointerEvents: "auto",
+  },
+  playCircle: { background: "#ffffff", color: "#000000", padding: 0 },
+  addCircle: {
+    background: "rgba(0,0,0,0.6)",
+    color: "rgba(255,255,255,0.9)",
+    border: "1px solid rgba(255,255,255,0.4)",
+    padding: 0,
+  },
+  addCircleSaved: { borderColor: "#ffffff", color: "#ffffff" },
+  infoCircle: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: 28,
+    height: 28,
+    borderRadius: 999,
+    border: "1px solid rgba(255,255,255,0.4)",
+    color: "rgba(255,255,255,0.9)",
+    fontSize: 13,
+    marginLeft: "auto",
+  },
+  sheetMeta: {
     margin: 0,
-    marginTop: 8,
+    marginTop: 6,
+    display: "flex",
+    alignItems: "center",
+    gap: 6,
+    fontSize: 11,
+    color: "rgba(255,255,255,0.75)",
+    overflow: "hidden",
+    whiteSpace: "nowrap",
+    textOverflow: "ellipsis",
+  },
+  sheetTop10: { fontWeight: 600, color: NETFLIX_COLORS.green, flexShrink: 0 },
+  sheetSynopsis: {
+    margin: 0,
+    marginTop: 2,
+    fontSize: 11,
+    lineHeight: 1.35,
+    color: "rgba(255,255,255,0.7)",
+    display: "-webkit-box",
+    WebkitLineClamp: 2,
+    WebkitBoxOrient: "vertical",
+    overflow: "hidden",
+  },
+  caption: { marginTop: 8, minWidth: 0, width: "100%" },
+  captionTitle: {
+    margin: 0,
     fontSize: theme.typography.sizes.sm,
     fontWeight: 500,
     color: "rgba(255,255,255,0.95)",
     overflow: "hidden",
     textOverflow: "ellipsis",
     whiteSpace: "nowrap",
-    maxWidth: "100%",
   },
-  cardMeta: {
+  captionMeta: {
     margin: 0,
     marginTop: 2,
     fontSize: 12,
@@ -114,80 +193,146 @@ const styles: Record<string, React.CSSProperties> = {
     overflow: "hidden",
     textOverflow: "ellipsis",
     whiteSpace: "nowrap",
-    maxWidth: "100%",
+  },
+  captionRanked: {
+    margin: 0,
+    marginTop: 8,
+    minWidth: 0,
+    textAlign: "center",
+    fontSize: 12,
+    fontWeight: 500,
+    color: "rgba(255,255,255,0.9)",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
   },
 };
 
-export function NetflixCardInline(props: {
-  title: NetflixTitleCard;
-  rank?: number | null;
-  onOpen: () => void;
-}): React.ReactElement {
-  const { title, rank, onOpen } = props;
+export interface NetflixCardInlineProps {
+  readonly title: NetflixTitleCard;
+  /** 1-based rank for the Top-10 numeral (null hides it). */
+  readonly rank?: number | null;
+  /** ranked = the weekly Top-10 portrait silhouette; default = the 16:9 tile. */
+  readonly variant?: "default" | "ranked";
+  /** The art (or the card body) opens the title detail. */
+  readonly onOpen: () => void;
+  /** The hover sheet's Play circle — the host's play path (the hand-off). */
+  readonly onPlay?: () => void;
+  /** The card's saved state on the session-scoped My List. */
+  readonly myListSaved?: boolean;
+  /** The hover sheet's + circle — the My List toggle. */
+  readonly onToggleMyList?: () => void;
+}
+
+export function NetflixCardInline(props: NetflixCardInlineProps): React.ReactElement {
+  const { title, rank, variant = "default", onOpen, onPlay, myListSaved = false, onToggleMyList } = props;
   const rankOf = rank ?? title.weeklyRank ?? title.allTimeRank ?? null;
+  const ranked = variant === "ranked" && rankOf !== null;
+  const metaBits = [title.releaseYear !== null ? String(title.releaseYear) : null, title.maturityRating].filter(
+    Boolean,
+  ) as string[];
+
+  const onWrapperClick = (event: React.MouseEvent<HTMLDivElement>): void => {
+    // The card body opens the detail — except when the click landed on one
+    // of the sheet's own buttons (the sibling-overlay pattern).
+    if ((event.target as HTMLElement).closest("button") !== null) return;
+    onOpen();
+  };
+
   return (
-    <button
-      type="button"
-      className="wfx-nf-card"
-      aria-label={`${title.title}${rankOf !== null ? ` — number ${rankOf}` : ""}`}
-      style={styles.card}
-      onClick={onOpen}
+    <div
+      className={`wfx-nf-card ${ranked ? "wfx-nf-ranked" : "wfx-nf-default"}`}
+      style={{ ...styles.card, ...(ranked ? styles.cardRanked : styles.cardDefault) }}
       data-testid={`netflix-card-${title.netflixId}`}
+      onClick={onWrapperClick}
     >
-      <span style={styles.cardMediaRow}>
-        {rankOf !== null && (
+      <div style={{ ...styles.mediaRow, ...(ranked ? undefined : styles.mediaRowDefault) }}>
+        {ranked && (
           <span aria-hidden="true" className="wfx-nf-rank" style={styles.rank}>
             {rankOf}
           </span>
         )}
-        <span className="wfx-nf-tile" style={styles.tile}>
-          {title.posterUrl !== null ? (
-            <img src={title.posterUrl} alt="" loading="lazy" style={styles.tileImg} />
+        <button
+          type="button"
+          className="wfx-nf-tile"
+          style={{ ...styles.tile, ...(ranked ? styles.tileRanked : styles.tileDefault) }}
+          aria-label={`${title.title} — details${rankOf !== null ? `, number ${rankOf} today` : ""}`}
+          onClick={onOpen}
+        >
+          {(ranked ? title.backdropUrl ?? title.posterUrl : title.posterUrl) !== null ? (
+            <img
+              src={(ranked ? title.backdropUrl ?? title.posterUrl : title.posterUrl) ?? ""}
+              alt=""
+              loading="lazy"
+              style={styles.tileImg}
+            />
           ) : (
             <span style={styles.tileFallback}>{title.title}</span>
           )}
-          {title.maturityRating !== null && (
-            <span style={styles.maturity}>{title.maturityRating}</span>
+          {title.logoUrl !== null && (
+            <span style={styles.logoStrip}>
+              <img src={title.logoUrl} alt="" style={styles.logoImg} />
+            </span>
           )}
-        </span>
-      </span>
-      <span style={styles.cardTitle}>{title.title}</span>
-      <span style={styles.cardMeta}>
-        {[title.releaseYear !== null ? String(title.releaseYear) : null, title.kind === "series" ? "Series" : "Film"]
-          .filter(Boolean)
-          .join(" · ")}
-      </span>
-    </button>
-  );
-}
+          {title.maturityRating !== null && <span style={styles.maturity}>{title.maturityRating}</span>}
+        </button>
+      </div>
 
-export function NetflixRailInline(props: {
-  rail: NetflixRailView;
-  onOpenTitle: (netflixId: number) => void;
-}): React.ReactElement {
-  const { rail, onOpenTitle } = props;
-  if (rail.titles.length === 0) return <></>;
-  return (
-    <section aria-label={rail.label} style={styles.rail} data-testid={`netflix-rail-${rail.key}`}>
-      <div style={styles.railHeader}>
-        <h2 style={styles.railTitle}>
-          {rail.label}
-          <span style={styles.railCountry}>· {rail.country !== "Global" ? rail.country : "Global"}</span>
-        </h2>
-        {rail.weekEndDate !== null && (
-          <span style={styles.railWeek}>week of {rail.weekEndDate}</span>
-        )}
+      {/* the hover sheet — a SIBLING of the art button (no nesting):
+          the white Play circle + the My List + circle + the meta line */}
+      <div className="wfx-nf-sheet" style={styles.sheet}>
+        <div style={styles.sheetInner}>
+          <div style={styles.sheetRow}>
+            {onPlay !== undefined && (
+              <button
+                type="button"
+                className="wfx-nf-sheet-btn"
+                style={{ ...styles.circleBtn, ...styles.playCircle }}
+                data-testid="netflix-card-play"
+                aria-label={`Play ${title.title} in WebFlix`}
+                onClick={onPlay}
+              >
+                <span aria-hidden="true">▶</span>
+              </button>
+            )}
+            {onToggleMyList !== undefined && (
+              <button
+                type="button"
+                className="wfx-nf-sheet-btn"
+                style={{ ...styles.circleBtn, ...styles.addCircle, ...(myListSaved ? styles.addCircleSaved : undefined) }}
+                data-testid="netflix-card-add"
+                aria-pressed={myListSaved}
+                aria-label={
+                  myListSaved ? `Remove ${title.title} from My List` : `Add ${title.title} to My List`
+                }
+                onClick={onToggleMyList}
+              >
+                <span aria-hidden="true">{myListSaved ? "✓" : "+"}</span>
+              </button>
+            )}
+            <span aria-hidden="true" style={styles.infoCircle}>
+              ⓘ
+            </span>
+          </div>
+          <p style={styles.sheetMeta}>
+            <span style={styles.sheetTop10}>Top 10</span>
+            {metaBits.length > 0 && <span>{metaBits.join(" · ")}</span>}
+          </p>
+          {title.synopsis !== "" && <p style={styles.sheetSynopsis}>{title.synopsis}</p>}
+        </div>
       </div>
-      <div className="wfx-scroll" style={styles.railRow}>
-        {rail.titles.map((title, i) => (
-          <NetflixCardInline
-            key={`${rail.key}-${title.netflixId}`}
-            title={title}
-            rank={i + 1}
-            onOpen={() => onOpenTitle(title.netflixId)}
-          />
-        ))}
-      </div>
-    </section>
+
+      {!ranked && (
+        <div style={styles.caption}>
+          <p style={styles.captionTitle}>{title.title}</p>
+          <p style={styles.captionMeta}>
+            {[title.releaseYear !== null ? String(title.releaseYear) : null, title.kind === "series" ? "Series" : "Film"]
+              .filter(Boolean)
+              .join(" · ")}
+          </p>
+        </div>
+      )}
+      {ranked && <p style={styles.captionRanked}>{title.title}</p>}
+    </div>
   );
 }

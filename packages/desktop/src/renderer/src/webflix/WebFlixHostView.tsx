@@ -15,6 +15,7 @@ import type {
   HistoryView,
   HomeFeedView,
   NetflixHomeView,
+  NetflixTitleCard,
   NetflixTitleView,
   SearchPageData,
   ShortsView,
@@ -53,6 +54,9 @@ export interface WebFlixHostBundle {
   readonly onSelectNetflixCountry: (country: string) => void;
   readonly onNetflixRetry: () => void;
   readonly onOpenExternalUrl: (url: string) => void;
+  /** WFX-NETFLIX-P45-LOOK-1: the session-scoped My List + its toggle. */
+  readonly netflixMyList: readonly NetflixTitleCard[];
+  readonly onToggleNetflixMyList: (title: NetflixTitleCard) => void;
   readonly loadingMoreSurfaces: readonly LoadMoreSurface[];
   readonly watchSurface: WatchSurfaceState | null;
   readonly setWatchState: (state: WatchSurfaceState | null) => void;
@@ -153,6 +157,8 @@ function buildShellProps(bundle: WebFlixHostBundle): AppShellProps {
     netflixTitleView: bundle.netflixTitleView,
     onSelectNetflixCountry: bundle.onSelectNetflixCountry,
     onOpenExternalUrl: bundle.onOpenExternalUrl,
+    netflixMyList: bundle.netflixMyList,
+    onToggleNetflixMyList: bundle.onToggleNetflixMyList,
     onRetrySurface: (surface) => {
       // WFX-NETFLIX-SOURCE-1: the second source's honest retry (the other
       // surfaces' retries stay unwired exactly as before this lane).
