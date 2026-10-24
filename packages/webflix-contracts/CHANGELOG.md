@@ -5,6 +5,21 @@ TL2 approval + migration notes; additive changes bump minor with a consumer
 impact note. No CHANGELOG existed before 0.2.0 — the 0.1.0 history is the git
 log of this package (frozen §2 shapes, D2-LOCAL lane).
 
+## 0.15.0 — 2026-10-24 — the Netflix second-source seam (WFX-NETFLIX-SOURCE-1)
+
+Additive only — every 0.14.0 export is untouched (semver minor per §3):
+
+- `ui-actions.ts` — MediaRouteSchema gains `netflix` (the web app's second
+  source hub; params.itemId selects the title detail, params.region the
+  country view). No existing route renamed/renumbered; RouteParams keys
+  unchanged.
+- `media-views.ts` — the Netflix view family: NetflixTitleCardSchema (the
+  second source's OWN card atom — deliberately NOT a VideoCardView/CatalogItem:
+  playback hands off to Netflix's official player, so the agent can never
+  playCatalogItem these), NetflixRailViewSchema, NetflixHomeViewSchema (hero +
+  rails + the source-label law's provenance note), NetflixCountryRankViewSchema,
+  NetflixTitleViewSchema, and the NetflixPort interface (hub + title detail).
+
 ## 0.11.0 — 2026-10-12 — the transparency-source seam (P5-SOURCES)
 ## 0.14.0 — 2026-10-23 — the WFX UI-action bridge + media-view seam (WFX-DESKTOP-WEBFLIX-UX-1, freeze §9)
 

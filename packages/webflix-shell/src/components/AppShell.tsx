@@ -8,6 +8,8 @@ import type {
   HistoryView,
   HomeFeedView,
   MediaRoute,
+  NetflixHomeView,
+  NetflixTitleView,
   ProviderAccountRecord,
   RouteParams,
   SearchPageData,
@@ -149,6 +151,11 @@ export interface AppShellProps {
   readonly shortsView?: ShortsView | null;
   readonly subscriptionsView?: SubscriptionsView | null;
   readonly historyView?: HistoryView | null;
+  // ---- WFX-NETFLIX-SOURCE-1 (the second source's surfaces). ----
+  /** The Netflix hub view (rails + hero; the honest not-provided default is null). */
+  readonly netflixHome?: NetflixHomeView | null;
+  /** The Netflix title-detail view (null = not loaded). */
+  readonly netflixTitleView?: NetflixTitleView | null;
   /** Surfaces currently appending a page (the honest in-flight fact). */
   readonly loadingMoreSurfaces?: readonly LoadMoreSurface[];
   /** Shared card play path — the same planning the buttons use. */
@@ -163,6 +170,11 @@ export interface AppShellProps {
   readonly onSelectChannelTab?: (tab: string) => void;
   /** Channel navigation from cards/headers. */
   readonly onOpenChannel?: (channel: { channelId?: string; handle?: string }) => void;
+  // ---- WFX-NETFLIX-SOURCE-1 (the second source's reports). ----
+  /** The hub's country-view chips report here ("Global" | "US"). */
+  readonly onSelectNetflixCountry?: (country: string) => void;
+  /** The play hand-off's external open (the host owns the system-browser call). */
+  readonly onOpenExternalUrl?: (url: string) => void;
 
   // ---- WFX watch surface (freeze §9.6 persistent player). ----
   readonly watchState?: WatchSurfaceState | null;
@@ -230,6 +242,8 @@ export function AppShell(props: AppShellProps) {
     shortsView = null,
     subscriptionsView = null,
     historyView = null,
+    netflixHome = null,
+    netflixTitleView = null,
     loadingMoreSurfaces = [],
     onPlayCard,
     onLoadMorePage,
@@ -237,6 +251,8 @@ export function AppShell(props: AppShellProps) {
     onSelectChip,
     onSelectChannelTab,
     onOpenChannel,
+    onSelectNetflixCountry,
+    onOpenExternalUrl,
     watchState = null,
     onWatchClose,
     onWatchToggleTheater,
@@ -454,6 +470,8 @@ export function AppShell(props: AppShellProps) {
             shortsView={shortsView}
             subscriptionsView={subscriptionsView}
             historyView={historyView}
+            netflixHome={netflixHome}
+            netflixTitleView={netflixTitleView}
             watchMounted={watchMounted}
             loadingMoreSurfaces={loadingMoreSurfaces}
             onPlayCard={onPlayCard === undefined ? undefined : handlePlayCard}
@@ -462,6 +480,8 @@ export function AppShell(props: AppShellProps) {
             onSelectChip={onSelectChip}
             onSelectChannelTab={onSelectChannelTab}
             onOpenChannel={onOpenChannel}
+            onSelectNetflixCountry={onSelectNetflixCountry}
+            onOpenExternalUrl={onOpenExternalUrl}
           />
         </main>
 

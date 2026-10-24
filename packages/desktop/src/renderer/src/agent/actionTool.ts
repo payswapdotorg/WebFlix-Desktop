@@ -74,6 +74,9 @@ export const WEBFLIX_UI_MEDIA_ROUTES = [
   "accounts",
   "ads",
   "evaluation",
+  // WFX-NETFLIX-SOURCE-1: the second source's hub (navigation only — its
+  // titles are NOT playable catalog items, so no playCatalogItem rides this).
+  "netflix",
 ] as const;
 
 /** The consent law, verbatim in the tool description the LLM reads. */

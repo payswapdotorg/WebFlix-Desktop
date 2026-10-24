@@ -58,6 +58,9 @@ import { useAccountRetentionHandlers } from "./useAccountRetentionHandlers.js";
 import { createSessionHistorySource, searchPhaseFromPageData } from "./mediaHostSupport.js";
 import { useSurfaceLoader } from "./useSurfaceLoader.js";
 import { useProducersAndWorkspace } from "./useProducersAndWorkspace.js";
+// WFX-NETFLIX-SOURCE-1: the second source's host support (the producer
+// build + view state + route handler family, extracted for the max-lines law).
+import { useNetflixHostSupport } from "./netflixHostSupport.js";
 import { createUiActionHandlers } from "./uiActionBridgeHandlers.js";
 import { useLiveMediaContext } from "./liveMediaContext.js";
 // WFX lanes (relative source imports — the desktop package convention).
@@ -188,6 +191,11 @@ export function WebFlixHost(deps: WebFlixHostDeps) {
     historySource,
   });
 
+  // WFX-NETFLIX-SOURCE-1: the second source's host support (view state +
+  // producer + handlers — the hook owns the family, extracted for the law).
+  const netflixSupport = useNetflixHostSupport({ route, setRoute });
+
+
   // The search flow (the SAME path the UI and the agent use).
   const runSearch = useCallback(
     (query: string): { playedLink: boolean } => {
@@ -272,6 +280,11 @@ export function WebFlixHost(deps: WebFlixHostDeps) {
     subscriptionsView,
     historyView,
     channelView,
+    getNetflixProducer: netflixSupport.getNetflixProducer,
+    netflixHome: netflixSupport.netflixHome,
+    netflixTitleView: netflixSupport.netflixTitleView,
+    setNetflixHome: netflixSupport.setNetflixHome,
+    setNetflixTitleView: netflixSupport.setNetflixTitleView,
   } as Parameters<typeof useSurfaceLoader>[0]);
 
   const handleImportLocalFiles = () => {
@@ -307,6 +320,7 @@ export function WebFlixHost(deps: WebFlixHostDeps) {
     setRoute("search", { query });
     runSearch(query);
   };
+
 
   // The LIVE-STATE mirror + the visible-media context builder (freeze §9.1:
   // the bridge is created ONCE per handlers record — every context read goes
@@ -392,6 +406,11 @@ export function WebFlixHost(deps: WebFlixHostDeps) {
       shortsView={shortsView}
       subscriptionsView={subscriptionsView}
       historyView={historyView}
+      netflixHome={netflixSupport.netflixHome}
+      netflixTitleView={netflixSupport.netflixTitleView}
+      onSelectNetflixCountry={netflixSupport.handleNetflixCountrySelect}
+      onNetflixRetry={netflixSupport.handleNetflixRetry}
+      onOpenExternalUrl={netflixSupport.handleOpenExternalUrl}
       loadingMoreSurfaces={loadingMoreSurfaces}
       watchSurface={watchSurface}
       setWatchState={setWatchState}

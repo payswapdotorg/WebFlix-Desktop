@@ -14,6 +14,8 @@ import type {
   ChannelView,
   HistoryView,
   HomeFeedView,
+  NetflixHomeView,
+  NetflixTitleView,
   SearchPageData,
   ShortsView,
   SubscriptionsView,
@@ -45,6 +47,12 @@ export interface WebFlixHostBundle {
   readonly shortsView: ShortsView | null;
   readonly subscriptionsView: SubscriptionsView | null;
   readonly historyView: HistoryView | null;
+  // ---- WFX-NETFLIX-SOURCE-1 (the second source's bundle). ----
+  readonly netflixHome: NetflixHomeView | null;
+  readonly netflixTitleView: NetflixTitleView | null;
+  readonly onSelectNetflixCountry: (country: string) => void;
+  readonly onNetflixRetry: () => void;
+  readonly onOpenExternalUrl: (url: string) => void;
   readonly loadingMoreSurfaces: readonly LoadMoreSurface[];
   readonly watchSurface: WatchSurfaceState | null;
   readonly setWatchState: (state: WatchSurfaceState | null) => void;
@@ -141,6 +149,17 @@ function buildShellProps(bundle: WebFlixHostBundle): AppShellProps {
     shortsView: bundle.shortsView,
     subscriptionsView: bundle.subscriptionsView,
     historyView: bundle.historyView,
+    netflixHome: bundle.netflixHome,
+    netflixTitleView: bundle.netflixTitleView,
+    onSelectNetflixCountry: bundle.onSelectNetflixCountry,
+    onOpenExternalUrl: bundle.onOpenExternalUrl,
+    onRetrySurface: (surface) => {
+      // WFX-NETFLIX-SOURCE-1: the second source's honest retry (the other
+      // surfaces' retries stay unwired exactly as before this lane).
+      if (surface === "netflix") {
+        bundle.onNetflixRetry();
+      }
+    },
     loadingMoreSurfaces: bundle.loadingMoreSurfaces,
     onLoadMorePage: (surface, cursor) => {
       const producers = bundle.getProducers();

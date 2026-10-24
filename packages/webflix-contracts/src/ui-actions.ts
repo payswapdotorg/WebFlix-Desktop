@@ -46,6 +46,9 @@ import { CapabilityStatusSchema } from "./capability";
 /**
  * The navigable media surfaces. Kept in lockstep with the WebFlix shell's
  * route model; additive new routes bump this enum (never rename/renumber).
+ * WFX-NETFLIX-SOURCE-1: `netflix` added additively (the web app's second
+ * source hub — params.itemId selects the title detail, params.region the
+ * country view; the hub itself renders when neither is set).
  */
 export const MediaRouteSchema = z.enum([
   "home",
@@ -61,6 +64,7 @@ export const MediaRouteSchema = z.enum([
   "accounts",
   "ads",
   "evaluation",
+  "netflix",
 ]);
 export type MediaRoute = z.infer<typeof MediaRouteSchema>;
 
@@ -68,14 +72,14 @@ export type MediaRoute = z.infer<typeof MediaRouteSchema>;
 export const RouteParamsSchema = z.object({
   /** search: the query to prefill. */
   query: z.string().optional(),
-  /** watch: the catalog item id to open. */
+  /** watch: the catalog item id to open. netflix: the title id (as a string). */
   itemId: z.string().optional(),
   /** channel: the provider channel id (preferred) or handle (fallback). */
   channelId: z.string().optional(),
   handle: z.string().optional(),
   /** channel: the tab to select. */
   channelTab: z.string().optional(),
-  /** trending/explore: category chip + region. */
+  /** trending: category chip + region. netflix: the country view ("Global"|"US"). */
   category: z.string().optional(),
   region: z.string().optional(),
 });

@@ -258,6 +258,96 @@ export const HistoryViewSchema = z.object({
 export type HistoryView = z.infer<typeof HistoryViewSchema>;
 
 // ---------------------------------------------------------------------------
+// Netflix hub — the second source's surfaces (WFX-NETFLIX-SOURCE-1)
+// ---------------------------------------------------------------------------
+
+/**
+ * A Netflix title card atom — the second source's OWN shape, deliberately
+ * NOT a VideoCardView: Netflix titles never resolve to an in-app CatalogItem
+ * (playback hands off to Netflix's official player — ADR 0002 §1 / the
+ * provider-policy matrix row). The agent cannot playCatalogItem these; the
+ * hub surfaces carry no visibleItemIds by the same law.
+ */
+export const NetflixTitleCardSchema = z.object({
+  /** The real Netflix video id — the deep-link key. */
+  netflixId: z.number().int().positive(),
+  title: z.string(),
+  kind: z.enum(["movie", "series"]),
+  synopsis: z.string(),
+  releaseYear: z.number().int().nullable(),
+  maturityRating: z.string().nullable(),
+  /** Landscape story art (hero/backdrop). */
+  backdropUrl: AbsoluteUrlSchema.nullable(),
+  /** 16:9 boxart (cards). */
+  posterUrl: AbsoluteUrlSchema.nullable(),
+  /** Title-logo art (hero overlay). */
+  logoUrl: AbsoluteUrlSchema.nullable(),
+  /** Global weekly rank within its pool (1..10); null for all-time pools. */
+  weeklyRank: z.number().int().nullable(),
+  /** All-time most-popular rank; null for weekly pools. */
+  allTimeRank: z.number().int().nullable(),
+  weeksInTop10: z.number().int().nullable(),
+  weeklyHoursViewed: z.number().nullable(),
+  /** Week end date (YYYY-MM-DD) for weekly pools; null = all-time. */
+  weekEndDate: z.string().nullable(),
+  /** The ONLY sanctioned netflix.com deep links (the connector's deeplink law). */
+  watchUrl: AbsoluteUrlSchema,
+  titlePageUrl: AbsoluteUrlSchema,
+});
+export type NetflixTitleCard = z.infer<typeof NetflixTitleCardSchema>;
+
+/** One browsable rail on the Netflix hub (one Tudum pool, one country view). */
+export const NetflixRailViewSchema = z.object({
+  key: z.string().min(1),
+  label: z.string(),
+  ranking: z.enum(["weekly", "alltime"]),
+  /** "Global" or an ISO country code the rail was ranked for. */
+  country: z.string(),
+  weekEndDate: z.string().nullable(),
+  titles: z.array(NetflixTitleCardSchema),
+});
+export type NetflixRailView = z.infer<typeof NetflixRailViewSchema>;
+
+/**
+ * The Netflix hub surface. `hero` is the top weekly title (null = honest
+ * absence); empty rails ARE the honest unavailable state (the producer maps
+ * the upstream-failure shape to phase "unavailable" with its reason).
+ */
+export const NetflixHomeViewSchema = z.object({
+  country: z.string(),
+  rails: z.array(NetflixRailViewSchema),
+  hero: NetflixTitleCardSchema.nullable(),
+  catalogSize: z.number().int().nonnegative(),
+  /** Provenance note naming HOW the surface was composed (the source-label law). */
+  sourceNote: z.string(),
+  phase: MediaViewPhaseSchema,
+  detail: z.string().optional(),
+});
+export type NetflixHomeView = z.infer<typeof NetflixHomeViewSchema>;
+
+/** A country where a title currently ranks (best-first). */
+export const NetflixCountryRankViewSchema = z.object({
+  countryId: z.string().min(1),
+  rank: z.number().int().positive(),
+});
+export type NetflixCountryRankView = z.infer<typeof NetflixCountryRankViewSchema>;
+
+/**
+ * The Netflix title-detail surface. `title` is null on every non-ready
+ * phase (the phase panel renders the honest state — never a fabricated
+ * placeholder card); a ready view always carries the title.
+ */
+export const NetflixTitleViewSchema = z.object({
+  title: NetflixTitleCardSchema.nullable(),
+  countryRanks: z.array(NetflixCountryRankViewSchema),
+  /** Same-pool neighbors — "More like this" stays honest (the Top 10 universe). */
+  relatedTitles: z.array(NetflixTitleCardSchema),
+  phase: MediaViewPhaseSchema,
+  detail: z.string().optional(),
+});
+export type NetflixTitleView = z.infer<typeof NetflixTitleViewSchema>;
+
+// ---------------------------------------------------------------------------
 // The producer ports (interfaces only — implemented in webflix-application)
 // ---------------------------------------------------------------------------
 
@@ -308,6 +398,20 @@ export interface SubscriptionsPort {
 /** Produces the local-history surface (grouped continue-watching). */
 export interface HistoryPort {
   history(): Promise<HistoryView>;
+}
+
+/**
+ * Produces the Netflix hub surfaces (WFX-NETFLIX-SOURCE-1 — the web app's
+ * second source, over Netflix's own public Tudum Top 10 data; no
+ * credentials, no account, playback hands off to netflix.com). Implementations
+ * answer the honest phase vocabulary: an unreachable upstream answers
+ * `unavailable` with its reason — never fabricated rows.
+ */
+export interface NetflixPort {
+  /** The hub: rails per Tudum pool for the requested country view. */
+  netflixHome(input: { country?: string }): Promise<NetflixHomeView>;
+  /** One title's detail page (where-it-ranks + same-pool neighbors). */
+  netflixTitle(input: { netflixId: number }): Promise<NetflixTitleView>;
 }
 
 /**

@@ -77,3 +77,14 @@ export * from "./reddit/catalogMapping";
 export * from "./reddit/playback";
 export * from "./reddit/service";
 export * from "./reddit/substitutes";
+// WFX-NETFLIX-SOURCE-1 — the second source's Tudum reader: the bounded 8-pool
+// matrix + the SSR-cache parser + the injectable upstream seam + the deeplink
+// law + the hub/title composition (ported from the web app's
+// src/lib/netflix/* — the Prisma mirror + My List are documented out of
+// desktop scope). Names are Netflix-prefixed throughout; no collisions with
+// the platform families above.
+export * from "./netflix/types";
+export * from "./netflix/deeplink";
+export * from "./netflix/upstream";
+export * from "./netflix/top10";
+export * from "./netflix/catalog";

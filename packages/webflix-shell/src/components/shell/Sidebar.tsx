@@ -31,6 +31,7 @@ const NAV_ICONS: Record<NavRoute, IconName> = {
   home: "home",
   search: "search",
   shorts: "shorts",
+  netflix: "netflix",
   subscriptions: "subscriptions",
   library: "library",
   history: "history",

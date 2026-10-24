@@ -92,6 +92,10 @@ import { createOAuthCallbackHandler } from "./oauthCallbackBridge.js";
 // "webflix", so ZCode production/preview preloads gain nothing.
 import "./webflixAccountBridge.js";
 import "./webflixAgentBridge.js";
+// WFX-NETFLIX-SOURCE-1: the Netflix second source's transport bridge (the
+// bounded Tudum pool fetch + the play hand-off open) — same law: exactly two
+// typed methods over two namespaced channels, NO-OP outside the webflix flavor.
+import "./webflixNetflixBridge.js";
 
 if (shouldEnableE2ETestBridge(process.env)) {
   contextBridge.exposeInMainWorld("__zcodeFinalArmsCustomEventsE2E", {

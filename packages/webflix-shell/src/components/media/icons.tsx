@@ -16,6 +16,7 @@ export type IconName =
   | "library"
   | "history"
   | "trending"
+  | "netflix"
   | "accounts"
   | "ads"
   | "evaluation"
@@ -69,6 +70,15 @@ const ICONS: Record<IconName, React.ReactNode> = {
     <>
       <path d="M3 17l5.5-6 4 4L20 7" />
       <path d="M15 7h5v5" />
+    </>
+  ),
+  // WFX-NETFLIX-SOURCE-1: the second source's hub — a screen + play glyph
+  // (the web app's TvMinimalPlay, hand-drawn in this family's stroke style).
+  netflix: (
+    <>
+      <rect x="3" y="5" width="18" height="13" rx="2" />
+      <path d="M10.5 9v5l4-2.5z" />
+      <path d="M9 20.5h6" />
     </>
   ),
   accounts: (

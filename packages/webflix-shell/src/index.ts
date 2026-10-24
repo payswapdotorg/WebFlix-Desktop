@@ -47,6 +47,14 @@ export { ChannelScreen } from "./components/ChannelScreen";
 export type { ChannelScreenProps } from "./components/ChannelScreen";
 export { TrendingScreen } from "./components/TrendingScreen";
 export type { TrendingScreenProps } from "./components/TrendingScreen";
+// WFX-NETFLIX-SOURCE-1: the second source's surfaces.
+export { NetflixScreen } from "./components/NetflixScreen";
+export type { NetflixScreenProps } from "./components/NetflixScreen";
+export { NetflixTitleScreen } from "./components/NetflixTitleScreen";
+export type { NetflixTitleScreenProps } from "./components/NetflixTitleScreen";
+export { NetflixPlayHandoff } from "./components/netflixPlayHandoff";
+export type { NetflixPlayHandoffProps } from "./components/netflixPlayHandoff";
+export { NetflixCardInline, NetflixRailInline } from "./components/netflixCard";
 export { ShortsScreen } from "./components/ShortsScreen";
 export type { ShortsScreenProps } from "./components/ShortsScreen";
 export { SubscriptionsScreen } from "./components/SubscriptionsScreen";

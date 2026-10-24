@@ -63,7 +63,8 @@ export type RetrySurface =
   | "shorts"
   | "subscriptions"
   | "history"
-  | "search";
+  | "search"
+  | "netflix";
 
 /** The chip-filtered surfaces (home feed + trending chart). */
 export type ChipSurface = "home" | "trending";
@@ -86,6 +87,10 @@ export const NAV_GROUPS: readonly NavGroup[] = [
       { id: "home", label: "Home" },
       { id: "search", label: "Search" },
       { id: "shorts", label: "Shorts" },
+      // WFX-NETFLIX-SOURCE-1: the second source's hub — the web app's own
+      // MAIN_NAV places Netflix in the primary group (4th rung, after
+      // Subscriptions); the desktop's primary group is this one.
+      { id: "netflix", label: "Netflix" },
     ],
   },
   {

@@ -213,6 +213,7 @@ import { registerRemoteIpcHandlers } from "./desktopMainIpcRemote.js";
 // webflix flavor (zero ZCode-build surface).
 import { registerWebFlixAccountIpc } from "./webflixAccountIpc.js";
 import { registerWebFlixAgentWorkspaceIpc } from "./webflixAgentWorkspaceIpc.js";
+import { registerWebFlixNetflixIpc } from "./webflixNetflixIpc.js";
 import {
   configureDesktopStabilityTelemetry,
   getStabilityLifecycleScene,
@@ -2192,6 +2193,11 @@ app.whenReady().then(async () => {
   // + YouTube Data API key IPC (webflix flavor only — no-ops otherwise). The
   // renderer supplies the artifact content; this process validates and writes.
   registerWebFlixAgentWorkspaceIpc({ logger });
+
+  // WFX-NETFLIX-SOURCE-1: the second source's transport IPC (webflix flavor
+  // only): the bounded Tudum pool-page fetch (the renderer cannot reach
+  // netflix.com itself — no CORS) + the play hand-off's system-browser open.
+  registerWebFlixNetflixIpc({ logger });
 
   registerRemoteIpcHandlers({
     logger,

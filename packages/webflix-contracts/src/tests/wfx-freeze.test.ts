@@ -27,6 +27,10 @@ import {
   MediaConnectionViewSchema,
   MediaRouteSchema,
   MediaViewPhaseSchema,
+  NetflixHomeViewSchema,
+  NetflixRailViewSchema,
+  NetflixTitleCardSchema,
+  NetflixTitleViewSchema,
   PlayingItemViewSchema,
   RouteParamsSchema,
   SearchPageDataSchema,
@@ -92,6 +96,14 @@ describe("ui-actions — routes, context, panel", () => {
     expectRoundTrip(RouteParamsSchema, {});
     expectRejected(MediaRouteSchema, "dashboard");
     expectRejected(RouteParamsSchema, { query: 42 });
+  });
+
+  it("round-trips the netflix route + its params (WFX-NETFLIX-SOURCE-1, additive)", () => {
+    expectRoundTrip(MediaRouteSchema, "netflix");
+    expectRoundTrip(RouteParamsSchema, { region: "US" });
+    expectRoundTrip(RouteParamsSchema, { itemId: "81215586" });
+    // The frozen set stays closed: a fabricated route is still rejected.
+    expectRejected(MediaRouteSchema, "hbo");
   });
 
   it("round-trips connection + panel views", () => {
@@ -371,5 +383,78 @@ describe("media-views — page surfaces", () => {
       expect(MediaViewPhaseSchema.safeParse(phase).success).toBe(true);
     }
     expectRejected(MediaViewPhaseSchema, "partial");
+  });
+
+  it("round-trips the Netflix view family (WFX-NETFLIX-SOURCE-1, additive)", () => {
+    const netflixCard = {
+      netflixId: 81215586,
+      title: "Sample title",
+      kind: "series",
+      synopsis: "A synopsis.",
+      releaseYear: 2024,
+      maturityRating: "TV-MA",
+      backdropUrl: "https://occ-0-2794-2219.1.nflxso.net/dnm/api/v6/XsduAbkYLtB24L0TUnRgs2iiIGYAAABeZ-2SdI21fTuuxP_6LOMrrWymCiHXKLRfkl4dZgEFBwc3BB.webp",
+      posterUrl: null,
+      logoUrl: null,
+      weeklyRank: 1,
+      allTimeRank: null,
+      weeksInTop10: 3,
+      weeklyHoursViewed: 21_000_000,
+      weekEndDate: "2026-10-19",
+      watchUrl: "https://www.netflix.com/watch/81215586",
+      titlePageUrl: "https://www.netflix.com/title/81215586",
+    };
+    expectRoundTrip(NetflixTitleCardSchema, netflixCard);
+    // The second source's own atom: deep links must be absolute URLs
+    // (scheme-less or malformed strings are rejected; the WHICH-URL law —
+    // only the connector's deeplink module constructs netflix.com links —
+    // is enforced at the connector, not in this contract).
+    expectRejected(NetflixTitleCardSchema, { ...netflixCard, watchUrl: "www.netflix.com/watch/81215586" });
+    expectRejected(NetflixTitleCardSchema, { ...netflixCard, netflixId: 0 });
+    expectRoundTrip(NetflixRailViewSchema, {
+      key: "weekly-tv",
+      label: "Top 10 Shows This Week",
+      ranking: "weekly",
+      country: "Global",
+      weekEndDate: "2026-10-19",
+      titles: [netflixCard],
+    });
+    expectRoundTrip(NetflixHomeViewSchema, {
+      country: "Global",
+      rails: [],
+      hero: netflixCard,
+      catalogSize: 57,
+      sourceNote: "Netflix's own public Top 10 & Most Popular (Tudum)",
+      phase: "ready",
+    });
+    expectRoundTrip(NetflixHomeViewSchema, {
+      country: "US",
+      rails: [],
+      hero: null,
+      catalogSize: 0,
+      sourceNote: "Netflix's own public Top 10 & Most Popular (Tudum)",
+      phase: "unavailable",
+      detail: "Netflix's Top 10 data is unreachable from this egress right now.",
+    });
+    expectRoundTrip(NetflixTitleViewSchema, {
+      title: netflixCard,
+      countryRanks: [{ countryId: "US", rank: 1 }],
+      relatedTitles: [],
+      phase: "ready",
+    });
+    // A non-ready title view carries NO title (null — never a placeholder).
+    expectRoundTrip(NetflixTitleViewSchema, {
+      title: null,
+      countryRanks: [],
+      relatedTitles: [],
+      phase: "unavailable",
+      detail: "Title not in the tracked Netflix catalog.",
+    });
+    expectRejected(NetflixTitleViewSchema, {
+      title: netflixCard,
+      countryRanks: [{ countryId: "US", rank: 0 }],
+      relatedTitles: [],
+      phase: "ready",
+    });
   });
 });

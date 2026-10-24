@@ -14,6 +14,8 @@ import type {
   HistoryView,
   HomeFeedView,
   MediaRoute,
+  NetflixHomeView,
+  NetflixTitleView,
   ProviderAccountRecord,
   RouteParams,
   SearchPageData,
@@ -41,6 +43,8 @@ import { RankerAdapterSelector } from "../RankerAdapterSelector";
 import { SettingsScreen } from "../SettingsScreen";
 import { ChannelScreen } from "../ChannelScreen";
 import { TrendingScreen } from "../TrendingScreen";
+import { NetflixScreen } from "../NetflixScreen";
+import { NetflixTitleScreen } from "../NetflixTitleScreen";
 import { ShortsScreen } from "../ShortsScreen";
 import { SubscriptionsScreen } from "../SubscriptionsScreen";
 import { HistoryScreen } from "../HistoryScreen";
@@ -90,6 +94,9 @@ export interface ScreenRouterProps {
   readonly shortsView: ShortsView | null;
   readonly subscriptionsView: SubscriptionsView | null;
   readonly historyView: HistoryView | null;
+  // ---- WFX-NETFLIX-SOURCE-1 (the second source's surfaces) ----
+  readonly netflixHome: NetflixHomeView | null;
+  readonly netflixTitleView: NetflixTitleView | null;
   /** Whether the persistent watch surface is mounted (the watch route's
    *  nothing-playing panel renders when it is not). */
   readonly watchMounted: boolean;
@@ -100,6 +107,11 @@ export interface ScreenRouterProps {
   readonly onSelectChip?: (surface: "home" | "trending", chip: string | null) => void;
   readonly onSelectChannelTab?: (tab: string) => void;
   readonly onOpenChannel?: (channel: { channelId?: string; handle?: string }) => void;
+  // ---- WFX-NETFLIX-SOURCE-1 (the second source's reports) ----
+  /** The hub's country-view chips report here ("Global" | "US"). */
+  readonly onSelectNetflixCountry?: (country: string) => void;
+  /** The play hand-off's external open (the host owns the system-browser call). */
+  readonly onOpenExternalUrl?: (url: string) => void;
 }
 
 export function ScreenRouter(props: ScreenRouterProps): React.ReactElement {
@@ -138,6 +150,8 @@ export function ScreenRouter(props: ScreenRouterProps): React.ReactElement {
     shortsView,
     subscriptionsView,
     historyView,
+    netflixHome,
+    netflixTitleView,
     watchMounted,
     loadingMoreSurfaces,
     onPlayCard,
@@ -146,6 +160,8 @@ export function ScreenRouter(props: ScreenRouterProps): React.ReactElement {
     onSelectChip,
     onSelectChannelTab,
     onOpenChannel,
+    onSelectNetflixCountry,
+    onOpenExternalUrl,
   } = props;
 
   const isLoadingMore = (surface: LoadMoreSurface): boolean =>
@@ -240,6 +256,26 @@ export function ScreenRouter(props: ScreenRouterProps): React.ReactElement {
           onLoadMore={(cursor) => onLoadMorePage?.("trending", cursor)}
           onRetry={() => onRetrySurface?.("trending")}
           loadingMore={isLoadingMore("trending")}
+        />
+      );
+    case "netflix":
+      // WFX-NETFLIX-SOURCE-1: params.itemId selects the title detail; the
+      // hub renders otherwise (params.region = the country view).
+      return params.itemId !== undefined ? (
+        <NetflixTitleScreen
+          view={netflixTitleView}
+          onBack={() => navigate("netflix", {})}
+          onOpenExternal={onOpenExternalUrl}
+          onOpenTitle={(netflixId) => navigate("netflix", { itemId: String(netflixId) })}
+          onRetry={() => onRetrySurface?.("netflix")}
+        />
+      ) : (
+        <NetflixScreen
+          view={netflixHome}
+          onSelectCountry={(country) => onSelectNetflixCountry?.(country)}
+          onOpenTitle={(netflixId) => navigate("netflix", { itemId: String(netflixId) })}
+          onOpenExternal={onOpenExternalUrl}
+          onRetry={() => onRetrySurface?.("netflix")}
         />
       );
     case "subscriptions":
