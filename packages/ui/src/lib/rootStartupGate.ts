@@ -41,7 +41,13 @@ export function shouldShowRootStartupLoading(state: RootStartupLoadingVisibility
 }
 
 export function shouldEnableProviderAvailabilityLoginEntryGuard(): boolean {
-  return true;
+  // WFX-ZCODE-OPEN-1 (operator authorization, 2026-10-24): "remove the zcode
+  // login gate if it enables you to work with it better." The startup login
+  // gate is disabled — the workspace boots straight into the agent surface;
+  // voluntary login (sidebar/settings) and the session-expired re-gate stay
+  // available. The skip path in the API-key form already proved the product
+  // supports running without a connected account (providerFamilyDomain only).
+  return false;
 }
 
 export function shouldResolveProviderStartupState(state: ProviderStartupResolutionState): boolean {
