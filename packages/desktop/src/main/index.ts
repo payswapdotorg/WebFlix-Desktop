@@ -214,6 +214,7 @@ import { registerRemoteIpcHandlers } from "./desktopMainIpcRemote.js";
 import { registerWebFlixAccountIpc } from "./webflixAccountIpc.js";
 import { registerWebFlixAgentWorkspaceIpc } from "./webflixAgentWorkspaceIpc.js";
 import { registerWebFlixNetflixIpc } from "./webflixNetflixIpc.js";
+import { registerWebFlixYoutubePublicIpc } from "./webflixYoutubePublicIpc.js";
 import {
   configureDesktopStabilityTelemetry,
   getStabilityLifecycleScene,
@@ -2198,6 +2199,12 @@ app.whenReady().then(async () => {
   // only): the bounded Tudum pool-page fetch (the renderer cannot reach
   // netflix.com itself — no CORS) + the play hand-off's system-browser open.
   registerWebFlixNetflixIpc({ logger });
+
+  // WFX-ANON-VIEW-1: the key-free public web transport IPC (webflix flavor
+  // only): the bounded anonymous InnerTube endpoints + the public SSR pages
+  // (the renderer cannot reach youtube.com itself — no CORS). This is the
+  // egress of the DEFAULT anonymous YouTube engine — zero credentials.
+  registerWebFlixYoutubePublicIpc({ logger });
 
   registerRemoteIpcHandlers({
     logger,

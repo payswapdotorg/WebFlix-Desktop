@@ -25,6 +25,17 @@ export * from "./youtube/substitutes";
 export * from "./youtube/mediaSource";
 export * from "./youtube/liveComposition";
 export * from "./youtube/searchSourceAdapter";
+// WFX-ANON-VIEW-1: the KEY-FREE PUBLIC WEB engine — the web app's own
+// anonymous path (InnerTube + SSR with the public WEB client key, zero
+// credentials) as the desktop's default YouTube source; the keyed Data-API
+// composition above stays the optional operator overlay. Sanctioned by the
+// operator's ruling + the ADR-0003 addendum + the freeze §9.5 addendum.
+export * from "./youtube/publicTransport";
+export * from "./youtube/publicText";
+export * from "./youtube/publicMapping";
+export * from "./youtube/publicChannelMapping";
+export * from "./youtube/publicSource";
+export * from "./youtube/publicComposition";
 // TikTok — second platform on the same frozen contracts (TIKTOK-CONNECT).
 // NOTE: tiktok/oauth.ts deliberately does NOT re-export the provider-neutral
 // OAuth substrate it imports from ./youtube/oauth (PKCE pair, state guard,

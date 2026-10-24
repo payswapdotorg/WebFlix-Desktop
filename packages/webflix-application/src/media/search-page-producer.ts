@@ -126,6 +126,9 @@ function honestSearchNote(status: string, detail: string): string {
 }
 
 function budgetNoteOf(budget: YouTubeSourceBudgetSnapshot): string {
+  // WFX-ANON-VIEW-1: the key-free public engine's ledger writes its own
+  // note (no Data API quota applies) — the unit math is the keyed engine's.
+  if (budget.note !== undefined) return `YouTube search budget: ${budget.note}`;
   return `YouTube search budget: ${budget.unitsRemainingToday.toLocaleString("en-US")} of ${budget.unitsLimitToday.toLocaleString("en-US")} units remain today (~${budget.searchCallsRemainingToday} searches).`;
 }
 

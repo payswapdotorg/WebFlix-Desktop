@@ -153,6 +153,25 @@ a toggleable layer. TL2 decisions, binding on all lanes:
    (fixtures label themselves). The live MrBeast journey gate stays BLOCKED
    until the operator provisions a key; fixture-labelled runs are recorded
    separately, never as live passes.
+   - **WFX-ANON-VIEW-1 addendum (2026-10-24, operator ruling — "you
+     shouldn't need to sign in before you can start viewing videos, I want
+     the same exact UX as the web app")**: the KEYED Data-API engine above
+     is now the OPTIONAL overlay — it keeps this law verbatim when an
+     operator key IS configured (official surfaces, quota ledger, its own
+     requires-auth-on-no-key behavior inside `createLiveYouTubeComposition`,
+     unchanged and still pinned by youtube-media-slice.test.ts). The
+     DEFAULT engine with no key is the KEY-FREE PUBLIC WEB composition
+     (`createPublicYouTubeComposition` — the web app's own anonymous path:
+     InnerTube + SSR with YouTube's public WEB client key, zero
+     credentials), so every surface boots into real videos with zero
+     sign-in. A `requires-auth` handle now honestly means NEITHER engine
+     could be built (no key AND no public transport — the fail-closed
+     non-desktop state). The public engine rides the main-process transport
+     IPC (`webflix:youtube-public:fetch`) under a pinned URL+method
+     allowlist (the Netflix transport law, mirrored); no cookies, no
+     Authorization, no SAPISIDHASH — the anonymous path carries no
+     credentials by construction. Sanctioned in the ADR-0003 addendum of
+     the same date.
 6. **PERSISTENT PLAYER COMPLIANCE POSITION** (revises AS-Q12 for WFX): the
    watch player host may persist across route transitions WITHIN the visible
    window (standard desktop split-view), with the official IFrame embed's

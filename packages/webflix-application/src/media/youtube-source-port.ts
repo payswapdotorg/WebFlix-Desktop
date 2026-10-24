@@ -27,10 +27,15 @@
  *     actually reported on the call that produced the row — absent stays
  *     absent (search snippets carry no subscriber counts; playlist rows
  *     carry no durations until the documented enrichment read).
- *   - THE HANDLE LAW (freeze §9.5): a composition with NO configured API
- *     key hands the producers a `{ kind: "requires-auth" }` handle — every
- *     Data-API-backed surface then answers the frozen requires-auth phase,
- *     never fabricated rows.
+ *   - THE HANDLE LAW (freeze §9.5, WFX-ANON-VIEW-1 addendum): the handle is
+ *     the ENGINE, whichever composition root built it — the official
+ *     Data-API engine when the operator key is configured (its own §9.5
+ *     requires-auth law unchanged), or the KEY-FREE PUBLIC WEB engine (the
+ *     web app's own anonymous path — the desktop default, so videos are
+ *     viewable with zero sign-in, the operator's ruling). A
+ *     `{ kind: "requires-auth" }` handle now means NEITHER engine could be
+ *     built (no key AND no public transport) — the honest fail-closed
+ *     state, never fabricated rows.
  */
 import type { CatalogItem, OperationCapability } from "webflix-contracts";
 
@@ -83,6 +88,12 @@ export interface YouTubeSourceBudgetSnapshot {
   readonly unitsLimitToday: number;
   readonly unitsRemainingToday: number;
   readonly searchCallsRemainingToday: number;
+  /**
+   * Optional engine note (WFX-ANON-VIEW-1): the key-free public engine's
+   * quota-free ledger writes its own note (no Data API quota applies); the
+   * unit fields stay 0 and the note overrides the unit-math phrasing.
+   */
+  readonly note?: string;
 }
 
 /** One engine page: rows + the honest paging cursor + the post-call budget. */
@@ -146,16 +157,27 @@ export interface YouTubeCatalogSource {
     maxResults?: number;
     pageToken?: string;
   }): Promise<YouTubeSourceOutcome<YouTubeSourcePage>>;
+  /**
+   * OPTIONAL (WFX-ANON-VIEW-1): a dedicated shorts feed, when the engine
+   * provides one (the key-free public engine's "viral shorts" search
+   * feed — the web app's own shorts surface). Engines without one keep the
+   * documented trending-chart classification compose (the Data-API path).
+   */
+  shortsFeed?(input: {
+    maxResults?: number;
+    pageToken?: string;
+  }): Promise<YouTubeSourceOutcome<YouTubeSourcePage>>;
   /** The quota-ledger view for budget notes. */
   budget(): YouTubeSourceBudgetSnapshot;
 }
 
 /**
- * What a composition hands the producers: the engine, or the honest
- * no-key state (freeze §9.5). Built app-side from the connectors
- * composition root's outcome
- * (`createLiveYouTubeComposition` → live | requires-auth) or by test
- * harnesses; the requires-auth handle maps onto the frozen
+ * What a composition hands the producers: the engine (whichever root built
+ * it — the keyed Data-API engine or the key-free public web engine, per
+ * the WFX-ANON-VIEW-1 addendum), or the honest NEITHER-engine state.
+ * Built app-side from the connectors composition roots' outcomes
+ * (`createLiveYouTubeComposition` / `createPublicYouTubeComposition`) or
+ * by test harnesses; the requires-auth handle maps onto the frozen
  * MediaViewPhase "requires-auth" on every Data-API-backed surface.
  */
 export type YouTubeCatalogSourceHandle =

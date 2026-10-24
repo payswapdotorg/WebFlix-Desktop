@@ -62,3 +62,38 @@ the permanent independent-value notice, the honest-state vocabulary, the
 no-fabricated-data laws, per-user authorization, and the frozen OS-level
 identity (appId/AUMID/scheme/data roots — freeze §6.1) all remain exactly
 as accepted. Only the visual identity moved to web parity.
+
+## Addendum — WFX-ANON-VIEW-1 (2026-10-24): the key-free public web surface, sanctioned as the anonymous default
+
+The operator ruled: "you shouldn't need to sign in before you can start
+viewing videos, I want the same exact UX as the web app." The deployed web
+app (webflix-2-0-one.vercel.app, repo payswapdotorg/webflix-2.0) serves its
+anonymous browsing surface over YouTube's own PUBLIC web endpoints — the
+InnerTube API (`/youtubei/v1/search|browse|next`) with YouTube's public,
+hard-coded WEB client key, plus SSR reads of the public trending and
+channel pages — with zero credentials and zero sign-in. This addendum
+sanctions porting that exact anonymous path into the desktop app as the
+DEFAULT YouTube engine (`packages/connectors/src/youtube/public*.ts`,
+`createPublicYouTubeComposition`), so the desktop boots straight into real
+videos with no key and no account — the parity the operator directed.
+
+What this addendum does NOT change (all still binding):
+
+- The per-user authorization doctrine: liking, subscribing, playlists and
+  every write/personal action still require the per-user OAuth connection;
+  the anonymous engine is READ-ONLY browsing/watching, exactly like the web
+  app's anonymous `@guest` viewer.
+- The official-surface preference: a configured Data-API key still takes
+  precedence (the keyed engine rides the official googleapis surfaces with
+  the quota ledger — freeze §9.5 verbatim when a key exists).
+- The no-fabricated-data laws: the public engine answers the same frozen
+  honest-state vocabulary; a dead transport is the typed `unavailable`
+  phase, never invented rows; the trending ladder degrades rung-by-rung
+  (SSR grid → search-compose) exactly like the deployed site.
+- The secret-free laws: the anonymous path carries no cookies, no
+  Authorization, no SAPISIDHASH — nothing to leak by construction. The
+  egress is the main-process transport IPC under a pinned URL+method
+  allowlist (the Netflix transport law, mirrored), pinned by battery.
+
+Recorded in docs/plans/work-orders/WFX-ANON-VIEW-1.md and the freeze §9.5
+addendum of the same date.

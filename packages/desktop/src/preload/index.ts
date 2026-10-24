@@ -96,6 +96,10 @@ import "./webflixAgentBridge.js";
 // bounded Tudum pool fetch + the play hand-off open) — same law: exactly two
 // typed methods over two namespaced channels, NO-OP outside the webflix flavor.
 import "./webflixNetflixBridge.js";
+// WFX-ANON-VIEW-1: the key-free public web transport bridge (the anonymous
+// YouTube engine's egress) — same law: exactly one typed method over one
+// namespaced channel, zero credentials, NO-OP outside the webflix flavor.
+import "./webflixYoutubePublicBridge.js";
 
 if (shouldEnableE2ETestBridge(process.env)) {
   contextBridge.exposeInMainWorld("__zcodeFinalArmsCustomEventsE2E", {

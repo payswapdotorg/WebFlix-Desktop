@@ -120,6 +120,12 @@ export interface YouTubeSourceBudgetSnapshot {
   readonly unitsLimitToday: number;
   readonly unitsRemainingToday: number;
   readonly searchCallsRemainingToday: number;
+  /**
+   * Optional engine note (WFX-ANON-VIEW-1): the key-free public engine's
+   * quota-free ledger writes its own note; mirrors the app port's optional
+   * field so the two shapes stay structurally pinned-equal.
+   */
+  readonly note?: string;
 }
 
 /** One engine page of rows + the honest paging cursor + the post-call budget. */

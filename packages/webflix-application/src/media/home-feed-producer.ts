@@ -41,10 +41,10 @@ import type { ClockPort } from "../ports";
 import type { YouTubeCatalogSourceHandle, YouTubeSourcePage } from "./youtube-source-port";
 
 export const HOME_FEED_COMPOSITION_NOTE =
-  "Composed from the official YouTube Data API trending chart (videos.list chart=mostPopular) with a duration/title-classified shorts shelf and the WebFlix-local continue-watching rail — YouTube publishes no home-feed API for third-party clients.";
+  "Composed from the provider's trending surface (the official Data API chart, or the key-free public web trending feed — the web app's own anonymous path) with a duration/title-classified shorts shelf and the WebFlix-local continue-watching rail — YouTube publishes no home-feed API for third-party clients.";
 
 export const HOME_FEED_APPEND_COMPOSITION_NOTE =
-  "Append page of the home compose: the official trending chart's next page, split into the shorts-classified shelf and the long-form grid — no official home-feed API exists for third-party clients.";
+  "Append page of the home compose: the provider trending surface's next page, split into the shorts-classified shelf and the long-form grid — no official home-feed API exists for third-party clients.";
 
 export interface HomeFeedProducerDeps {
   readonly clock: ClockPort;
