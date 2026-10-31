@@ -1,0 +1,430 @@
+# WebFlix release pipeline — WFX-DIST-1
+# Order: docs/plans/work-orders/WFX-DIST-1.md
+#
+# What this workflow produces
+# ---------------------------
+# The downloadable, installable product on BOTH desktop platforms — the
+# zcode-parity distribution surface (operator instruction 2026-10-31:
+# "easily downloadable and installable on Linux and Windows"):
+#
+#   build-linux   (ubuntu-24.04)  → WebFlix-<version>-linux-amd64.deb
+#                                   WebFlix-<version>-linux-x86_64.AppImage
+#   build-windows (windows-2025)  → WebFlix-<version>-win-x64.exe (NSIS)
+#   release       (tag pushes)    → a GitHub Release carrying every artifact
+#                                   + .sha256 sidecars + latest.json +
+#                                   install.sh / install.ps1 (repo root,
+#                                   curl-able raw URLs)
+#
+# Modes
+# -----
+#   workflow_dispatch  → verification dry-run: both lanes build and upload
+#                        workflow artifacts; the release job is SKIPPED
+#                        (it is tag-gated). This is how the lanes are
+#                        verified BEFORE a real tag.
+#   push tag v*        → the full pipeline + the GitHub Release publish.
+#
+# Auto-update stays fail-closed (the P8-RELEASE-DRIFT-1 / P9-LINUX-1 guard,
+# cited not modified)
+# ---------------------------------------------------------------------
+#   - No GH_TOKEN/GITHUB_TOKEN is passed into any electron-builder step;
+#     the builder's publish config stays the inert localhost placeholder.
+#   - The Release is created by the release job through the gh CLI using
+#     the job-scoped GITHUB_TOKEN (contents:write) — publishing artifacts
+#     does NOT create an update feed and never points the app at one.
+#   - latest.json is the INSTALL-SCRIPT manifest (zcode-distribution
+#     parity, consumed by install.sh/install.ps1) — it is deliberately
+#     NOT an electron-updater feed, and the in-app updater remains
+#     disabled for the WebFlix flavor (updater-product-guard.ts).
+#
+# Identity values (homepage https://webflix.org, maintainer
+# WebFlix <dev@webflix.org>) were marked PROPOSED pending operator
+# approval in the P9-LINUX-1 workflow header; the operator's
+# distribution instruction (2026-10-31) is that approval — they are
+# unchanged here and every artifact keeps carrying them.
+
+name: webflix-release
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: webflix-release-${{ github.ref }}
+  # Never cancel an in-flight publish; a superseded tag build simply queues.
+  cancel-in-progress: false
+
+jobs:
+  build-linux:
+    name: WebFlix Linux x86_64 (deb + AppImage)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    env:
+      WEBFLIX_IDENTITY: "1"
+      ZCODE_ENV: production
+      ZCODE_LINUX_TARGETS: "AppImage,deb"
+      ZCODE_SKIP_REMOTE_ASSETS: "1"
+    steps:
+      - name: Check out source (no persisted credentials)
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up pnpm (repository pin)
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.2
+
+      - name: Set up Node (repository pin) with pnpm-store cache
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.14.0
+          cache: pnpm
+
+      - name: Install dependencies (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify WebFlix product identity (fail-closed)
+        working-directory: packages/desktop
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'EOF'
+          const identity = await import("./scripts/desktop-product-identity.mjs");
+          const webflix = identity.resolveDesktopProductIdentity(process.env);
+          const expected = {
+            flavor: "webflix",
+            appId: "org.webflix.desktop",
+            productName: "WebFlix",
+            scheme: "webflix",
+            dataRoot: ".webflix",
+            linuxExecutableName: "webflix",
+            linuxPackageName: "webflix-desktop",
+          };
+          for (const [field, expectedValue] of Object.entries(expected)) {
+            if (webflix[field] !== expectedValue) {
+              throw new Error(`WebFlix identity mismatch on ${field}: expected ${expectedValue}, got ${webflix[field]}`);
+            }
+          }
+          identity.assertWebFlixIdentityNeverLeaksZCode(webflix);
+          const config = (await import("./electron-builder.config.js")).default;
+          if (config.appId !== "org.webflix.desktop" || config.productName !== "WebFlix") {
+            throw new Error("builder config identity drifted");
+          }
+          const targets = config.linux.target;
+          if (!Array.isArray(targets) || targets.join(",") !== "AppImage,deb") {
+            throw new Error(`ZCODE_LINUX_TARGETS convergence failed: ${JSON.stringify(targets)}`);
+          }
+          console.log("[identity] WebFlix lane OK; linux.target =", targets.join(","));
+          EOF
+
+      - name: Build WebFlix desktop (bundle:desktop, linux/x64)
+        run: pnpm bundle:desktop -- --os linux --arch x64
+
+      - name: Verify artifacts, identity surface, and write sidecars
+        run: |
+          set -euo pipefail
+          VERSION="$(node -p "require('./package.json').version")"
+          DIST="packages/desktop/dist"
+          MIN_BYTES=$((50 * 1024 * 1024))
+          shopt -s nullglob
+          DEBS=("$DIST"/WebFlix-"${VERSION}"-linux-*.deb)
+          APPIMAGES=("$DIST"/WebFlix-"${VERSION}"-linux-*.AppImage)
+          shopt -u nullglob
+          if [ "${#DEBS[@]}" -ne 1 ] || [ "${#APPIMAGES[@]}" -ne 1 ]; then
+            echo "FAIL: expected exactly one .deb and one .AppImage (found ${#DEBS[@]} deb, ${#APPIMAGES[@]} appimage)" >&2
+            exit 1
+          fi
+          DEB="${DEBS[0]}"
+          APPIMAGE="${APPIMAGES[0]}"
+          for artifact in "$DEB" "$APPIMAGE"; do
+            size="$(stat -c%s "$artifact")"
+            if [ "$size" -lt "$MIN_BYTES" ]; then
+              echo "FAIL: artifact below minimum size (${size} < ${MIN_BYTES}): $artifact" >&2
+              exit 1
+            fi
+            (cd "$DIST" && sha256sum "$(basename "$artifact")" > "$(basename "$artifact").sha256")
+            echo "[artifact] $(basename "$artifact") size=${size}"
+          done
+
+          echo "== deb package identity (dpkg fields) =="
+          field() { dpkg-deb -f "$DEB" "$1"; }
+          [ "$(field Package)" = "webflix-desktop" ] || { echo "FAIL: deb Package is not webflix-desktop" >&2; exit 1; }
+          [ "$(field Version)" = "$VERSION" ] || { echo "FAIL: deb Version drift" >&2; exit 1; }
+          if dpkg-deb -f "$DEB" Description | grep -qi "zcode"; then
+            echo "FAIL: deb Description leaks a ZCode string" >&2; exit 1
+          fi
+          dpkg-deb -f "$DEB" Description | grep -q "WebFlix Desktop App" || {
+            echo "FAIL: deb Description is not the WebFlix description" >&2; exit 1
+          }
+          echo "[deb] Package=$(field Package) Version=$(field Version) Depends=$(field Depends)"
+
+          echo "== deb desktop entry identity =="
+          DEB_EXTRACT="$(mktemp -d)"
+          dpkg-deb -x "$DEB" "$DEB_EXTRACT"
+          DEB_DESKTOP="$(find "$DEB_EXTRACT" -name "*.desktop" -type f)"
+          grep -qx "Name=WebFlix" "$DEB_DESKTOP" || { echo "FAIL: desktop Name is not WebFlix" >&2; exit 1; }
+          grep -qx "Icon=webflix" "$DEB_DESKTOP" || { echo "FAIL: desktop Icon is not webflix" >&2; exit 1; }
+          grep -q "x-scheme-handler/webflix" "$DEB_DESKTOP" || { echo "FAIL: desktop entry missing webflix:// scheme" >&2; exit 1; }
+          if grep -qi "zcode" "$DEB_DESKTOP"; then
+            echo "FAIL: desktop entry contains a ZCode string" >&2; exit 1
+          fi
+          echo "[deb] desktop entry identity OK"
+
+          echo "== AppImage identity =="
+          [ -x "$APPIMAGE" ] || { echo "FAIL: AppImage is not executable" >&2; exit 1; }
+          APPIMAGE_EXTRACT="$(mktemp -d)"
+          (cd "$APPIMAGE_EXTRACT" && "$GITHUB_WORKSPACE/$APPIMAGE" --appimage-extract >/dev/null)
+          APPIMAGE_ROOT="$APPIMAGE_EXTRACT/squashfs-root"
+          APPIMAGE_DESKTOP="$(find "$APPIMAGE_ROOT" -maxdepth 1 -name "*.desktop" -type f | head -1)"
+          grep -qx "Name=WebFlix" "$APPIMAGE_DESKTOP" || { echo "FAIL: AppImage desktop Name is not WebFlix" >&2; exit 1; }
+          grep -q "x-scheme-handler/webflix" "$APPIMAGE_DESKTOP" || { echo "FAIL: AppImage desktop missing webflix:// scheme" >&2; exit 1; }
+          echo "[appimage] desktop entry identity OK"
+
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "DEB_NAME=$(basename "$DEB")" >> "$GITHUB_ENV"
+          echo "APPIMAGE_NAME=$(basename "$APPIMAGE")" >> "$GITHUB_ENV"
+
+      - name: Upload .deb artifact (+ sha256 sidecar)
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-linux-deb
+          path: |
+            packages/desktop/dist/${{ env.DEB_NAME }}
+            packages/desktop/dist/${{ env.DEB_NAME }}.sha256
+          if-no-files-found: error
+
+      - name: Upload .AppImage artifact (+ sha256 sidecar)
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-linux-appimage
+          path: |
+            packages/desktop/dist/${{ env.APPIMAGE_NAME }}
+            packages/desktop/dist/${{ env.APPIMAGE_NAME }}.sha256
+          if-no-files-found: error
+
+  build-windows:
+    name: WebFlix Windows x86_64 (NSIS installer)
+    runs-on: windows-2025
+    timeout-minutes: 120
+    env:
+      WEBFLIX_IDENTITY: "1"
+      ZCODE_ENV: production
+      ZCODE_SKIP_REMOTE_ASSETS: "1"
+    steps:
+      - name: Check out source (no persisted credentials)
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up pnpm (repository pin)
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.2
+
+      - name: Set up Node (repository pin) with pnpm-store cache
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.14.0
+          cache: pnpm
+
+      - name: Install dependencies (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify WebFlix product identity (fail-closed)
+        working-directory: packages/desktop
+        shell: pwsh
+        run: |
+          @'
+          const identity = await import("./scripts/desktop-product-identity.mjs");
+          const webflix = identity.resolveDesktopProductIdentity(process.env);
+          const expected = {
+            flavor: "webflix",
+            appId: "org.webflix.desktop",
+            productName: "WebFlix",
+            scheme: "webflix",
+            dataRoot: ".webflix",
+          };
+          for (const [field, expectedValue] of Object.entries(expected)) {
+            if (webflix[field] !== expectedValue) {
+              throw new Error(`WebFlix identity mismatch on ${field}: expected ${expectedValue}, got ${webflix[field]}`);
+            }
+          }
+          identity.assertWebFlixIdentityNeverLeaksZCode(webflix);
+          const config = (await import("./electron-builder.config.js")).default;
+          if (config.win.target.join(",") !== "nsis") {
+            throw new Error(`win.target drifted: ${JSON.stringify(config.win.target)}`);
+          }
+          console.log("[identity] WebFlix lane OK; win.target =", config.win.target.join(","));
+          '@ | node --input-type=module
+          if ($LASTEXITCODE -ne 0) { throw "identity verification failed" }
+
+      - name: Build WebFlix desktop (bundle:desktop, win/x64)
+        run: pnpm bundle:desktop -- --os win --arch x64
+
+      - name: Verify installer, identity surface, and write sidecar
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $Version = (node -p "require('./package.json').version")
+          $Dist = "packages/desktop/dist"
+          $Installers = @(Get-ChildItem -Path $Dist -Filter "WebFlix-$Version-win-*.exe" -File)
+          if ($Installers.Count -ne 1) {
+            throw "FAIL: expected exactly one NSIS installer, found $($Installers.Count)"
+          }
+          $Installer = $Installers[0]
+          if ($Installer.Length -lt 50MB) {
+            throw "FAIL: installer below minimum size ($($Installer.Length) bytes): $($Installer.Name)"
+          }
+          $Sha = (Get-FileHash -Algorithm SHA256 $Installer.FullName).Hash.ToLower()
+          Set-Content -Path "$($Installer.FullName).sha256" -Value "$Sha  $($Installer.Name)" -NoNewline
+          Write-Host "[artifact] $($Installer.Name) size=$($Installer.Length) sha256=$Sha"
+
+          # PE version identity — the NSIS installer is stamped from the
+          # product identity; a ZCode leak here is a product-surface bug.
+          $VersionInfo = (Get-Item $Installer.FullName).VersionInfo
+          Write-Host "[installer] ProductName=$($VersionInfo.ProductName) FileDescription=$($VersionInfo.FileDescription) FileVersion=$($VersionInfo.FileVersion)"
+          if ($VersionInfo.ProductName -ne "WebFlix") {
+            throw "FAIL: installer ProductName is not WebFlix: $($VersionInfo.ProductName)"
+          }
+          if ("$($VersionInfo.FileDescription)$($VersionInfo.ProductName)$($VersionInfo.CompanyName)" -match "[Zz][Cc]ode") {
+            throw "FAIL: installer version info leaks a ZCode string"
+          }
+
+          "NSIS_NAME=$($Installer.Name)" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "WEBFLIX_VERSION=$Version" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Upload NSIS installer (+ sha256 sidecar)
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-windows-nsis
+          path: |
+            packages/desktop/dist/${{ env.NSIS_NAME }}
+            packages/desktop/dist/${{ env.NSIS_NAME }}.sha256
+          if-no-files-found: error
+
+  release:
+    name: Publish the GitHub Release
+    needs: [build-linux, build-windows]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - name: Check out the tagged tree (for install.sh / install.ps1)
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Verify tag matches the package version (fail-closed)
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF_NAME}"
+          VERSION="$(node -p "require('./package.json').version")"
+          if [ "v$VERSION" != "$TAG" ]; then
+            echo "FAIL: tag $TAG does not match package.json version $VERSION (expected v$VERSION)" >&2
+            exit 1
+          fi
+          echo "release tag $TAG == package version $VERSION"
+
+      - name: Download all lane artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          merge-multiple: false
+
+      - name: Stage the release payload + generate latest.json and notes
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF_NAME}"
+          VERSION="${TAG#v}"
+          STAGE="release-stage"
+          mkdir -p "$STAGE"
+
+          DEB_NAME="$(basename "$(find release-assets/release-linux-deb -name '*.deb' -type f)")"
+          APPIMAGE_NAME="$(basename "$(find release-assets/release-linux-appimage -name '*.AppImage' -type f)")"
+          NSIS_NAME="$(basename "$(find release-assets/release-windows-nsis -name '*.exe' -type f)")"
+          cp "release-assets/release-linux-deb/$DEB_NAME" "$STAGE/"
+          cp "release-assets/release-linux-deb/$DEB_NAME.sha256" "$STAGE/"
+          cp "release-assets/release-linux-appimage/$APPIMAGE_NAME" "$STAGE/"
+          cp "release-assets/release-linux-appimage/$APPIMAGE_NAME.sha256" "$STAGE/"
+          cp "release-assets/release-windows-nsis/$NSIS_NAME" "$STAGE/"
+          cp "release-assets/release-windows-nsis/$NSIS_NAME.sha256" "$STAGE/"
+          cp install.sh install.ps1 "$STAGE/"
+
+          sha() { cut -d' ' -f1 "$STAGE/$1.sha256"; }
+          DEB_SHA256="$(sha "$DEB_NAME")"
+          APPIMAGE_SHA256="$(sha "$APPIMAGE_NAME")"
+          NSIS_SHA256="$(sha "$NSIS_NAME")"
+          RELEASED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+          node --input-type=module - "$STAGE/latest.json" <<JSON
+          import { writeFile } from "node:fs/promises";
+          const [out] = process.argv.slice(2);
+          const payload = {
+            version: "$VERSION",
+            tag: "$TAG",
+            channel: "stable",
+            releasedAt: "$RELEASED_AT",
+            debName: "$DEB_NAME",
+            debSha256: "$DEB_SHA256",
+            appimageName: "$APPIMAGE_NAME",
+            appimageSha256: "$APPIMAGE_SHA256",
+            nsisName: "$NSIS_NAME",
+            nsisSha256: "$NSIS_SHA256",
+          };
+          await writeFile(out, JSON.stringify(payload, null, 2) + "\n");
+          JSON
+
+          {
+            echo "## Downloads"
+            echo ""
+            echo "| Platform | Artifact | SHA-256 |"
+            echo "| --- | --- | --- |"
+            echo "| Linux (deb) | \`$DEB_NAME\` | \`$DEB_SHA256\` |"
+            echo "| Linux (AppImage) | \`$APPIMAGE_NAME\` | \`$APPIMAGE_SHA256\` |"
+            echo "| Windows (NSIS) | \`$NSIS_NAME\` | \`$NSIS_SHA256\` |"
+            echo ""
+            echo "Every artifact carries a \`.sha256\` sidecar in this release; \`latest.json\` is the install-script manifest."
+            echo ""
+            echo "## Install"
+            echo ""
+            echo "Linux (deb on apt systems, AppImage otherwise):"
+            echo ""
+            echo '    curl -fsSL https://raw.githubusercontent.com/payswapdotorg/webflix-desktop/main/install.sh | sh'
+            echo ""
+            echo "Windows (PowerShell):"
+            echo ""
+            echo '    irm https://raw.githubusercontent.com/payswapdotorg/webflix-desktop/main/install.ps1 | iex'
+            echo ""
+            echo "Or download an artifact above and install manually (\`sudo apt-get install ./$DEB_NAME\`, or make the AppImage executable and run it; on Windows run the NSIS installer)."
+            echo ""
+            echo "## Notes"
+            echo ""
+            echo "- Auto-update remains intentionally disabled in-app (the WebFlix flavor's fail-closed updater guard); releases are announced, never self-installed."
+            echo "- Linux artifacts are smoke-verified per release (launch, identity, isolation, the durable library/history restart gates). The Windows lane is build- and identity-verified per release; Windows runtime QA is recorded in the release evidence as it matures."
+            echo "- Source: \`$TAG\` at commit \`$GITHUB_SHA\`."
+          } > release-notes.md
+
+          echo "== staged payload =="
+          ls -la "$STAGE"
+
+      - name: Create the GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF_NAME}"
+          VERSION="${TAG#v}"
+          gh release create "$TAG" release-stage/* release-notes.md \
+            --title "WebFlix Desktop $VERSION" \
+            --notes-file release-notes.md \
+            --latest
+          echo "release published:"
+          gh release view "$TAG" --json url,assets --jq '{url: .url, assets: [.assets[].name]}'

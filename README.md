@@ -4,6 +4,24 @@
 
 WebFlix is built from the desktop/application substrate in [zai-org/ZCode](https://github.com/zai-org/ZCode). The initial platform goal is to make WebFlix a meaningful alternative interface to YouTube using each user's own authorized YouTube account where supported. After that first integration is proven, generalize the connector and account model to become a primary interface for more major social platforms. The existing [WebFlix 2.0 web app](https://github.com/payswapdotorg/WebFlix-2.0) is a behavioral and integration reference, not a runtime dependency or a shared-account backend.
 
+## Download & install
+
+Prebuilt, checksummed installers for **Linux and Windows** are published on the [releases page](https://github.com/payswapdotorg/webflix-desktop/releases) (built by [`.github/workflows/webflix-release.yml`](.github/workflows/webflix-release.yml) with per-artifact SHA-256 sidecars and a `latest.json` manifest).
+
+**Linux** (one-liner — `.deb` through apt on Debian/Ubuntu systems, AppImage into `~/.local/bin` elsewhere; `--appimage`/`--deb` to force, `--version X` to pin):
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/payswapdotorg/webflix-desktop/main/install.sh | sh
+```
+
+**Windows** (PowerShell one-liner — downloads the NSIS installer, verifies its SHA-256, then runs it):
+
+```powershell
+irm https://raw.githubusercontent.com/payswapdotorg/webflix-desktop/main/install.ps1 | iex
+```
+
+Manual: grab `WebFlix-<version>-linux-amd64.deb` (or the `.AppImage`) / `WebFlix-<version>-win-x64.exe` from the latest release, check the `.sha256` sidecar, and install (`sudo apt-get install ./<deb>` / make the AppImage executable / run the NSIS installer). The in-app auto-updater is intentionally disabled (fail-closed product guard) — new versions are announced, never self-installed.
+
 ## Product direction
 
 **Delivery order:** (1) a source-reviewed, per-user YouTube interface; (2) the next major social platforms selected by capability, user value and integration feasibility; (3) the wider entertainment OS capabilities. The architecture remains provider-neutral so the YouTube-first implementation does not become a hard-coded single-provider domain.
