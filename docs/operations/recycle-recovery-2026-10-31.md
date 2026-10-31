@@ -16,7 +16,10 @@ reboot was a full sandbox reprovision, not a revive:
 - `my-project` git history (the harness checkpoint commits) — reset to a fresh
   initial commit; the working tree is the stock scaffold
 - Survivors: the GitHub remote (sole source of truth) and the credentials
-  supplied by the operator
+  supplied by the operator. Operational note for the next TL: the
+  operator's FALLBACK PAT carries push/write on this repo; the primary PAT
+  is read-only (verified live: clone works with both, push only with the
+  fallback).
 
 ## The loss inventory (honest — what is gone and cannot be recovered)
 
@@ -96,9 +99,24 @@ Companion gates, same tree:
 
 The rebuilt desktop-bridge stack lives from this wave forward under
 `my-project/mini-services/desktop-bridge` (bun, :3033) and is committed to the
-harness repository's git — not just the local filesystem — so the next recycle
-restores it from the harness instead of losing it. The operator-facing console
-rides the harness web app (`/`).
+harness repository's git (commit dd9add4) — not just the local filesystem —
+so the next recycle restores it from the harness instead of losing it. The
+operator-facing console rides the harness web app (`/`): a live CDP view of
+the running app (auto-refreshing 1440×900 captures), real process status,
+the journey results, the evidence gallery and Relaunch/Stop controls.
+
+Bridge verification (browser-verified end-to-end the same day): the stack
+launched and adopted cleanly across hot reloads; the live view rendered the
+real app with live keyless YouTube rows; Relaunch and Stop round-trips each
+produced exactly one clean transition with fresh pids; captures are 1440×900
+via `Emulation.setDeviceMetricsOverride` (Electron's browser CDP endpoint has
+no `Browser.getWindowForTarget`); mobile 375px layout verified overflow-free.
+One live defect was found and fixed during verification — `bun --hot` does
+not clear prior module instances' timers, so stale watchdog closures once
+spawned rival stacks and crash-looped against each other; the bridge now
+keeps its state on `globalThis`, runs a single re-bindable watchdog tick and
+serializes every stack transition through a mutex (recorded as THE
+HOT-RELOAD LAW in the bridge source and the harness WORKLOG).
 
 ## Standing residuals (unchanged by this wave)
 
