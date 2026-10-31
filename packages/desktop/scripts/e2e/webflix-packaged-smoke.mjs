@@ -647,9 +647,31 @@ async function runPackagedSmoke({
           await page
             .locator('[data-testid="library-import-local-files"]')
             .click({ timeout: 5_000 });
-          await page.setInputFiles('[data-testid="webflix-local-file-input"]', mediaFile, {
-            timeout: 10_000,
-          });
+          // WFX-DURABLE-LIB-1: the file is attached through RAW CDP
+          // (DOM.setFileInputFiles), NOT page.setInputFiles — over a
+          // connectOverCDP session Playwright's setInputFiles falls back to
+          // DataTransfer-built File objects, which carry NO OS path
+          // (webUtils.getPathForFile answers null — live-pinned: the durable
+          // import then honestly degrades session-only). DOM.setFileInputFiles
+          // attaches the SAME path-backed File a real OS picker produces, so
+          // the durable import path is exercised for real.
+          const cdp = await page.context().newCDPSession(page);
+          try {
+            const doc = await cdp.send("DOM.getDocument", {});
+            const found = await cdp.send("DOM.querySelector", {
+              nodeId: doc.root.nodeId,
+              selector: '[data-testid="webflix-local-file-input"]',
+            });
+            if (!found.nodeId) {
+              throw new Error("the local file input was not found in the DOM");
+            }
+            await cdp.send("DOM.setFileInputFiles", {
+              files: [mediaFile],
+              nodeId: found.nodeId,
+            });
+          } finally {
+            await cdp.detach().catch(() => undefined);
+          }
           const entryRow = page.locator("li", { hasText: "local file" }).first();
           await entryRow.waitFor({ state: "visible", timeout: 10_000 });
           const entryText = await entryRow.innerText();
@@ -699,6 +721,35 @@ async function runPackagedSmoke({
               : `playing: t=${playerState.currentTime.toFixed(2)}s/${playerState.duration.toFixed(2)}s src=${playerState.src}`,
           );
           await page.screenshot({ path: join(outDir, `05-${flavor}-watch-player.png`) });
+          // WFX-DURABLE-LIB-1: let the playhead reports land BEFORE the
+          // shutdown — the first heartbeat fires at ~1s of playback and the
+          // clip's end report at its duration; the app must stay alive for
+          // them. Poll the REAL durable row (never a blind sleep), bounded.
+          let durableProgressMs = 0;
+          const progressDeadline = Date.now() + 9_000;
+          while (Date.now() < progressDeadline) {
+            const rows = await page
+              .evaluate(async () => {
+                const result = await globalThis.window?.webflixLocalLibrary?.listHistory?.("history");
+                return result?.ok === true ? result.entries : null;
+              })
+              .catch(() => null);
+            const watched = Array.isArray(rows)
+              ? rows.find((entry) => entry?.item?.title?.includes("webflix-smoke-media.mp4"))
+              : undefined;
+            if (watched !== undefined && watched.positionMs > 0) {
+              durableProgressMs = watched.positionMs;
+              break;
+            }
+            await sleep(400);
+          }
+          record(
+            `local-media:${flavor}:durable-progress`,
+            durableProgressMs > 0,
+            durableProgressMs > 0
+              ? `the durable watch row recorded real progress (positionMs=${durableProgressMs}) before shutdown`
+              : "no durable progress report landed before the bounded wait elapsed",
+          );
         } catch (error) {
           record(`local-media:${flavor}:import`, false, String(error?.message ?? error));
         }

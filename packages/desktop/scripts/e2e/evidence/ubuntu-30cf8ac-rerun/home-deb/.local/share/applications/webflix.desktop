@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=WebFlix
+Comment=WebFlix Desktop App
+Exec="/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-30cf8ac-rerun/deb-tree/opt/WebFlix/webflix" %U
+Terminal=false
+Type=Application
+Icon=webflix
+Categories=Development;
+MimeType=x-scheme-handler/webflix;
+StartupWMClass=WebFlix

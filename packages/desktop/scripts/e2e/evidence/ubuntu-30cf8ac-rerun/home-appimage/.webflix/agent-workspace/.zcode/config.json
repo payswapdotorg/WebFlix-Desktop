@@ -1,0 +1,18 @@
+{
+  "mcp": {
+    "servers": {
+      "webflix_ui": {
+        "type": "stdio",
+        "command": "/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-30cf8ac-rerun/appimage-run/squashfs-root/webflix",
+        "args": [
+          "/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-30cf8ac-rerun/home-appimage/.webflix/agent-workspace/webflix-ui-mcp.mjs"
+        ],
+        "env": {
+          "WEBFLIX_UI_RENDEZVOUS_DIR": "/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-30cf8ac-rerun/home-appimage/.webflix/agent-workspace",
+          "WEBFLIX_UI_RESPONSE_ROOT": "/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-30cf8ac-rerun/home-appimage/.webflix",
+          "ELECTRON_RUN_AS_NODE": "1"
+        }
+      }
+    }
+  }
+}
