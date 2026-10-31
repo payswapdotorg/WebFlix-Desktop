@@ -26,6 +26,11 @@ export function createDesktopNativePackagePrunePatterns(targetPlatformKey) {
     // 桌面运行时统一使用目标 prebuild，禁止把安装机现场编译物或 ABI bin 缓存带进跨平台包。
     "!node_modules/node-pty/build/**",
     "!node_modules/node-pty/bin/**",
+    // WFX-DURABLE-LIB-1：local-library 的 better-sqlite3 只在系统 Node（单测/CLI 场景）可用；
+    // 桌面 Electron 进程（开发 ABI 不匹配 / 打包无重建）一律由适配器回退 node:sqlite。
+    // 原生 .node 既不重建也不 asarUnpack，直接整体剪除，避免触发 packed-native 断言。
+    "!node_modules/better-sqlite3/**",
+    "!node_modules/@types/better-sqlite3/**",
     ...SUPPORTED_DESKTOP_PLATFORM_KEYS.filter((key) => key !== targetPlatformKey).map(
       (key) => `!node_modules/node-pty/prebuilds/${key}/**`,
     ),

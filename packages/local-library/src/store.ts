@@ -10,6 +10,7 @@ import { migration0004TranscriptPayloads } from "./db/migrations/0004_transcript
 import { migration0005TextAndAudioPayloads } from "./db/migrations/0005_text_and_audio_payloads";
 import { migration0006AdCenterStores } from "./db/migrations/0006_ad_center_stores";
 import { migration0007AdOfferVerificationStore } from "./db/migrations/0007_ad_offer_verification_store";
+import { migration0008WatchHistory } from "./db/migrations/0008_watch_history";
 import type { Migration } from "./db/migrate";
 import { createIntelligenceStores, type IntelligenceStores } from "./intelligence-stores";
 import { createAdsStores, type AdsStores } from "./ads-stores";
@@ -17,6 +18,7 @@ import { SqliteRankerSelectionStore } from "./ranker-selection-store";
 import { SqliteTranscriptPayloadStore } from "./transcript-payload-store";
 import { SqliteTextPayloadStore } from "./text-payload-store";
 import { SqliteAudioRenditionStore } from "./audio-rendition-store";
+import { SqliteWatchHistoryStore } from "./watch-history-store";
 import { ValidationError } from "./errors";
 import { LocalStore, type LocalStoreOptions } from "./localStore";
 import { assertNotDefaultDataRootInTests } from "./paths";
@@ -29,6 +31,7 @@ export const ALL_MIGRATIONS: readonly Migration[] = [
   migration0005TextAndAudioPayloads,
   migration0006AdCenterStores,
   migration0007AdOfferVerificationStore,
+  migration0008WatchHistory,
 ];
 
 export interface OpenStoreOptions {
@@ -48,6 +51,7 @@ export class WebFlixStore {
   private transcriptPayloadStore: SqliteTranscriptPayloadStore | undefined;
   private textPayloadStore: SqliteTextPayloadStore | undefined;
   private audioRenditionStore: SqliteAudioRenditionStore | undefined;
+  private watchHistoryStore: SqliteWatchHistoryStore | undefined;
   /** The caller-injected clock (tests pin it); threads into the ads bundle. */
   private readonly now: (() => number) | undefined;
 
@@ -140,6 +144,23 @@ export class WebFlixStore {
   get audioRenditions(): SqliteAudioRenditionStore {
     this.audioRenditionStore ??= new SqliteAudioRenditionStore(this.db);
     return this.audioRenditionStore;
+  }
+
+  /**
+   * Durable WebFlix-owned watch-history store (WFX-DURABLE-LIB-1) over this
+   * profile's database — per-profile by construction (ADR-0003): the
+   * `watch_history` table (migration 0008, the freeze §7.5 storage profile —
+   * WebFlix-owned facts persist indefinitely, provider payloads ride a
+   * 30-day refresh-or-delete TTL). Lazy and stateless: the adapter only
+   * wraps the db handle. The composition-root consumer is this order's
+   * desktop main-process IPC seam (webflixLocalLibraryIpc.ts).
+   */
+  get watchHistory(): SqliteWatchHistoryStore {
+    this.watchHistoryStore ??= new SqliteWatchHistoryStore(
+      this.db,
+      this.now !== undefined ? { now: this.now } : {},
+    );
+    return this.watchHistoryStore;
   }
 
   close(): void {

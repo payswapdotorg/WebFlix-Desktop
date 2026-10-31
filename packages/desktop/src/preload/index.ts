@@ -100,6 +100,11 @@ import "./webflixNetflixBridge.js";
 // YouTube engine's egress) — same law: exactly one typed method over one
 // namespaced channel, zero credentials, NO-OP outside the webflix flavor.
 import "./webflixYoutubePublicBridge.js";
+// WFX-DURABLE-LIB-1: the durable local-library/history bridge — same law:
+// exactly eight typed methods over eight namespaced channels; playback URL
+// grants come only from the main-side authorize path, NO-OP outside the
+// webflix flavor.
+import "./webflixLocalLibraryBridge.js";
 
 if (shouldEnableE2ETestBridge(process.env)) {
   contextBridge.exposeInMainWorld("__zcodeFinalArmsCustomEventsE2E", {

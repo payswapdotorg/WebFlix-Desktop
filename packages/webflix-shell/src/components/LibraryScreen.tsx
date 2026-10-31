@@ -166,7 +166,7 @@ export function LibraryScreen(props: LibraryScreenProps) {
             <p style={styles.muted}>
               No local files yet.{" "}
               {onImportLocalFiles
-                ? "Import files you own with the button above — entries are session-only in this build (the durable local-library bridge is a later order)."
+                ? "Import files you own with the button above — imported entries stay on this device and re-list on the next start (durable device-local storage; files without a device path stay session-only; nothing is uploaded)."
                 : "Point the local library (D2) at a folder of videos you own and they will be listed here."}
             </p>
           </div>

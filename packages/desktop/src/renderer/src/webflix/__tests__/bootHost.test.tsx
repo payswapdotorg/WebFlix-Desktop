@@ -107,7 +107,7 @@ describe("the local import path works with no network and no credentials (requir
     expect(empty.textContent).toContain("session-only");
   });
 
-  it("a picked file becomes a library entry (the REAL input → session → screen wiring)", () => {
+  it("a picked file becomes a library entry (the REAL input → session → screen wiring)", async () => {
     renderHost();
     const input = screen.getByTestId("webflix-local-file-input") as HTMLInputElement;
     const file = new File([new Uint8Array([1, 2, 3])], "holiday.mp4", { type: "video/mp4" });
@@ -115,7 +115,10 @@ describe("the local import path works with no network and no credentials (requir
     fireEvent.change(input);
 
     fireEvent.click(screen.getByTestId("nav-library"));
-    const entry = screen.getByText("holiday.mp4");
+    // WFX-DURABLE-LIB-1 re-pin: the import flow is now durable-aware (the
+    // entry list refreshes in the import promise's continuation — one IPC
+    // round on a live bridge; a microtask on the null-bridge test path).
+    const entry = await screen.findByText("holiday.mp4", undefined, { timeout: 2000 });
     expect(entry).toBeTruthy();
   });
 });

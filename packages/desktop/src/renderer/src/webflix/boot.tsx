@@ -1,3 +1,4 @@
+/* eslint-disable max-lines -- boot.tsx: the WebFlix integration host (the WFX lanes' composition root); the route state, the play paths and the WFX-DURABLE-LIB-1 durable wiring (history source + retention seam + boot restore) share one host deliberately — the seams the battery fakes are this module's exported deps surface. Split deferred to the Phase-2 module split backlog (TL3 arbitration, repo precedent: localStore.ts). */
 /**
  * WFX-DESKTOP-WEBFLIX-UX-1 — the WebFlix renderer boot, INTEGRATED (TL2 lane).
  *
@@ -48,6 +49,13 @@ import type { WatchSurfaceState } from "../../../../../webflix-shell/src/compone
 import { WEBFLIX_DOCUMENT_TITLE } from "./brand.js";
 import { getWebFlixAccountsBridge, type WebFlixAccountsBridge } from "./accountsBridge.js";
 import { getWebFlixAgentWorkspaceBridge } from "./agentWorkspaceBridge.js";
+// WFX-DURABLE-LIB-1: the durable local-library bridge accessor (null = the
+// honest session-only degrade) + the durable watch-history source.
+import {
+  getWebFlixLocalLibraryBridge,
+  type WebFlixLocalLibraryBridge,
+} from "./localLibraryBridge.js";
+import { createDurableHistorySource, type DurableHistorySource } from "./durableHistorySource.js";
 import { createLocalLibrarySession, type LocalLibrarySession } from "./localLibrarySession.js";
 import { createRetentionSession, type RetentionSession } from "./retentionSession.js";
 import { resolveSearchQuery } from "./searchFlow.js";
@@ -55,7 +63,7 @@ import { resolvePlayPlan, type WatchView } from "./watchPlan.js";
 import { WebFlixErrorBoundary } from "./hostChrome.js";
 import { WebFlixHostView } from "./WebFlixHostView.js";
 import { useAccountRetentionHandlers } from "./useAccountRetentionHandlers.js";
-import { createSessionHistorySource, searchPhaseFromPageData } from "./mediaHostSupport.js";
+import { searchPhaseFromPageData } from "./mediaHostSupport.js";
 import { useSurfaceLoader } from "./useSurfaceLoader.js";
 import { useProducersAndWorkspace } from "./useProducersAndWorkspace.js";
 // WFX-NETFLIX-SOURCE-1: the second source's host support (the producer
@@ -92,6 +100,18 @@ export interface WebFlixHostDeps {
   /** The agent-workspace bridge (default: the real preload bridge; null = the honest unavailable state). */
   readonly agentWorkspaceBridge?: ReturnType<typeof getWebFlixAgentWorkspaceBridge>;
   /**
+   * WFX-DURABLE-LIB-1: the durable local-library bridge (default: the real
+   * preload bridge; null = the honest session-only degrade — byte-equivalent
+   * to the pre-wave surfaces).
+   */
+  readonly localLibraryBridge?: WebFlixLocalLibraryBridge | null;
+  /**
+   * WFX-DURABLE-LIB-1: the history-source factory (tests inject the
+   * session-only double; default: the durable-backed source over the
+   * bridge above).
+   */
+  readonly createHistorySource?: () => DurableHistorySource;
+  /**
    * The media-producer factory (default: the real live composition — the
    * key IPC → createLiveYouTubeComposition → createYouTubeMediaProducers).
    * Tests inject a fixture-labelled double.
@@ -112,17 +132,39 @@ export function WebFlixHost(deps: WebFlixHostDeps) {
     resolveOsPath: resolveOsPathDep,
     appVersion,
     agentWorkspaceBridge = getWebFlixAgentWorkspaceBridge(),
+    localLibraryBridge = getWebFlixLocalLibraryBridge(),
+    createHistorySource,
     createMediaProducers,
   } = deps;
   const localLibrary = useMemo(
-    () => createLocalLibrary?.() ?? createLocalLibrarySession(),
-    [createLocalLibrary],
+    () =>
+      createLocalLibrary?.() ??
+      createLocalLibrarySession({ durable: localLibraryBridge }),
+    [createLocalLibrary, localLibraryBridge],
   );
+  // WFX-DURABLE-LIB-1: the durable-backed watch-history source — the session
+  // seam's drop-in upgrade (write-through + merged reads; a null bridge is
+  // byte-equivalent to the session-only source).
+  const historySource = useMemo(
+    () => createHistorySource?.() ?? createDurableHistorySource({ bridge: localLibraryBridge }),
+    [createHistorySource, localLibraryBridge],
+  );
+  // WFX-DURABLE-LIB-1: the retention session now acts on the REAL durable
+  // stores through the history source's retention seam (pause gate, honest
+  // merged counts, the both-stores history reset) — the two previously
+  // disconnected history stores are one surface now.
   const retention = useMemo(
-    () => createRetention?.() ?? createRetentionSession(),
-    [createRetention],
+    () =>
+      createRetention?.() ??
+      createRetentionSession({
+        durable: {
+          setHistoryPaused: (paused) => historySource.setPaused(paused),
+          historyCount: () => historySource.countHistory(),
+          clearHistory: () => historySource.clearAll(),
+        },
+      }),
+    [createRetention, historySource],
   );
-  const historySource = useMemo(() => createSessionHistorySource(), []);
 
   // Route state (the frozen MediaRoute model; the shell renders from this).
   const [route, setRouteState] = useState<{ route: MediaRoute; params: RouteParams }>({
@@ -244,15 +286,50 @@ export function WebFlixHost(deps: WebFlixHostDeps) {
     [localLibrary, registerCards, historySource, setRoute],
   );
 
+  // WFX-DURABLE-LIB-1: the playing item's id (progress reports key against
+  // this — the shell's player reports positions, the host knows the item).
+  const playingItemIdRef = useRef<string | null>(null);
+
+  // WFX-DURABLE-LIB-1: the boot-time durable restore — re-list the device-
+  // local entries (present files gain a play-time-authorized plan, missing
+  // files keep their honest missing state) and register their cards so the
+  // agent bridge can play them too.
+  useEffect(() => {
+    let cancelled = false;
+    void localLibrary.restoreDurableEntries().then((restored) => {
+      if (cancelled || restored.length === 0) return;
+      setLocalEntries([...localLibrary.entryCatalogItems()]);
+      registerCards(restored.map((item) => ({ item, title: item.title })));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [localLibrary, registerCards]);
+
   // The shared play path (cards, links, queue entries AND the agent bridge).
   const playCard = useCallback(
     (card: VideoCardView) => {
       registerCards([card]);
-      historySource.recordWatch(card.item, card, undefined);
+      playingItemIdRef.current = card.item.id;
+      // WFX-DURABLE-LIB-1: a continue card carries its stored resume position
+      // (resumeAtSec) — the watch record keeps it (the app dying before the
+      // seek still leaves the durable row at the pre-play position) and the
+      // player seeks to it once on load.
+      const resumePositionMs =
+        "resumeAtSec" in card && typeof card.resumeAtSec === "number" && card.resumeAtSec > 0
+          ? card.resumeAtSec * 1000
+          : undefined;
+      historySource.recordWatch(card.item, card, undefined, resumePositionMs);
       localLibrary.markPlayed(card.item);
       setRecentItems([...localLibrary.recents()]);
       const view: WatchView = resolvePlayPlan(card.item, localLibrary);
-      setWatchState({ title: card.title, plan: view.plan, card, related: [] });
+      setWatchState({
+        title: card.title,
+        plan: view.plan,
+        card,
+        related: [],
+        ...(resumePositionMs !== undefined ? { resumePositionMs } : {}),
+      });
       setQueue((current) =>
         current.some((entry) => entry.item.id === card.item.id) ? current : [...current, card],
       );
@@ -301,25 +378,72 @@ export function WebFlixHost(deps: WebFlixHostDeps) {
         ).window?.zcode;
         return bridge?.getPathForFile?.(file) ?? null;
       });
-    localLibrary.importFiles(files.map((file) => ({ file, osPath: resolveOsPath(file) })));
-    setLocalEntries([...localLibrary.entryCatalogItems()]);
+    const imported = files.map((file) => ({ file, osPath: resolveOsPath(file) }));
+    // WFX-DURABLE-LIB-1 (the id-correlation law): pathed picks on a live
+    // bridge persist FIRST so the STABLE durable id becomes the catalog id
+    // (the watch rows key by it — a restart's restored entry correlates with
+    // its own history for resume). The await is one batched IPC round.
+    void Promise.resolve(localLibrary.importFilesDurable(imported)).then(() => {
+      setLocalEntries([...localLibrary.entryCatalogItems()]);
+    });
   };
 
   const handlePlay = (item: CatalogItem) => {
-    const view = resolvePlayPlan(item, localLibrary);
-    if (view.plan.kind !== "unavailable") {
-      localLibrary.markPlayed(item);
-      setRecentItems([...localLibrary.recents()]);
+    playingItemIdRef.current = item.id;
+    // WFX-DURABLE-LIB-1: a durable entry refreshes its authorization grant
+    // at play time (the main-side registry decides; the placeholder plan
+    // never reaches the player). Non-durable items keep the exact sync path.
+    const durablePlan = localLibrary.authorizeAtPlay(item.id);
+    const finishPlay = (view: WatchView, resumePositionMs?: number): void => {
+      if (view.plan.kind !== "unavailable") {
+        localLibrary.markPlayed(item);
+        setRecentItems([...localLibrary.recents()]);
+      }
+      historySource.recordWatch(item, null, undefined, resumePositionMs);
+      setWatchState({
+        title: item.title,
+        plan: view.plan,
+        card: null,
+        related: [],
+        ...(resumePositionMs !== undefined ? { resumePositionMs } : {}),
+      });
+      setRoute("watch", { itemId: item.id });
+    };
+    if (durablePlan !== null) {
+      void durablePlan.then((plan) => {
+        const view: WatchView = plan !== null ? { title: item.title, plan } : resolvePlayPlan(item, localLibrary);
+        // A restored durable local item resumes from its stored position
+        // when one exists (the merged history view knows it).
+        void historySource
+          .resumePositionMs(item.id)
+          .then((resumeMs) => {
+            finishPlay(view, resumeMs ?? undefined);
+          })
+          .catch(() => {
+            finishPlay(view);
+          });
+      });
+      return;
     }
-    historySource.recordWatch(item, null, undefined);
-    setWatchState({ title: item.title, plan: view.plan, card: null, related: [] });
-    setRoute("watch", { itemId: item.id });
+    const view = resolvePlayPlan(item, localLibrary);
+    finishPlay(view);
   };
 
   const handleSearchSubmit = (query: string) => {
     setRoute("search", { query });
     runSearch(query);
   };
+
+  // WFX-DURABLE-LIB-1: the local player's playhead reports — the durable
+  // progress record (throttled ~5s + pause/end from the shell's player).
+  const handleWatchProgress = useCallback(
+    (positionMs: number, durationMs: number | null) => {
+      const itemId = playingItemIdRef.current;
+      if (itemId === null) return;
+      historySource.recordProgress(itemId, positionMs, durationMs ?? undefined);
+    },
+    [historySource],
+  );
 
 
   // The LIVE-STATE mirror + the visible-media context builder (freeze §9.1:
@@ -439,6 +563,7 @@ export function WebFlixHost(deps: WebFlixHostDeps) {
       handleConnect={accountHandlers.handleConnect}
       handleDisconnect={accountHandlers.handleDisconnect}
       handleImportLocalFiles={handleImportLocalFiles}
+      handleWatchProgress={handleWatchProgress}
       handlePauseHistory={() => {
         void accountHandlers.handlePauseHistory();
       }}

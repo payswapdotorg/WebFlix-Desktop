@@ -1,3 +1,4 @@
+/* eslint-disable max-lines -- AppShell.tsx: the media-first shell root (WFX-UX-SHELL-1) + the persistent watch-dock layout (freeze §9.6); the route model, the docked player wiring and the WFX-DURABLE-LIB-1 progress/resume threading share one component deliberately. Split deferred to the Phase-2 module split backlog (TL3 arbitration, repo precedent: localStore.ts). */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { theme } from "../theme";
 import type {
@@ -70,6 +71,12 @@ export interface WatchSurfaceState {
   readonly actions?: readonly WatchActionView[];
   /** Host-side theater preference (the shell tracks its own toggle too). */
   readonly theater?: boolean;
+  /**
+   * WFX-DURABLE-LIB-1: the stored resume position for this play (the host
+   * knows the item's history); the local <video> seeks here once on load.
+   * Absent/0 = play from the start.
+   */
+  readonly resumePositionMs?: number;
 }
 
 export interface AppShellProps {
@@ -102,6 +109,13 @@ export interface AppShellProps {
    * Absent = no import affordance rendered (never a dead control).
    */
   readonly onImportLocalFiles?: () => void;
+  /**
+   * WFX-DURABLE-LIB-1: reports the local <video> player's playhead
+   * (throttled ~5s while playing + on pause/end); the host owns the
+   * durable progress record. Absent = no progress reporting (the player
+   * behaves exactly as before — no dead handlers).
+   */
+  readonly onWatchProgress?: (positionMs: number, durationMs: number | null) => void;
   // DESKTOP-COMPOSITION-1 (the composition row the P4/P5 ledger rows
   // promised): the Ad Center + MI Evaluation surfaces mount props-driven,
   // flat-optional like every other screen prop. Defaults are the honest
@@ -238,6 +252,7 @@ export function AppShell(props: AppShellProps) {
     onSearchSubmit,
     onRetrySearch,
     onImportLocalFiles,
+    onWatchProgress,
     connectOutcome = null,
     // WFX media-view seam (honest not-provided defaults: null everywhere).
     homeFeed = null,
@@ -520,6 +535,8 @@ export function AppShell(props: AppShellProps) {
                   ? undefined
                   : (channelId) => handleOpenChannel({ channelId })
               }
+              initialPositionMs={watchState.resumePositionMs}
+              onProgress={onWatchProgress}
             />
           </aside>
         )}

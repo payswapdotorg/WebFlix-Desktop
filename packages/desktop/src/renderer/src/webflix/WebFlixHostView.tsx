@@ -75,6 +75,11 @@ export interface WebFlixHostBundle {
   readonly handleConnect: (providerId: string) => void;
   readonly handleDisconnect: (internalAccountId: string) => void;
   readonly handleImportLocalFiles: () => void;
+  /**
+   * WFX-DURABLE-LIB-1: the local player's playhead reports (throttled +
+   * pause/end) — the host owns the durable progress record.
+   */
+  readonly handleWatchProgress: (positionMs: number, durationMs: number | null) => void;
   readonly handlePauseHistory: () => void;
   readonly handleResumeHistory: () => void;
   readonly handleResetLocalData: (scope: RetentionScope) => void;
@@ -146,6 +151,7 @@ function buildShellProps(bundle: WebFlixHostBundle): AppShellProps {
     onConnect: bundle.handleConnect,
     onDisconnect: bundle.handleDisconnect,
     onImportLocalFiles: bundle.handleImportLocalFiles,
+    onWatchProgress: bundle.handleWatchProgress,
     onSearchSubmit: bundle.handleSearchSubmit,
     homeFeed: bundle.homeFeed,
     channelView: bundle.channelView,

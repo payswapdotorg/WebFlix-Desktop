@@ -1,3 +1,4 @@
+/* eslint-disable max-lines -- WatchScreen.tsx: the persistent watch surface (freeze §9.6 — the player element must NEVER remount across variants); the player block's stable tree position, the three variant layouts, the metadata/action/queue chrome and the WFX-DURABLE-LIB-1 playhead reporting share one component deliberately — extracting subcomponents risks remounting the iframe/<video> mid-playback. Split deferred to the Phase-2 module split backlog (TL3 arbitration, repo precedent: localStore.ts). */
 import React from "react";
 import { theme } from "../theme";
 import type { PlaybackPlan, VideoCardView } from "webflix-contracts";
@@ -11,7 +12,6 @@ import {
   WatchActionRow,
 } from "./watch/WatchChrome";
 import type { WatchActionView, WatchQueueEntryView } from "./watch/WatchChrome";
-
 // Public re-exports (the barrel + the existing battery pin these names here).
 export type { WatchActionView, WatchQueueEntryView };
 export { DEFAULT_WATCH_ACTIONS };
@@ -59,6 +59,22 @@ export interface WatchScreenProps {
   readonly onPlayCard?: (card: VideoCardView) => void;
   /** Opens the channel from the metadata band (needs card.channelId). */
   readonly onOpenChannel?: (channelId: string) => void;
+  // ---- WFX-DURABLE-LIB-1 additions (both optional; the legacy contract
+  // stays EXACTLY when these are absent) ----
+  /**
+   * The stored resume position for this play (the host knows the item's
+   * history); the local <video> seeks here ONCE on loadedmetadata.
+   * Absent/0 = play from the start.
+   */
+  readonly initialPositionMs?: number;
+  /**
+   * Reports the local <video> player's playhead — throttled ~5s while
+   * playing, immediate on pause/end (the host owns the durable progress
+   * record). Absent = the player behaves exactly as before (no progress
+   * reporting, no dead handlers). Only the local-file path reports; the
+   * official IFrame embed cannot (no JS API by design).
+   */
+  readonly onProgress?: (positionMs: number, durationMs: number | null) => void;
 }
 
 const styles: Record<string, React.CSSProperties> = {
@@ -191,8 +207,38 @@ export function WatchScreen(props: WatchScreenProps): React.ReactElement {
     onAction,
     onPlayCard,
     onOpenChannel,
+    initialPositionMs,
+    onProgress,
   } = props;
   const embedUrl = plan.kind === "official-embed" ? embedUrlOf(plan) : undefined;
+
+  // ---- WFX-DURABLE-LIB-1: the local player's playhead reporting ----
+  // The <video> element persists across variants (freeze §9.6), so the
+  // refs reset per SRC (a new file = a new progress stream), and the seek
+  // fires ONCE per src on loadedmetadata. The throttle keeps the durable
+  // write path at ~1 report / 5s while playing; pause/end report
+  // immediately (the position the user actually stopped at).
+  const videoRef = React.useRef<HTMLVideoElement | null>(null);
+  const lastReportedMsRef = React.useRef(0);
+  const soughtForSrcRef = React.useRef<string | null>(null);
+  const planSrc = plan.kind === "local-file" ? plan.path : null;
+  const reportPlayhead = (immediate: boolean): void => {
+    const element = videoRef.current;
+    if (element === null || onProgress === undefined) return;
+    const positionMs = element.currentTime * 1000;
+    if (!Number.isFinite(positionMs) || positionMs < 0) return;
+    if (!immediate) {
+      // The first heartbeat lands at ~1s (short clips must report too — a
+      // 3s smoke clip would never cross a pure 5s threshold); after that
+      // the steady ~5s cadence applies.
+      const last = lastReportedMsRef.current;
+      if (last > 0 && positionMs - last < 5000) return;
+      if (last === 0 && positionMs < 1000) return;
+    }
+    lastReportedMsRef.current = positionMs;
+    const durationMs = Number.isFinite(element.duration) ? element.duration * 1000 : null;
+    onProgress(positionMs, durationMs);
+  };
 
   // The player block is ALWAYS the second child (after the heading) of the
   // SAME primary column in every variant (compact, normal, theater): the
@@ -228,7 +274,32 @@ export function WatchScreen(props: WatchScreenProps): React.ReactElement {
 
       {plan.kind === "local-file" && (
         <>
-          <video data-testid="watch-local-player" controls src={plan.path} style={styles.player} />
+          <video
+            data-testid="watch-local-player"
+            controls
+            src={plan.path}
+            style={styles.player}
+            ref={(element) => {
+              videoRef.current = element;
+            }}
+            onTimeUpdate={() => reportPlayhead(false)}
+            onPause={() => reportPlayhead(true)}
+            onEnded={() => reportPlayhead(true)}
+            onLoadedMetadata={() => {
+              // The once-per-src resume seek (WFX-DURABLE-LIB-1): the host
+              // supplied the stored position; 0/absent plays from the start.
+              if (soughtForSrcRef.current === planSrc) return;
+              soughtForSrcRef.current = planSrc;
+              lastReportedMsRef.current = 0;
+              const element = videoRef.current;
+              if (element !== null && initialPositionMs !== undefined && initialPositionMs > 0) {
+                const seekTo = initialPositionMs / 1000;
+                if (Number.isFinite(element.duration) && seekTo < element.duration) {
+                  element.currentTime = seekTo;
+                }
+              }
+            }}
+          />
           <p style={styles.note}>
             Playing a local file from your disk{plan.mimeType ? ` (${plan.mimeType})` : ""}.
           </p>

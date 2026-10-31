@@ -215,6 +215,7 @@ import { registerWebFlixAccountIpc } from "./webflixAccountIpc.js";
 import { registerWebFlixAgentWorkspaceIpc } from "./webflixAgentWorkspaceIpc.js";
 import { registerWebFlixNetflixIpc } from "./webflixNetflixIpc.js";
 import { registerWebFlixYoutubePublicIpc } from "./webflixYoutubePublicIpc.js";
+import { registerWebFlixLocalLibraryIpc } from "./webflixLocalLibraryIpc.js";
 import {
   configureDesktopStabilityTelemetry,
   getStabilityLifecycleScene,
@@ -2205,6 +2206,16 @@ app.whenReady().then(async () => {
   // (the renderer cannot reach youtube.com itself — no CORS). This is the
   // egress of the DEFAULT anonymous YouTube engine — zero credentials.
   registerWebFlixYoutubePublicIpc({ logger });
+
+  // WFX-DURABLE-LIB-1: the durable local-library/history bridge (webflix
+  // flavor only): the ONE migration-backed SQLite store under the WebFlix
+  // identity data root, exposed through the validated IPC surface. The
+  // local-media preview registry is the ONLY file-access grant for restored
+  // entries (play-time authorization; progress writes re-warm it).
+  registerWebFlixLocalLibraryIpc({
+    logger,
+    localMediaPathRegistry: localMediaPreviewPathRegistry,
+  });
 
   registerRemoteIpcHandlers({
     logger,

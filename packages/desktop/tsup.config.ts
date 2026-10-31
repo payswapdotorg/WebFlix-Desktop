@@ -125,6 +125,10 @@ const desktopNodeRuntimeExternals = [
   "node-forge",
   // ZIP 解包器内部依赖 CommonJS require("fs")，不能内联到 ESM main/host 产物。
   "yauzl",
+  // WFX-DURABLE-LIB-1：local-library 的适配器动态 import("better-sqlite3")。
+  // 保持运行时外部依赖：打包态会被 native 裁剪策略剪除（适配器回退 node:sqlite），
+  // 开发态 Electron ABI 与系统构建不匹配时同样被适配器捕获回退 —— 两种情况都不能内联。
+  "better-sqlite3",
 ];
 
 function createDevReadyMarkerHook(target: "main" | "host" | "preload"): string {
@@ -166,6 +170,9 @@ export default defineConfig([
       // electron-builder 又会排除 node_modules/@zcode，导致安装包启动即 ERR_MODULE_NOT_FOUND。
       // producer 的 JS broker 必须跟随 services 一起内联，原生 addon 仍只存在于独立 Helper。
       "@zcode/zcode-cua",
+      // WFX-DURABLE-LIB-1：local-library 同样导出 TypeScript 源码（无 dist 产物），
+      // 生产运行时没有 TS loader，必须内联进 main 产物；其 better-sqlite3 依赖保持外部（见上）。
+      "local-library",
     ],
     // OTLP 端点与鉴权只在运行时读取；构建环境中的凭据不能写进公开安装包。
     define: createSharedDefines(),

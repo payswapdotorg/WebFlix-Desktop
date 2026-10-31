@@ -169,9 +169,10 @@ describe("durable Ad Center stores (sqlite seam, temp dirs)", () => {
 
   it("migration 0006 + 0007 create the six ad_* tables and are recorded exactly once", async () => {
     const rows = store.db.prepare("SELECT id, name FROM schema_migrations ORDER BY id").all();
-    expect(rows).toHaveLength(7);
+    expect(rows).toHaveLength(8);
     expect(rows[5]["name"]).toBe("0006_ad_center_stores");
     expect(rows[6]["name"]).toBe("0007_ad_offer_verification_store");
+    expect(rows[7]["name"]).toBe("0008_watch_history");
     const tables = store.db
       .prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name LIKE 'ad_%'")
       .all()
@@ -682,11 +683,11 @@ describe("durable Ad Center stores (sqlite seam, temp dirs)", () => {
       checksum: "fnv1a32:373f2325",
     });
     db.close();
-    // Reopen with the FULL list: 0006 + 0007 apply forward, nothing is lost.
+    // Reopen with the FULL list: 0006 + 0007 + 0008 apply forward, nothing is lost.
     const reopened = await openStore({ baseDir: dir, now: pinnedClock() });
     try {
       const migrations = reopened.db.prepare("SELECT id FROM schema_migrations ORDER BY id").all();
-      expect(migrations).toHaveLength(7);
+      expect(migrations).toHaveLength(8);
       const payload = await reopened.textPayloads.get("art-pre-0006");
       expect(payload.text).toBe("pre-0006 payload");
       // The ads tables exist and are HONESTLY EMPTY (pre-import state).
@@ -718,13 +719,13 @@ describe("durable Ad Center stores (sqlite seam, temp dirs)", () => {
     const edgeStore = new SqliteEvidenceEdgeStore(db);
     await edgeStore.append(edge);
     db.close();
-    // Reopen with the FULL list: 0007 applies forward, the 0006-era data
+    // Reopen with the FULL list: 0007 (and 0008) apply forward, the 0006-era data
     // survives byte-identically, and the verification table is honestly
     // empty (no ads.verify run has happened yet).
     const reopened = await openStore({ baseDir: dir, now: pinnedClock() });
     try {
       const migrations = reopened.db.prepare("SELECT id FROM schema_migrations ORDER BY id").all();
-      expect(migrations).toHaveLength(7);
+      expect(migrations).toHaveLength(8);
       expect(await reopened.ads.claims.get("claim-1")).toEqual(claim);
       expect(await reopened.ads.evidenceEdges.get("ev-1")).toEqual(edge);
       expect(await reopened.ads.offerVerifications.list()).toEqual([]);

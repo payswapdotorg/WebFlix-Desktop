@@ -2,9 +2,11 @@
  * P9-UI-1 (order requirement 3) — the watch-plan resolver for the WebFlix
  * renderer host: REAL plans only, honest typed refusals otherwise.
  *
- *   - A local session entry resolves to its playable object-URL plan; a
- *     removed entry resolves to the typed unavailable/removed state (the
- *     session library is stated honestly — re-import, never a ghost play).
+ *   - A local session entry resolves to its playable plan (a fresh import's
+ *     object URL, or the durable entry's authorized-at-play preview URL —
+ *     WFX-DURABLE-LIB-1 refreshes it through authorizeAtPlay before this
+ *     resolver runs); a removed entry resolves to the typed
+ *     unavailable/removed state (re-import, never a ghost play).
  *   - A YouTube item resolves through the reviewed provider operation ONLY
  *     when it carries a real official-embed reference; WebFlix never wraps
  *     scraped streams.
@@ -36,7 +38,7 @@ export function resolvePlayPlan(item: CatalogItem, localLibrary: LocalLibrarySes
         recovery: {
           action: "retry-later",
           message:
-            "This session's local entry is no longer present — import the file again (session library only in this build).",
+            "This local entry is not in the current library — import the file again (durable entries re-list at app start; a missing file is always stated, never silent).",
         },
       },
     };

@@ -33,15 +33,22 @@
  *   6. zcode-leak      — visible text/title/alt scan for ZCode/Z.ai.
  *   7. local media     — REAL Web file-picker import (playwright sets the
  *                        hidden <input type=file>) + REAL playback of the
- *                        imported object URL in the <video> player.
+ *                        imported object URL in the <video> player; the
+ *                        import ALSO persists as a durable device-local
+ *                        library entry + watch-history row (WFX-DURABLE-LIB-1).
  *   8. offline         — network emulation offline; library/playback intact.
  *   9. desktop entry   — installed entry identity fields vs the manifest;
  *                        the user-level deep-link entry the app writes.
  *  10. crash/natives   — no MODULE_NOT_FOUND/native-module/dlopen errors, no
  *                        crash dumps beyond the crashpad client id.
  *  11. shutdown        — SIGTERM exits cleanly; restart with the same HOME
- *                        boots to the same identity (session-only library
- *                        honestly empty again).
+ *                        boots to the same identity; the durable bridge
+ *                        RESTORES the imported library entry + the watch
+ *                        history row (positionMs > 0 — real progress
+ *                        persisted; the store status drives an honest
+ *                        BLOCKED if no sqlite engine is live in the
+ *                        packaged runtime — the session-only degrade, never
+ *                        a fake pass).
  *
  * Usage (from packages/desktop):
  *   node scripts/e2e/webflix-packaged-smoke.mjs \
@@ -59,7 +66,7 @@
 import { spawn, spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { basename, join, resolve } from "node:path";
 import { createRequire } from "node:module";
 import net from "node:net";
 
@@ -832,7 +839,6 @@ async function runPackagedSmoke({
       `second launch on the same HOME: window=${secondBoot.window} dom-ready=${secondBoot.domReady}`,
     );
     let restartTitleOk = false;
-    let restartLibraryHonest = false;
     try {
       await waitForHttp(
         `http://127.0.0.1:${cdpPort}/json/version`,
@@ -856,15 +862,93 @@ async function runPackagedSmoke({
           timeout: 30_000,
         });
         restartTitleOk = true;
-        await secondPage
-          .getByRole("button", { name: "Library", exact: true })
-          .click({ timeout: 5_000 });
-        const emptyState = await secondPage
-          .locator('[data-testid="library-local-empty"]')
-          .innerText()
+        // ---- WFX-DURABLE-LIB-1: the restart durability gates ----
+        // The bridge status is the REAL typed truth (the same surface the
+        // app uses — never a DOM guess): ok + engine = the durable store is
+        // live under the same HOME; !ok = the honest session-only degrade
+        // (recorded BLOCKED with the reason, never a fake pass).
+        const durableStatus = await secondPage
+          .evaluate(() =>
+            globalThis.window?.webflixLocalLibrary?.getStatus?.() ?? Promise.resolve(null),
+          )
           .catch(() => null);
-        restartLibraryHonest = emptyState !== null && /session-only/i.test(emptyState);
-        await secondPage.screenshot({ path: join(outDir, `06-${flavor}-restart-library.png`) });
+        const durableLive =
+          durableStatus !== null && durableStatus.ok === true && typeof durableStatus.engine === "string";
+        const mediaBasename = mediaFile !== undefined ? basename(mediaFile) : null;
+        if (mediaBasename === null) {
+          record(
+            `restart:${flavor}:durable-library-restored`,
+            false,
+            "BLOCKED: no --media file was provided in the first run — nothing was imported to restore",
+            true,
+          );
+          record(
+            `restart:${flavor}:durable-history-restored`,
+            false,
+            "BLOCKED: no --media file was provided in the first run — no watch to restore",
+            true,
+          );
+        } else if (!durableLive) {
+          record(
+            `restart:${flavor}:durable-library-restored`,
+            false,
+            `BLOCKED: the durable store is unavailable on this runtime (status: ${
+              durableStatus === null ? "bridge absent" : durableStatus.reason ?? "not ok"
+            }) — the session-only degrade is the honest state, never a fake pass`,
+            true,
+          );
+          record(
+            `restart:${flavor}:durable-history-restored`,
+            false,
+            `BLOCKED: the durable store is unavailable on this runtime — no history to restore`,
+            true,
+          );
+          await secondPage
+            .getByRole("button", { name: "Library", exact: true })
+            .click({ timeout: 5_000 })
+            .catch(() => undefined);
+          await secondPage.screenshot({ path: join(outDir, `06-${flavor}-restart-library.png`) });
+        } else {
+          // The imported file's durable entry re-lists on the Library screen.
+          await secondPage
+            .getByRole("button", { name: "Library", exact: true })
+            .click({ timeout: 5_000 });
+          const restoredTile = secondPage.locator("li", { hasText: mediaBasename }).first();
+          const tileVisible = await restoredTile
+            .waitFor({ state: "visible", timeout: 10_000 })
+            .then(() => true)
+            .catch(() => false);
+          record(
+            `restart:${flavor}:durable-library-restored`,
+            tileVisible,
+            tileVisible
+              ? `the imported file's entry re-listed after restart (engine=${durableStatus.engine}, entries=${durableStatus.entryCount})`
+              : `the durable store is live (engine=${durableStatus.engine}) but the imported entry "${mediaBasename}" did not re-list`,
+          );
+          await secondPage.screenshot({ path: join(outDir, `06-${flavor}-restart-library.png`) });
+          // The watch history row survived with real progress (positionMs>0)
+          // — read through the SAME bridge the History screen rides.
+          const historyRows = await secondPage
+            .evaluate(() =>
+              globalThis.window?.webflixLocalLibrary?.listHistory?.("history") ?? Promise.resolve(null),
+            )
+            .catch(() => null);
+          const watchedRow =
+            historyRows !== null && Array.isArray(historyRows.entries)
+              ? historyRows.entries.find((entry) => entry?.item?.title?.includes(mediaBasename))
+              : undefined;
+          record(
+            `restart:${flavor}:durable-history-restored`,
+            watchedRow !== undefined && watchedRow.positionMs > 0,
+            watchedRow === undefined
+              ? `no durable watch-history row for "${mediaBasename}" after restart (rows=${
+                  Array.isArray(historyRows?.entries) ? historyRows.entries.length : "?"
+                })`
+              : `watch-history row restored: positionMs=${watchedRow.positionMs}/durationMs=${
+                  watchedRow.durationMs ?? "?"
+                } (engine=${durableStatus.engine})`,
+          );
+        }
       }
       await secondBrowser.close();
     } catch (error) {
@@ -876,13 +960,6 @@ async function runPackagedSmoke({
       restartTitleOk
         ? "second boot restores the WebFlix identity"
         : "second boot did not reach the WebFlix title",
-    );
-    record(
-      `restart:${flavor}:session-library-honest-empty`,
-      restartLibraryHonest,
-      restartLibraryHonest
-        ? "library honestly empty again (session-only entries — documented truthfulness)"
-        : "session-only empty state not observed after restart",
     );
     secondRun.child.kill("SIGTERM");
     shutdownDeadline = Date.now() + SHUTDOWN_TIMEOUT_MS;

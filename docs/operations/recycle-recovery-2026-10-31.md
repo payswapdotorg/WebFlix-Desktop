@@ -132,4 +132,11 @@ HOT-RELOAD LAW in the bridge source and the harness WORKLOG).
   `5ef27f9` — full record in docs/operations/ubuntu-release-evidence.md).
   What remains of this slice: live provider round-trips (need provider
   credentials in the profile — the standing honest BLOCKED).
-- The durable local-library/history bridge (later order).
+- ~~The durable local-library/history bridge (later order).~~ CLOSED by
+  WFX-DURABLE-LIB-1 (2026-10-31): the migration-backed store (0008_watch_history
+  + the existing LibraryEntry tables) wired through the desktop main-process
+  IPC bridge — history/library survive restart, local-file playheads record
+  (throttled + pause/end), the restart resume seek live-verified end-to-end
+  (paused at 3.965s → resumed at 3.965s over the authorized preview URL),
+  and the retention controls act on the real stores. Full record:
+  docs/plans/work-orders/WFX-DURABLE-LIB-1.md.

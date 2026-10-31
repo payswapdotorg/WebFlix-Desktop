@@ -345,6 +345,83 @@ describe("WatchScreen", () => {
     rerender(<WatchScreen title="T" plan={plan} />);
     expect(screen.queryByRole("button", { name: "Back" })).toBeNull();
   });
+
+  // ---- WFX-DURABLE-LIB-1: the local player's playhead reporting ----
+
+  it("reports the local player's playhead — the ~1s first heartbeat, the 5s cadence, and immediate pause/end", () => {
+    const plan: PlaybackPlan = { kind: "local-file", path: "blob:x", mimeType: "video/mp4" };
+    const onProgress = vi.fn();
+    render(<WatchScreen title="t" plan={plan} onProgress={onProgress} />);
+    const player = screen.getByTestId("watch-local-player") as HTMLVideoElement;
+    Object.defineProperty(player, "duration", { configurable: true, get: () => 30 });
+    // Below the 1s first heartbeat — no report.
+    Object.defineProperty(player, "currentTime", { configurable: true, get: () => 0.4 });
+    fireEvent.timeUpdate(player);
+    expect(onProgress).not.toHaveBeenCalled();
+    // Cross 1s — the first heartbeat lands (positionMs + durationMs).
+    Object.defineProperty(player, "currentTime", { configurable: true, get: () => 1.5 });
+    fireEvent.timeUpdate(player);
+    expect(onProgress).toHaveBeenCalledTimes(1);
+    expect(onProgress).toHaveBeenLastCalledWith(1500, 30000);
+    // Under the 5s cadence — throttled away.
+    Object.defineProperty(player, "currentTime", { configurable: true, get: () => 2.0 });
+    fireEvent.timeUpdate(player);
+    expect(onProgress).toHaveBeenCalledTimes(1);
+    // Pause reports IMMEDIATELY (the position the user actually stopped at).
+    Object.defineProperty(player, "currentTime", { configurable: true, get: () => 2.2 });
+    fireEvent.pause(player);
+    expect(onProgress).toHaveBeenCalledTimes(2);
+    expect(onProgress).toHaveBeenLastCalledWith(2200, 30000);
+    // End reports too (the final position).
+    Object.defineProperty(player, "currentTime", { configurable: true, get: () => 3.0 });
+    fireEvent.ended(player);
+    expect(onProgress).toHaveBeenCalledTimes(3);
+    expect(onProgress).toHaveBeenLastCalledWith(3000, 30000);
+  });
+
+  it("reports nothing when no handler is wired (the legacy contract stays EXACTLY)", () => {
+    const plan: PlaybackPlan = { kind: "local-file", path: "blob:x", mimeType: "video/mp4" };
+    render(<WatchScreen title="t" plan={plan} />);
+    const player = screen.getByTestId("watch-local-player") as HTMLVideoElement;
+    Object.defineProperty(player, "duration", { configurable: true, get: () => 30 });
+    Object.defineProperty(player, "currentTime", { configurable: true, get: () => 2 });
+    fireEvent.timeUpdate(player);
+    fireEvent.pause(player);
+    // No handler, no crash, no dead behavior — the player renders as before.
+    expect(player.getAttribute("src")).toBe("blob:x");
+  });
+
+  it("seeks ONCE to the stored resume position on loadedmetadata (the resume path)", () => {
+    const plan: PlaybackPlan = { kind: "local-file", path: "blob:y", mimeType: "video/mp4" };
+    const seekSpy = vi.fn();
+    const first = render(<WatchScreen title="t" plan={plan} initialPositionMs={45_000} />);
+    const player = screen.getByTestId("watch-local-player") as HTMLVideoElement;
+    Object.defineProperty(player, "duration", { configurable: true, get: () => 120 });
+    Object.defineProperty(player, "currentTime", {
+      configurable: true,
+      get: () => 0,
+      set: (value: number) => seekSpy(value),
+    });
+    fireEvent.loadedMetadata(player);
+    expect(seekSpy).toHaveBeenCalledWith(45);
+    // The seek fires ONCE per src — a later metadata reload does not re-seek.
+    fireEvent.loadedMetadata(player);
+    expect(seekSpy).toHaveBeenCalledTimes(1);
+    first.unmount();
+    // A resume position beyond the duration is refused (never a broken seek).
+    const plan2: PlaybackPlan = { kind: "local-file", path: "blob:z" };
+    const seekSpy2 = vi.fn();
+    render(<WatchScreen title="t2" plan={plan2} initialPositionMs={999_000} />);
+    const player2 = screen.getByTestId("watch-local-player") as HTMLVideoElement;
+    Object.defineProperty(player2, "duration", { configurable: true, get: () => 60 });
+    Object.defineProperty(player2, "currentTime", {
+      configurable: true,
+      get: () => 0,
+      set: (value: number) => seekSpy2(value),
+    });
+    fireEvent.loadedMetadata(player2);
+    expect(seekSpy2).not.toHaveBeenCalled();
+  });
 });
 
 // ---------- LibraryScreen ----------
@@ -372,6 +449,16 @@ describe("LibraryScreen", () => {
       /no collections yet/i,
     );
     expect(screen.getByTestId("library-local-empty").textContent).toMatch(/no local files yet/i);
+  });
+
+  it("states the durable device-local persistence honestly in the importable empty state (WFX-DURABLE-LIB-1 re-pin)", () => {
+    render(<LibraryScreen onImportLocalFiles={() => undefined} />);
+    const empty = screen.getByTestId("library-local-empty").textContent ?? "";
+    expect(empty).toMatch(/no local files yet/i);
+    expect(empty).toMatch(/stay on this device/i);
+    expect(empty).toMatch(/nothing is uploaded/i);
+    // The pre-wave "later order" phrasing is GONE — the bridge has arrived.
+    expect(empty).not.toMatch(/later order/i);
   });
 });
 

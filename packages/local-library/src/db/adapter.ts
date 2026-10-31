@@ -1,3 +1,4 @@
+import { createRequire } from "node:module";
 import { SqliteUnavailableError } from "../errors";
 
 /**
@@ -6,9 +7,19 @@ import { SqliteUnavailableError } from "../errors";
  * The preferred engine is better-sqlite3 (declared in this package's dependencies).
  * The D2-LOCAL environment rules forbid running installs inside the preinstalled
  * harness, so when better-sqlite3 is not resolvable (or its native build is
- * unavailable) the adapter transparently falls back to node:sqlite — the SQLite
- * driver that ships with Node 24. Both engines are driven exclusively through
- * positional parameters so binding semantics are identical.
+ * unavailable — including the WFX-DURABLE-LIB-1 live finding: under Electron a
+ * system-Node-built better-sqlite3 IMPORTS fine but its INSTANTIATION throws the
+ * ABI mismatch, so the adapter also degrades on constructor failure) the adapter
+ * transparently falls back to node:sqlite — the SQLite driver that ships with
+ * Node 24. Both engines are driven exclusively through positional parameters so
+ * binding semantics are identical.
+ *
+ * The node:sqlite fallback loads through createRequire + require("node:sqlite")
+ * — the SAME pattern every services chunk in the desktop main bundle uses —
+ * because tsup's ESM code-splitting rewrites dynamic import("node:sqlite")
+ * into import("sqlite") (the node: prefix stripped), which does NOT resolve to
+ * the builtin under Electron's ESM loader (pinned live: the durable bridge
+ * answered the typed unavailable until this pattern landed).
  */
 
 export type SqlParam = string | number | bigint | Uint8Array | null;
@@ -106,7 +117,9 @@ function wrapRaw(engine: SqliteEngineName, raw: RawEngine): SqliteDatabase {
 async function openNodeSqlite(file: string): Promise<SqliteDatabase> {
   let DatabaseSync: new (path: string) => RawEngine;
   try {
-    ({ DatabaseSync } = (await import("node:sqlite")) as unknown as {
+    // createRequire — NOT a dynamic import — the tsup/ESM-splitting finding
+    // documented in the module header (the desktop bundle's proven pattern).
+    ({ DatabaseSync } = createRequire(import.meta.url)("node:sqlite") as unknown as {
       DatabaseSync: new (path: string) => RawEngine;
     });
   } catch (error) {
@@ -128,9 +141,22 @@ function configureConnection(db: SqliteDatabase): void {
 export async function createSqliteDatabase(file: string): Promise<SqliteDatabase> {
   const BetterSqlite3 = await loadBetterSqlite3();
   if (BetterSqlite3) {
-    const db = wrapRaw("better-sqlite3", new BetterSqlite3(file));
-    configureConnection(db);
-    return db;
+    try {
+      const db = wrapRaw("better-sqlite3", new BetterSqlite3(file));
+      configureConnection(db);
+      return db;
+    } catch (error) {
+      // WFX-DURABLE-LIB-1 (the Electron-runtime finding, live-pinned): under
+      // Electron the dynamic import of a system-Node-built better-sqlite3
+      // RESOLVES (the require shim defers the native load), and the ABI
+      // mismatch surfaces only at INSTANTIATION — an instantiation failure
+      // means the module is unusable in THIS runtime, which is exactly the
+      // documented fallback condition. Cache the unusability and degrade to
+      // node:sqlite; a genuine open error (bad path etc.) re-surfaces from
+      // the fallback attempt, so no real failure is masked.
+      cachedBetterSqlite3 = null;
+      void error;
+    }
   }
   const db = await openNodeSqlite(file);
   configureConnection(db);

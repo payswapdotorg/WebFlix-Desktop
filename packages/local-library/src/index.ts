@@ -51,6 +51,21 @@ export { migration0005TextAndAudioPayloads } from "./db/migrations/0005_text_and
 export { migration0006AdCenterStores } from "./db/migrations/0006_ad_center_stores";
 export { migration0007AdOfferVerificationStore } from "./db/migrations/0007_ad_offer_verification_store";
 
+// Durable WebFlix-owned watch-history store (WFX-DURABLE-LIB-1): the
+// `watch_history` table (additive migration 0008, the freeze §7.5/AS-Q8
+// storage profile — facts persist indefinitely, provider payloads ride a
+// 30-day refresh-or-delete TTL, the local provider is exempt), exported for
+// the composition root: the desktop main-process IPC seam
+// (webflixLocalLibraryIpc.ts) is this order's consumer.
+export { migration0008WatchHistory } from "./db/migrations/0008_watch_history";
+export { SqliteWatchHistoryStore } from "./watch-history-store";
+export type {
+  WatchHistoryRecord,
+  WatchHistoryStoreOptions,
+  WatchHistoryWriteInput,
+  WatchProgressInput,
+} from "./watch-history-store";
+
 // Durable Ad Center stores (P5-STORES row 2, Phase-5 row 2): every ads shape
 // this order persists gets its OWN ad_* table (additive migration 0006) and
 // one store module per table family on this package's storage seam —
