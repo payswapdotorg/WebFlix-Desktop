@@ -1,0 +1,1054 @@
+<out> [2026-10-31 08:41:16.616] [pid:20967] [main] [crash-capture] configured remoteCrashReporterEnabled=true stagingDir=/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-6a315eb/composer/deb/home-deb/.webflix/v2/crash/live archiveDir=/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-6a315eb/composer/deb/home-deb/.webflix/v2/crash/archive
+<out> 
+<err> LaunchProcess: failed to execvp:
+<err> xdg-settings
+<err> 
+<err> [2026-10-31 08:41:16.637] [pid:20967] [main] [deep-link] 注册协议失败 { scheme: 'webflix' }
+<err> 
+<err> [2026-10-31 08:41:16.646] [pid:20967] [main] [deep-link] Linux 用户级协议注册失败 {
+<err>   desktopFilePath: '/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-6a315eb/composer/deb/home-deb/.local/share/applications/webflix.desktop',
+<err>   desktopFileName: 'webflix.desktop',
+<err>   executablePath: '/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-6a315eb/composer/deb/deb-tree/opt/WebFlix/webflix',
+<err>   args: [],
+<err>   status: null,
+<err>   signal: null,
+<err>   timeoutMs: undefined,
+<err>   error: 'spawnSync xdg-mime ENOENT',
+<err>   stderr: undefined
+<err> }
+<err> 
+<err> [2026-10-31 08:41:16.647] [pid:20967] [main] [deep-link] update-desktop-database 不可用，已跳过 {
+<err>   desktopFilePath: '/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-6a315eb/composer/deb/home-deb/.local/share/applications/webflix.desktop',
+<err>   message: 'spawnSync update-desktop-database ENOENT'
+<err> }
+<err> 
+<err> (node:20967) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+<err> (Use `webflix --trace-warnings ...` to show where the warning was created)
+<err> 
+<err> [20967:1031/084117.029544:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/dbus/system_bus_socket: No such file or directory
+<err> [20967:1031/084117.029607:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+<err> [20967:1031/084117.029621:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/dbus/system_bus_socket: No such file or directory
+<err> [20967:1031/084117.029629:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/dbus/system_bus_socket: No such file or directory
+<err> 
+<out> [2026-10-31 08:41:17.040] [pid:20967] [main] [startup] runtime process env prepared asynchronously id=1 in 418ms
+<out> 
+<err> 
+<err> DevTools listening on ws://127.0.0.1:36795/devtools/browser/6a8e06ac-fd22-486a-b116-7397c3ef97a3
+<err> 
+<err> [20967:1031/084117.075589:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+<err> [20967:1031/084117.075973:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+<err> 
+<err> [20967:1031/084117.092372:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+<err> 
+<out> [2026-10-31 08:41:17.096] [pid:20967] [main] [desktop-network] renderer proxy mode=direct bypass=disabled customCa=disabled insecureCerts=rejected
+<out> 
+<out> [2026-10-31 08:41:17.096] [pid:20967] [main] [desktop-network] renderer proxy mode=system bypass=disabled customCa=disabled insecureCerts=rejected
+<out> 
+<out> [2026-10-31 08:41:17.097] [pid:20967] [main] [auto-update] refused (disabled for this desktop product flavor): WebFlix runtime product identity is active (H1 fail-closed; freeze §6.1 defers the WebFlix update feed — the ZCode manifest feed must never serve a WebFlix build)
+<out> 
+<out> [2026-10-31 08:41:17.099] [pid:20967] [main] [browser-data] chrome import IPC not registered: chromeImportEnabled flag is OFF (default, fail-closed)
+<out> 
+<out> [2026-10-31 08:41:17.101] [pid:20967] [main] [cua-permission-ipc] CUA permission IPC not registered: webflixProductSurface flag is OFF (default, fail-closed)
+<out> 
+<out> [2026-10-31 08:41:17.102] [pid:20967] [main] [webflix-accounts] account IPC registered (webflix flavor) {
+<out>   channels: [
+<out>     'webflix:accounts:get-status',
+<out>     'webflix:accounts:connect',
+<out>     'webflix:accounts:disconnect'
+<out>   ]
+<out> }
+<out> 
+<out> [2026-10-31 08:41:17.103] [pid:20967] [main] [remote-ipc] SSH/Docker/WSL remote IPC not registered: webflixProductSurface flag is OFF (default, fail-closed)
+<out> 
+<out> [2026-10-31 08:41:17.104] [pid:20967] [main] [resource] sampling started interval=10000ms report=300000ms
+<out> 
+<out> [2026-10-31 08:41:17.104] [pid:20967] [main] [network] reporting started interval=300000ms
+<out> 
+<out> [2026-10-31 08:41:17.105] [pid:20967] [main] [force-update] 当前产品身份（webflix，webflix-never-consults-the-zcode-kill-switch）跳过远端强制升级检查
+<out> 
+<out> [2026-10-31 08:41:17.105] [pid:20967] [main] [startup] 创建主窗口
+<out> 
+<out> [2026-10-31 08:41:17.105] [pid:20967] [main] [primary-window] creating main window (app-ready)
+<out> 
+<out> [2026-10-31 08:41:17.123] [pid:20967] [main] [startup-workspace] using conversation workspace: /home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-6a315eb/composer/deb/home-deb/.webflix/workspace/default
+<out> 
+<err> [20967:1031/084117.188022:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+<err> 
+<err> [20967:1031/084117.258506:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+<err> 
+<out> [2026-10-31 08:41:17.291] [pid:20967] [main] [desktop-context-prompt] config refreshed { enabled: true, configVersion: 'desktop-sp-v1' }
+<out> 
+<out> [2026-10-31 08:41:17.618] [pid:20967] [main] [createWindow] dom-ready fired (local-1)
+<out> 
+<out> [2026-10-31 08:41:17.618] [pid:20967] [main] [desktop-context-prompt] first host spawn decision resolved { enabled: true, configVersion: 'desktop-sp-v1' }
+<out> 
+<out> [2026-10-31 08:41:17.632] [pid:20967] [main] [spawnHostProcess] forked host process for (local-1), pid=undefined
+<out> 
+<out> [2026-10-31 08:41:17.632] [pid:20967] [main] [spawnHostProcess] host module path: /home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-6a315eb/composer/deb/deb-tree/opt/WebFlix/resources/app.asar/out/host/index.js
+<out> [2026-10-31 08:41:17.632] [pid:20967] [main] [spawnHostProcess] glm binary path: <not found>
+<out> 
+<out> [2026-10-31 08:41:17.632] [pid:20967] [main] [spawnHostProcess] BIGMODEL_OAUTH_APP_SECRET source: fallback
+<out> 
+<out> [2026-10-31 08:41:17.635] [pid:20967] [main] [task-realtime] registered host {
+<out>   hostId: 'ddf192b7-d606-440d-9e55-1378e13558cc',
+<out>   windowId: 1,
+<out>   workspaceKeyCount: 0,
+<out>   deliveryKind: 'desktop_window'
+<out> }
+<out> 
+<err> [2026-10-31 08:41:17.722] [pid:20967] [main] [webflix-accounts] OS secure storage unavailable — reporting the typed fail-closed status
+<err> 
+<out> [2026-10-31 08:41:17.723] [pid:20967] [main] [webflix-agent-workspace] ensured /home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-6a315eb/composer/deb/home-deb/.webflix/agent-workspace (2 files, node=/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-6a315eb/composer/deb/deb-tree/opt/WebFlix/webflix (as-node))
+<out> 
+<out> [2026-10-31 08:41:17.727] [pid:20967] [main] [webflix-agent-workspace] wrote 2 config files
+<out> 
+<err> (node:21047) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+<err> (Use `exe --trace-warnings ...` to show where the warning was created)
+<err> [2026-10-31 08:41:18.426] [pid:21047] [zcode-host] ExperimentalWarning: SQLite is an experimental feature and might change at any time
+<err> [2026-10-31 08:41:18.477] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:18.426] [pid:21047] [zcode-host] ExperimentalWarning: SQLite is an experimental feature and might change at any time
+<err> [2026-10-31 08:41:18.492] [pid:21047] [zcode-host] [cua-pip-session] focus event dropped: service unavailable
+<err> [2026-10-31 08:41:18.499] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:18.492] [pid:21047] [zcode-host] [cua-pip-session] focus event dropped: service unavailable
+<err> 
+<err> (node:21047) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+<err> (Use `exe --trace-warnings ...` to show where the warning was created)
+<err> 
+<err> [20967:1031/084118.962894:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+<err> [20967:1031/084118.962945:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+<err> 
+<err> [20967:1031/084118.963518:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+<err> [20967:1031/084118.963566:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+<err> 
+<out> [2026-10-31 08:41:20.844] [pid:20967] [main] [stability] perf_app_start reported
+<out> 
+<out> [2026-10-31 08:41:21.222] [pid:21047] [zcode-host] initializing local services
+<out> 
+<out> [2026-10-31 08:41:21.223] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.222] [pid:21047] [zcode-host] initializing local services
+<out> 
+<out> [2026-10-31 08:41:21.359] [pid:21047] [cua-pip-session] [cua-pip-session] wiring resolved {
+<out>   enabled: false,
+<out>   platform: 'linux',
+<out>   serviceAuthorityMode: 'desktop-local',
+<out>   lifecycleWired: true
+<out> }
+<out> 
+<out> [2026-10-31 08:41:21.361] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.359] [pid:21047] [cua-pip-session] [cua-pip-session] wiring resolved {"enabled":false,"platform":"linux","serviceAuthorityMode":"desktop-local","lifecycleWired":true}
+<out> 
+<out> [2026-10-31 08:41:21.368] [pid:21047] [zcode-agent-service] 开始初始化 ZCode agent {
+<out>   workspaceKey: '/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-6a315eb/composer/deb/home-deb/.webflix/workspace/default',
+<out>   workspacePath: '/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-6a315eb/composer/deb/home-deb/.webflix/workspace/default'
+<out> }
+<out> 
+<out> [2026-10-31 08:41:21.369] [pid:21047] [zcode-host] exposing services on ChannelServer...
+<out> 
+<out> [2026-10-31 08:41:21.369] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.368] [pid:21047] [zcode-agent-service] 开始初始化 ZCode agent {"workspaceKey":"/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-6a315eb/composer/deb/home-deb/.webflix/workspace/default","workspacePath":"/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-6a315eb/composer/deb/home-deb/.webflix/workspace/default"}
+<out> 
+<out> [2026-10-31 08:41:21.371] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.369] [pid:21047] [zcode-host] exposing services on ChannelServer...
+<out> 
+<out> [2026-10-31 08:41:21.371] [pid:21047] [zcode-host] creating ChannelServer (deferInit=false)
+<out> 
+<out> [2026-10-31 08:41:21.371] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.371] [pid:21047] [zcode-host] creating ChannelServer (deferInit=false)
+<out> 
+<out> [2026-10-31 08:41:21.372] [pid:21047] [zcode-host] [rpc:register] channel "file"
+<out> 
+<out> [2026-10-31 08:41:21.373] [pid:21047] [zcode-host] [rpc:register] channel "media-preview"
+<out> 
+<out> [2026-10-31 08:41:21.373] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.372] [pid:21047] [zcode-host] [rpc:register] channel "file"
+<out> 
+<out> [2026-10-31 08:41:21.373] [pid:21047] [zcode-host] [rpc:register] channel "git"
+<out> 
+<out> [2026-10-31 08:41:21.373] [pid:21047] [zcode-host] [rpc:register] channel "git-checkpoint"
+<out> 
+<out> [2026-10-31 08:41:21.373] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.373] [pid:21047] [zcode-host] [rpc:register] channel "media-preview"
+<out> 
+<out> [2026-10-31 08:41:21.373] [pid:21047] [zcode-host] [rpc:register] channel "system"
+<out> 
+<out> [2026-10-31 08:41:21.373] [pid:21047] [zcode-host] [rpc:register] channel "terminal"
+<out> 
+<out> [2026-10-31 08:41:21.374] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.373] [pid:21047] [zcode-host] [rpc:register] channel "git"
+<out> 
+<out> [2026-10-31 08:41:21.374] [pid:21047] [zcode-host] [rpc:register] channel "setting"
+<out> 
+<out> [2026-10-31 08:41:21.374] [pid:21047] [zcode-host] [rpc:register] channel "onboarding-record"
+<out> 
+<out> [2026-10-31 08:41:21.374] [pid:21047] [zcode-host] [rpc:register] channel "credential"
+<out> 
+<out> [2026-10-31 08:41:21.374] [pid:21047] [zcode-host] [rpc:register] channel "broadcast"
+<out> 
+<out> [2026-10-31 08:41:21.374] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.373] [pid:21047] [zcode-host] [rpc:register] channel "git-checkpoint"
+<out> 
+<out> [2026-10-31 08:41:21.375] [pid:21047] [zcode-host] [rpc:register] channel "zcode-task"
+<out> 
+<out> [2026-10-31 08:41:21.375] [pid:21047] [zcode-host] [rpc:register] channel "zcode-agent"
+<out> 
+<out> [2026-10-31 08:41:21.375] [pid:21047] [zcode-host] [rpc:register] channel "zcode-session"
+<out> 
+<out> [2026-10-31 08:41:21.375] [pid:21047] [zcode-host] [rpc:register] channel "cua-permission"
+<out> 
+<out> [2026-10-31 08:41:21.375] [pid:21047] [zcode-host] [rpc:register] channel "cua-pip-session"
+<out> 
+<out> [2026-10-31 08:41:21.375] [pid:21047] [zcode-host] [rpc:register] channel "conversation-share"
+<out> 
+<out> [2026-10-31 08:41:21.375] [pid:21047] [zcode-host] [rpc:register] channel "bots"
+<out> 
+<out> [2026-10-31 08:41:21.375] [pid:21047] [zcode-host] [rpc:register] channel "file-watcher"
+<out> 
+<out> [2026-10-31 08:41:21.375] [pid:21047] [zcode-host] [rpc:register] channel "oauth"
+<out> 
+<out> [2026-10-31 08:41:21.376] [pid:21047] [zcode-host] [rpc:register] channel "usage-stats"
+<out> 
+<out> [2026-10-31 08:41:21.376] [pid:21047] [zcode-host] [rpc:register] channel "coding-plan-subscription"
+<out> 
+<out> [2026-10-31 08:41:21.376] [pid:21047] [zcode-host] [rpc:register] channel "client-config"
+<out> 
+<out> [2026-10-31 08:41:21.376] [pid:21047] [zcode-host] [rpc:register] channel "client-scenes"
+<out> 
+<out> [2026-10-31 08:41:21.376] [pid:21047] [zcode-host] [rpc:register] channel "off-peak-task"
+<out> 
+<out> [2026-10-31 08:41:21.376] [pid:21047] [zcode-host] [rpc:register] channel "skills"
+<out> 
+<out> [2026-10-31 08:41:21.376] [pid:21047] [zcode-host] [rpc:register] channel "skill-sync"
+<out> 
+<out> [2026-10-31 08:41:21.376] [pid:21047] [zcode-host] [rpc:register] channel "mcp-sync"
+<out> 
+<out> [2026-10-31 08:41:21.376] [pid:21047] [zcode-host] [rpc:register] channel "plugin-sync"
+<out> 
+<out> [2026-10-31 08:41:21.376] [pid:21047] [zcode-host] [rpc:register] channel "plugins"
+<out> 
+<out> [2026-10-31 08:41:21.376] [pid:21047] [zcode-host] [rpc:register] channel "plugin-management"
+<out> 
+<out> [2026-10-31 08:41:21.376] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.373] [pid:21047] [zcode-host] [rpc:register] channel "system"
+<out> 
+<out> [2026-10-31 08:41:21.376] [pid:21047] [zcode-host] [rpc:register] channel "subagents"
+<out> 
+<out> [2026-10-31 08:41:21.376] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.373] [pid:21047] [zcode-host] [rpc:register] channel "terminal"
+<out> 
+<out> [2026-10-31 08:41:21.377] [pid:21047] [zcode-host] [rpc:register] channel "commands"
+<out> 
+<out> [2026-10-31 08:41:21.377] [pid:21047] [zcode-host] [rpc:register] channel "hooks"
+<out> 
+<out> [2026-10-31 08:41:21.377] [pid:21047] [zcode-host] [rpc:register] channel "memory"
+<out> 
+<out> [2026-10-31 08:41:21.377] [pid:21047] [zcode-host] [rpc:register] channel "settings-sync"
+<out> 
+<out> [2026-10-31 08:41:21.377] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.374] [pid:21047] [zcode-host] [rpc:register] channel "setting"
+<out> 
+<out> [2026-10-31 08:41:21.377] [pid:21047] [zcode-host] [rpc:register] channel "feedback"
+<out> 
+<out> [2026-10-31 08:41:21.377] [pid:21047] [zcode-host] [rpc:register] channel "prompt-attachment-transfer"
+<out> 
+<out> [2026-10-31 08:41:21.377] [pid:21047] [zcode-host] [rpc:register] channel "provider-settings"
+<out> 
+<out> [2026-10-31 08:41:21.377] [pid:21047] [zcode-host] [rpc:register] channel "model-selection"
+<out> 
+<out> [2026-10-31 08:41:21.377] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.374] [pid:21047] [zcode-host] [rpc:register] channel "onboarding-record"
+<out> 
+<out> [2026-10-31 08:41:21.377] [pid:21047] [zcode-host] [rpc:register] channel "window-controller"
+<out> 
+<out> [2026-10-31 08:41:21.377] [pid:21047] [zcode-host] service connection ready mode=desktop-continuous
+<out> 
+<out> [2026-10-31 08:41:21.377] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.374] [pid:21047] [zcode-host] [rpc:register] channel "credential"
+<out> 
+<out> [2026-10-31 08:41:21.377] [pid:21047] [zcode-host] window Host topology, reason=base-attachment-ready, pid=21047, connections=0, logicalSessions=0, attachments=1
+<out> 
+<out> [2026-10-31 08:41:21.378] [pid:21047] [zcode-host] local services ready, all channels registered
+<out> 
+<out> [2026-10-31 08:41:21.378] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.374] [pid:21047] [zcode-host] [rpc:register] channel "broadcast"
+<out> 
+<out> [2026-10-31 08:41:21.378] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.375] [pid:21047] [zcode-host] [rpc:register] channel "zcode-task"
+<out> 
+<out> [2026-10-31 08:41:21.378] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.375] [pid:21047] [zcode-host] [rpc:register] channel "zcode-agent"
+<out> 
+<out> [2026-10-31 08:41:21.379] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.375] [pid:21047] [zcode-host] [rpc:register] channel "zcode-session"
+<out> 
+<out> [2026-10-31 08:41:21.379] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.375] [pid:21047] [zcode-host] [rpc:register] channel "cua-permission"
+<out> 
+<out> [2026-10-31 08:41:21.380] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.375] [pid:21047] [zcode-host] [rpc:register] channel "cua-pip-session"
+<out> 
+<out> [2026-10-31 08:41:21.380] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.375] [pid:21047] [zcode-host] [rpc:register] channel "conversation-share"
+<out> 
+<out> [2026-10-31 08:41:21.380] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.375] [pid:21047] [zcode-host] [rpc:register] channel "bots"
+<out> 
+<out> [2026-10-31 08:41:21.380] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.375] [pid:21047] [zcode-host] [rpc:register] channel "file-watcher"
+<out> 
+<out> [2026-10-31 08:41:21.380] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.375] [pid:21047] [zcode-host] [rpc:register] channel "oauth"
+<out> 
+<out> [2026-10-31 08:41:21.381] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.376] [pid:21047] [zcode-host] [rpc:register] channel "usage-stats"
+<out> 
+<out> [2026-10-31 08:41:21.381] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.376] [pid:21047] [zcode-host] [rpc:register] channel "coding-plan-subscription"
+<out> 
+<out> [2026-10-31 08:41:21.381] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.376] [pid:21047] [zcode-host] [rpc:register] channel "client-config"
+<out> 
+<out> [2026-10-31 08:41:21.381] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.376] [pid:21047] [zcode-host] [rpc:register] channel "client-scenes"
+<out> 
+<out> [2026-10-31 08:41:21.381] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.376] [pid:21047] [zcode-host] [rpc:register] channel "off-peak-task"
+<out> 
+<out> [2026-10-31 08:41:21.383] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.376] [pid:21047] [zcode-host] [rpc:register] channel "skills"
+<out> 
+<out> [2026-10-31 08:41:21.383] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.376] [pid:21047] [zcode-host] [rpc:register] channel "skill-sync"
+<out> 
+<out> [2026-10-31 08:41:21.383] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.376] [pid:21047] [zcode-host] [rpc:register] channel "mcp-sync"
+<out> 
+<out> [2026-10-31 08:41:21.383] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.376] [pid:21047] [zcode-host] [rpc:register] channel "plugin-sync"
+<out> 
+<out> [2026-10-31 08:41:21.384] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.376] [pid:21047] [zcode-host] [rpc:register] channel "plugins"
+<out> 
+<out> [2026-10-31 08:41:21.384] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.376] [pid:21047] [zcode-host] [rpc:register] channel "plugin-management"
+<out> 
+<out> [2026-10-31 08:41:21.384] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.376] [pid:21047] [zcode-host] [rpc:register] channel "subagents"
+<out> 
+<out> [2026-10-31 08:41:21.384] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.377] [pid:21047] [zcode-host] [rpc:register] channel "commands"
+<out> 
+<out> [2026-10-31 08:41:21.384] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.377] [pid:21047] [zcode-host] [rpc:register] channel "hooks"
+<out> 
+<out> [2026-10-31 08:41:21.385] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.377] [pid:21047] [zcode-host] [rpc:register] channel "memory"
+<out> 
+<out> [2026-10-31 08:41:21.385] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.377] [pid:21047] [zcode-host] [rpc:register] channel "settings-sync"
+<out> 
+<out> [2026-10-31 08:41:21.385] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.377] [pid:21047] [zcode-host] [rpc:register] channel "feedback"
+<out> 
+<out> [2026-10-31 08:41:21.385] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.377] [pid:21047] [zcode-host] [rpc:register] channel "prompt-attachment-transfer"
+<out> 
+<out> [2026-10-31 08:41:21.385] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.377] [pid:21047] [zcode-host] [rpc:register] channel "provider-settings"
+<out> 
+<out> [2026-10-31 08:41:21.385] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.377] [pid:21047] [zcode-host] [rpc:register] channel "model-selection"
+<out> 
+<out> [2026-10-31 08:41:21.386] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.377] [pid:21047] [zcode-host] [rpc:register] channel "window-controller"
+<out> 
+<out> [2026-10-31 08:41:21.386] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.377] [pid:21047] [zcode-host] service connection ready mode=desktop-continuous
+<out> 
+<out> [2026-10-31 08:41:21.386] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.377] [pid:21047] [zcode-host] window Host topology, reason=base-attachment-ready, pid=21047, connections=0, logicalSessions=0, attachments=1
+<out> 
+<out> [2026-10-31 08:41:21.387] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.378] [pid:21047] [zcode-host] local services ready, all channels registered
+<out> 
+<out> [2026-10-31 08:41:21.389] [pid:20967] [main] [database-startup] terminal {
+<out>   attemptId: 'b9eb0d30-da63-49ad-9e44-04fb980abdff',
+<out>   status: 'ready',
+<out>   durationMs: 2900,
+<out>   errorCode: undefined,
+<out>   disk: [
+<out>     {
+<out>       scopeId: '44cb730c420480a0477b505ae68af508fb90f96cf0ec54c6ad16949dd427f13a',
+<out>       observedAvailableDropPeakBytes: 1413120,
+<out>       minAvailableBytes: 701075456,
+<out>       quality: 'complete',
+<out>       sampledAt: 1793436080494
+<out>     }
+<out>   ]
+<out> }
+<out> 
+<out> [2026-10-31 08:41:21.394] [pid:20967] [main] [cron-scheduler] forked scheduler process pid=undefined
+<out> 
+<out> [2026-10-31 08:41:21.397] [pid:21047] [zcode-host] creating ChannelServer (deferInit=false)
+<out> 
+<out> [2026-10-31 08:41:21.397] [pid:21047] [zcode-host] [rpc:register] channel "file"
+<out> 
+<out> [2026-10-31 08:41:21.398] [pid:21047] [zcode-host] [rpc:register] channel "media-preview"
+<out> 
+<out> [2026-10-31 08:41:21.398] [pid:21047] [zcode-host] [rpc:register] channel "git"
+<out> 
+<out> [2026-10-31 08:41:21.398] [pid:21047] [zcode-host] [rpc:register] channel "git-checkpoint"
+<out> 
+<out> [2026-10-31 08:41:21.398] [pid:21047] [zcode-host] [rpc:register] channel "system"
+<out> 
+<out> [2026-10-31 08:41:21.398] [pid:21047] [zcode-host] [rpc:register] channel "terminal"
+<out> 
+<out> [2026-10-31 08:41:21.398] [pid:21047] [zcode-host] [rpc:register] channel "setting"
+<out> [2026-10-31 08:41:21.398] [pid:21047] [zcode-host] [rpc:register] channel "onboarding-record"
+<out> 
+<out> [2026-10-31 08:41:21.398] [pid:21047] [zcode-host] [rpc:register] channel "credential"
+<out> 
+<out> [2026-10-31 08:41:21.398] [pid:21047] [zcode-host] [rpc:register] channel "broadcast"
+<out> 
+<out> [2026-10-31 08:41:21.398] [pid:21047] [zcode-host] [rpc:register] channel "zcode-task"
+<out> 
+<out> [2026-10-31 08:41:21.398] [pid:21047] [zcode-host] [rpc:register] channel "zcode-agent"
+<out> 
+<out> [2026-10-31 08:41:21.399] [pid:21047] [zcode-host] [rpc:register] channel "zcode-session"
+<out> 
+<out> [2026-10-31 08:41:21.399] [pid:21047] [zcode-host] [rpc:register] channel "cua-permission"
+<out> 
+<out> [2026-10-31 08:41:21.399] [pid:21047] [zcode-host] [rpc:register] channel "cua-pip-session"
+<out> [2026-10-31 08:41:21.399] [pid:21047] [zcode-host] [rpc:register] channel "conversation-share"
+<out> [2026-10-31 08:41:21.399] [pid:21047] [zcode-host] [rpc:register] channel "bots"
+<out> [2026-10-31 08:41:21.399] [pid:21047] [zcode-host] [rpc:register] channel "file-watcher"
+<out> 
+<out> [2026-10-31 08:41:21.399] [pid:21047] [zcode-host] [rpc:register] channel "oauth"
+<out> 
+<out> [2026-10-31 08:41:21.399] [pid:21047] [zcode-host] [rpc:register] channel "usage-stats"
+<out> 
+<out> [2026-10-31 08:41:21.399] [pid:21047] [zcode-host] [rpc:register] channel "coding-plan-subscription"
+<out> 
+<out> [2026-10-31 08:41:21.399] [pid:21047] [zcode-host] [rpc:register] channel "client-config"
+<out> 
+<out> [2026-10-31 08:41:21.400] [pid:21047] [zcode-host] [rpc:register] channel "client-scenes"
+<out> 
+<out> [2026-10-31 08:41:21.400] [pid:21047] [zcode-host] [rpc:register] channel "off-peak-task"
+<out> 
+<out> [2026-10-31 08:41:21.400] [pid:21047] [zcode-host] [rpc:register] channel "skills"
+<out> 
+<out> [2026-10-31 08:41:21.400] [pid:21047] [zcode-host] [rpc:register] channel "skill-sync"
+<out> 
+<out> [2026-10-31 08:41:21.400] [pid:21047] [zcode-host] [rpc:register] channel "mcp-sync"
+<out> 
+<out> [2026-10-31 08:41:21.400] [pid:21047] [zcode-host] [rpc:register] channel "plugin-sync"
+<out> 
+<out> [2026-10-31 08:41:21.400] [pid:21047] [zcode-host] [rpc:register] channel "plugins"
+<out> 
+<out> [2026-10-31 08:41:21.400] [pid:21047] [zcode-host] [rpc:register] channel "plugin-management"
+<out> 
+<out> [2026-10-31 08:41:21.400] [pid:21047] [zcode-host] [rpc:register] channel "subagents"
+<out> 
+<out> [2026-10-31 08:41:21.400] [pid:21047] [zcode-host] [rpc:register] channel "commands"
+<out> 
+<out> [2026-10-31 08:41:21.400] [pid:21047] [zcode-host] [rpc:register] channel "hooks"
+<out> 
+<out> [2026-10-31 08:41:21.400] [pid:21047] [zcode-host] [rpc:register] channel "memory"
+<out> 
+<out> [2026-10-31 08:41:21.400] [pid:21047] [zcode-host] [rpc:register] channel "settings-sync"
+<out> 
+<out> [2026-10-31 08:41:21.400] [pid:21047] [zcode-host] [rpc:register] channel "feedback"
+<out> 
+<out> [2026-10-31 08:41:21.400] [pid:21047] [zcode-host] [rpc:register] channel "prompt-attachment-transfer"
+<out> 
+<out> [2026-10-31 08:41:21.400] [pid:21047] [zcode-host] [rpc:register] channel "provider-settings"
+<out> 
+<out> [2026-10-31 08:41:21.400] [pid:21047] [zcode-host] [rpc:register] channel "model-selection"
+<out> 
+<out> [2026-10-31 08:41:21.400] [pid:21047] [zcode-host] [rpc:register] channel "window-controller"
+<out> [2026-10-31 08:41:21.401] [pid:21047] [zcode-host] service connection ready mode=desktop-continuous
+<out> 
+<out> [2026-10-31 08:41:21.401] [pid:21047] [zcode-host] attached scoped service port, attachmentId=e027417a-16eb-47c3-8e03-630ff8cd6ae0, scope=local, clientMode=desktop-continuous
+<out> 
+<out> [2026-10-31 08:41:21.401] [pid:21047] [zcode-host] window Host topology, reason=attachment-added, pid=21047, connections=0, logicalSessions=0, attachments=1
+<out> 
+<out> [2026-10-31 08:41:21.402] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.397] [pid:21047] [zcode-host] creating ChannelServer (deferInit=false)
+<out> 
+<out> [2026-10-31 08:41:21.405] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.397] [pid:21047] [zcode-host] [rpc:register] channel "file"
+<out> 
+<out> [2026-10-31 08:41:21.406] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.398] [pid:21047] [zcode-host] [rpc:register] channel "media-preview"
+<out> 
+<out> [2026-10-31 08:41:21.406] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.398] [pid:21047] [zcode-host] [rpc:register] channel "git"
+<out> 
+<out> [2026-10-31 08:41:21.407] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.398] [pid:21047] [zcode-host] [rpc:register] channel "git-checkpoint"
+<out> 
+<out> [2026-10-31 08:41:21.407] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.398] [pid:21047] [zcode-host] [rpc:register] channel "system"
+<out> 
+<out> [2026-10-31 08:41:21.409] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.398] [pid:21047] [zcode-host] [rpc:register] channel "terminal"
+<out> 
+<out> [2026-10-31 08:41:21.409] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.398] [pid:21047] [zcode-host] [rpc:register] channel "setting"
+<out> 
+<out> [2026-10-31 08:41:21.410] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.398] [pid:21047] [zcode-host] [rpc:register] channel "onboarding-record"
+<out> 
+<out> [2026-10-31 08:41:21.411] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.398] [pid:21047] [zcode-host] [rpc:register] channel "credential"
+<out> 
+<out> [2026-10-31 08:41:21.411] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.398] [pid:21047] [zcode-host] [rpc:register] channel "broadcast"
+<out> 
+<out> [2026-10-31 08:41:21.412] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.398] [pid:21047] [zcode-host] [rpc:register] channel "zcode-task"
+<out> 
+<out> [2026-10-31 08:41:21.414] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.398] [pid:21047] [zcode-host] [rpc:register] channel "zcode-agent"
+<out> 
+<out> [2026-10-31 08:41:21.415] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.399] [pid:21047] [zcode-host] [rpc:register] channel "zcode-session"
+<out> 
+<out> [2026-10-31 08:41:21.415] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.399] [pid:21047] [zcode-host] [rpc:register] channel "cua-permission"
+<out> 
+<out> [2026-10-31 08:41:21.416] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.399] [pid:21047] [zcode-host] [rpc:register] channel "cua-pip-session"
+<out> 
+<out> [2026-10-31 08:41:21.416] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.399] [pid:21047] [zcode-host] [rpc:register] channel "conversation-share"
+<out> 
+<out> [2026-10-31 08:41:21.416] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.399] [pid:21047] [zcode-host] [rpc:register] channel "bots"
+<out> 
+<out> [2026-10-31 08:41:21.417] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.399] [pid:21047] [zcode-host] [rpc:register] channel "file-watcher"
+<out> 
+<out> [2026-10-31 08:41:21.418] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.399] [pid:21047] [zcode-host] [rpc:register] channel "oauth"
+<out> 
+<out> [2026-10-31 08:41:21.419] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.399] [pid:21047] [zcode-host] [rpc:register] channel "usage-stats"
+<out> 
+<out> [2026-10-31 08:41:21.420] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.399] [pid:21047] [zcode-host] [rpc:register] channel "coding-plan-subscription"
+<out> 
+<out> [2026-10-31 08:41:21.421] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.399] [pid:21047] [zcode-host] [rpc:register] channel "client-config"
+<out> 
+<out> [2026-10-31 08:41:21.421] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.400] [pid:21047] [zcode-host] [rpc:register] channel "client-scenes"
+<out> 
+<out> [2026-10-31 08:41:21.422] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.400] [pid:21047] [zcode-host] [rpc:register] channel "off-peak-task"
+<out> 
+<out> [2026-10-31 08:41:21.422] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.400] [pid:21047] [zcode-host] [rpc:register] channel "skills"
+<out> 
+<out> [2026-10-31 08:41:21.423] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.400] [pid:21047] [zcode-host] [rpc:register] channel "skill-sync"
+<out> 
+<out> [2026-10-31 08:41:21.424] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.400] [pid:21047] [zcode-host] [rpc:register] channel "mcp-sync"
+<out> 
+<out> [2026-10-31 08:41:21.427] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.400] [pid:21047] [zcode-host] [rpc:register] channel "plugin-sync"
+<out> 
+<out> [2026-10-31 08:41:21.428] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.400] [pid:21047] [zcode-host] [rpc:register] channel "plugins"
+<out> 
+<out> [2026-10-31 08:41:21.430] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.400] [pid:21047] [zcode-host] [rpc:register] channel "plugin-management"
+<out> 
+<out> [2026-10-31 08:41:21.431] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.400] [pid:21047] [zcode-host] [rpc:register] channel "subagents"
+<out> 
+<out> [2026-10-31 08:41:21.432] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.400] [pid:21047] [zcode-host] [rpc:register] channel "commands"
+<out> 
+<out> [2026-10-31 08:41:21.433] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.400] [pid:21047] [zcode-host] [rpc:register] channel "hooks"
+<out> 
+<out> [2026-10-31 08:41:21.434] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.400] [pid:21047] [zcode-host] [rpc:register] channel "memory"
+<out> 
+<out> [2026-10-31 08:41:21.435] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.400] [pid:21047] [zcode-host] [rpc:register] channel "settings-sync"
+<out> 
+<out> [2026-10-31 08:41:21.436] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.400] [pid:21047] [zcode-host] [rpc:register] channel "feedback"
+<out> 
+<out> [2026-10-31 08:41:21.454] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.400] [pid:21047] [zcode-host] [rpc:register] channel "prompt-attachment-transfer"
+<out> 
+<out> [2026-10-31 08:41:21.454] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.400] [pid:21047] [zcode-host] [rpc:register] channel "provider-settings"
+<out> 
+<out> [2026-10-31 08:41:21.455] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.400] [pid:21047] [zcode-host] [rpc:register] channel "model-selection"
+<out> 
+<out> [2026-10-31 08:41:21.456] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.400] [pid:21047] [zcode-host] [rpc:register] channel "window-controller"
+<out> 
+<out> [2026-10-31 08:41:21.457] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.401] [pid:21047] [zcode-host] service connection ready mode=desktop-continuous
+<out> 
+<out> [2026-10-31 08:41:21.458] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.401] [pid:21047] [zcode-host] attached scoped service port, attachmentId=e027417a-16eb-47c3-8e03-630ff8cd6ae0, scope=local, clientMode=desktop-continuous
+<out> 
+<out> [2026-10-31 08:41:21.459] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:21.401] [pid:21047] [zcode-host] window Host topology, reason=attachment-added, pid=21047, connections=0, logicalSessions=0, attachments=1
+<out> 
+<out> [2026-10-31 08:41:22.399] [pid:21047] [provider-runtime][trace:Provider Registry 已就绪] {
+<out>   configRevision: '["zcode-builtin:30:bca9cfa7364f27f934a4955d32c6827e96e5a37affda60124246c737776f35e9","2915b997aefbd6c7fe8ccfc87153713dc11851987034eec5a515e9660ac81b0e"]',
+<out>   providerCount: 0
+<out> }
+<out> 
+<out> [2026-10-31 08:41:22.402] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:22.399] [pid:21047] [provider-runtime][trace:Provider Registry 已就绪] {"configRevision":"[\"zcode-builtin:30:bca9cfa7364f27f934a4955d32c6827e96e5a37affda60124246c737776f35e9\",\"2915b997aefbd6c7fe8ccfc87153713dc11851987034eec5a515e9660ac81b0e\"]","providerCount":0}
+<out> 
+<out> [2026-10-31 08:41:22.471] [pid:21047] [zcode-agent-service] provider/model 尚未就绪，ZCode agent 保持未启动 {
+<out>   providerCount: 0,
+<out>   revision: 'model-selection:1',
+<out>   workspaceKey: '/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-6a315eb/composer/deb/home-deb/.webflix/workspace/default',
+<out>   workspacePath: '/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-6a315eb/composer/deb/home-deb/.webflix/workspace/default'
+<out> }
+<out> 
+<out> [2026-10-31 08:41:22.473] [pid:21047] [zcode-agent-service] ZCode agent 等待 provider/model 就绪 {
+<out>   durationMs: 1105,
+<out>   message: '当前没有可用的模型供应商和模型，请先登录或配置 API Key。',
+<out>   workspaceKey: '/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-6a315eb/composer/deb/home-deb/.webflix/workspace/default',
+<out>   workspacePath: '/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-6a315eb/composer/deb/home-deb/.webflix/workspace/default'
+<out> }
+<out> [2026-10-31 08:41:22.474] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:22.471] [pid:21047] [zcode-agent-service] provider/model 尚未就绪，ZCode agent 保持未启动 {"providerCount":0,"revision":"model-selection:1","workspaceKey":"/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-6a315eb/composer/deb/home-deb/.webflix/workspace/default","workspacePath":"/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-6a315eb/composer/deb/home-deb/.webflix/workspace/default"}
+<out> 
+<out> [2026-10-31 08:41:22.475] [pid:21047] [zcode-host] ZCode agent warmup waiting for provider/model (local host init (1/1)) workspace=/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-6a315eb/composer/deb/home-deb/.webflix/workspace/default
+<out> [2026-10-31 08:41:22.475] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:22.473] [pid:21047] [zcode-agent-service] ZCode agent 等待 provider/model 就绪 {"durationMs":1105,"message":"当前没有可用的模型供应商和模型，请先登录或配置 API Key。","workspaceKey":"/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-6a315eb/composer/deb/home-deb/.webflix/workspace/default","workspacePath":"/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-6a315eb/composer/deb/home-deb/.webflix/workspace/default"}
+<out> 
+<out> [2026-10-31 08:41:22.476] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:22.475] [pid:21047] [zcode-host] ZCode agent warmup waiting for provider/model (local host init (1/1)) workspace=/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-6a315eb/composer/deb/home-deb/.webflix/workspace/default
+<out> 
+<err> [2026-10-31 08:41:22.564] [pid:21047] [provider-config] ZCode Built-in Config 远端刷新失败 {
+<err>   error: Error: ZCode Built-in cdn: invalid schema at providerRules.8.config.access.mode (invalid_value)
+<err>       at downloadZCodeBuiltinRelease (file:///home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-6a315eb/composer/deb/deb-tree/opt/WebFlix/resources/app.asar/out/host/index.js:2:71461)
+<err>       at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+<err>       at async #r (file:///home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-6a315eb/composer/deb/deb-tree/opt/WebFlix/resources/app.asar/out/host/index.js:2:73689)
+<err>       at async Promise.allSettled (index 0)
+<err> }
+<err> 
+<err> [2026-10-31 08:41:22.568] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:22.564] [pid:21047] [provider-config] ZCode Built-in Config 远端刷新失败 {"error":{}}
+<err> 
+<out> [2026-10-31 08:41:22.883] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (4.5ms)
+<out> 
+<out> [2026-10-31 08:41:22.885] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:22.883] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (4.5ms)
+<out> 
+<err> (node:21074) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+<err> (Use `exe --trace-warnings ...` to show where the warning was created)
+<err> 
+<out> [2026-10-31 08:41:22.905] [pid:21047] [zcode-host] [rpc:listen] broadcast.onMessage subscribed
+<out> 
+<out> [2026-10-31 08:41:22.906] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:22.905] [pid:21047] [zcode-host] [rpc:listen] broadcast.onMessage subscribed
+<out> 
+<out> [2026-10-31 08:41:22.910] [pid:20967] [main] [cron-scheduler] cron scheduler started
+<out> 
+<out> [2026-10-31 08:41:22.918] [pid:21047] [zcode-host] [rpc:listen] zcode-agent.onDynamicLocalTtftFacts subscribed
+<out> 
+<out> [2026-10-31 08:41:22.918] [pid:21047] [zcode-host] [rpc:listen] zcode-agent.onDynamicConversationFrame subscribed
+<out> [2026-10-31 08:41:22.918] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:22.918] [pid:21047] [zcode-host] [rpc:listen] zcode-agent.onDynamicLocalTtftFacts subscribed
+<out> 
+<out> [2026-10-31 08:41:22.919] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:22.918] [pid:21047] [zcode-host] [rpc:listen] zcode-agent.onDynamicConversationFrame subscribed
+<out> 
+<out> [2026-10-31 08:41:22.919] [pid:20967] [renderer] v4 conversation frame upstream attached {
+<out>   workspaceKey: '/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-6a315eb/composer/deb/home-deb/.webflix/agent-workspace',
+<out>   workspacePath: '/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-6a315eb/composer/deb/home-deb/.webflix/agent-workspace',
+<out>   event: 'v4.conversation.frames.upstream_attached',
+<out>   listenerCount: 1,
+<out>   module: 'ui.v4.conversation_transport',
+<out>   runtimeGeneration: 0,
+<out>   status: 'completed'
+<out> }
+<out> 
+<out> [2026-10-31 08:41:22.994] [pid:21047] [zcode-host] [rpc:listen] broadcast.onMessage subscribed
+<out> 
+<out> [2026-10-31 08:41:22.995] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:22.994] [pid:21047] [zcode-host] [rpc:listen] broadcast.onMessage subscribed
+<out> 
+<out> [2026-10-31 08:41:22.996] [pid:21047] [zcode-host] [rpc:listen] zcode-agent.onDynamicLocalTtftFacts subscribed
+<out> [2026-10-31 08:41:22.996] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:22.996] [pid:21047] [zcode-host] [rpc:listen] zcode-agent.onDynamicLocalTtftFacts subscribed
+<out> 
+<out> [2026-10-31 08:41:22.996] [pid:20967] [renderer] v4 conversation frame upstream attached {
+<out>   workspaceKey: '/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-6a315eb/composer/deb/home-deb/.webflix/agent-workspace',
+<out>   workspacePath: '/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-6a315eb/composer/deb/home-deb/.webflix/agent-workspace',
+<out>   event: 'v4.conversation.frames.upstream_attached',
+<out>   listenerCount: 1,
+<out>   module: 'ui.v4.conversation_transport',
+<out>   runtimeGeneration: 0,
+<out>   status: 'completed'
+<out> }
+<out> [2026-10-31 08:41:22.997] [pid:21047] [zcode-host] [rpc:listen] zcode-agent.onDynamicConversationFrame subscribed
+<out> 
+<out> [2026-10-31 08:41:22.997] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:22.997] [pid:21047] [zcode-host] [rpc:listen] zcode-agent.onDynamicConversationFrame subscribed
+<out> 
+<out> [2026-10-31 08:41:24.389] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.4ms)
+<out> 
+<out> [2026-10-31 08:41:24.390] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:24.389] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.4ms)
+<out> 
+<out> [2026-10-31 08:41:25.889] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:41:25.890] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:25.889] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:41:27.390] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.5ms)
+<out> 
+<out> [2026-10-31 08:41:27.391] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:27.390] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.5ms)
+<out> 
+<out> [2026-10-31 08:41:28.890] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:41:28.891] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:28.890] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:41:30.391] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.4ms)
+<out> 
+<out> [2026-10-31 08:41:30.392] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:30.391] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.4ms)
+<out> 
+<out> [2026-10-31 08:41:31.892] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.4ms)
+<out> 
+<out> [2026-10-31 08:41:31.893] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:31.892] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.4ms)
+<out> 
+<out> [2026-10-31 08:41:33.392] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:41:33.393] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:33.392] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:41:34.893] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:41:34.894] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:34.893] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:41:36.394] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.5ms)
+<out> 
+<out> [2026-10-31 08:41:36.395] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:36.394] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.5ms)
+<out> 
+<out> [2026-10-31 08:41:37.898] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (4.5ms)
+<out> [2026-10-31 08:41:37.906] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:37.898] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (4.5ms)
+<out> 
+<out> [2026-10-31 08:41:39.395] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.4ms)
+<out> 
+<out> [2026-10-31 08:41:39.396] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:39.395] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.4ms)
+<out> 
+<out> [2026-10-31 08:41:40.895] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.4ms)
+<out> 
+<out> [2026-10-31 08:41:40.896] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:40.895] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.4ms)
+<out> 
+<out> [2026-10-31 08:41:42.396] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:41:42.397] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:42.396] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:41:43.897] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:41:43.898] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:43.897] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:41:45.397] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:41:45.398] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:45.397] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:41:46.898] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:41:46.899] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:46.898] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:41:48.399] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.5ms)
+<out> 
+<out> [2026-10-31 08:41:48.399] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:48.399] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.5ms)
+<out> 
+<out> [2026-10-31 08:41:49.899] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:41:49.900] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:49.899] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:41:51.399] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:41:51.400] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:51.399] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:41:52.900] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.4ms)
+<out> 
+<out> [2026-10-31 08:41:52.901] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:52.900] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.4ms)
+<out> 
+<out> [2026-10-31 08:41:54.400] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.4ms)
+<out> 
+<out> [2026-10-31 08:41:54.401] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:54.400] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.4ms)
+<out> 
+<out> [2026-10-31 08:41:55.901] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.2ms)
+<out> 
+<out> [2026-10-31 08:41:55.914] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:55.901] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.2ms)
+<out> 
+<out> [2026-10-31 08:41:57.401] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.2ms)
+<out> 
+<out> [2026-10-31 08:41:57.402] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:57.401] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.2ms)
+<out> 
+<out> [2026-10-31 08:41:58.902] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:41:58.903] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:41:58.902] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:42:00.403] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.4ms)
+<out> 
+<out> [2026-10-31 08:42:00.404] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:42:00.403] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.4ms)
+<out> 
+<out> [2026-10-31 08:42:01.903] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.4ms)
+<out> 
+<out> [2026-10-31 08:42:01.904] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:42:01.903] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.4ms)
+<out> 
+<out> [2026-10-31 08:42:03.404] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.2ms)
+<out> 
+<out> [2026-10-31 08:42:03.404] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:42:03.404] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.2ms)
+<out> 
+<out> [2026-10-31 08:42:04.904] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:42:04.905] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:42:04.904] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:42:06.404] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:42:06.405] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:42:06.404] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:42:07.905] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:42:07.906] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:42:07.905] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:42:09.405] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:42:09.406] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:42:09.405] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:42:10.906] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:42:10.907] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:42:10.906] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:42:12.406] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:42:12.407] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:42:12.406] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:42:13.907] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.4ms)
+<out> 
+<out> [2026-10-31 08:42:13.908] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:42:13.907] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.4ms)
+<out> 
+<out> [2026-10-31 08:42:15.407] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:42:15.408] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:42:15.407] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:42:16.908] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:42:16.909] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:42:16.908] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:42:17.115] [pid:20967] [main] [memory] role=main reason=first rssKb=281308 heapUsedKb=29546 heapTotalKb=31060 externalKb=5797 arrayBuffersKb=0 app.willDownloadListeners=0 app.windows=1 broadcast.claims=0 broadcast.processes=1 guest.closedTabIds=0 guest.tabs=0 taskBus.leases=0 taskBus.sessionRoutes=0 taskBus.streamBatches=0 ws.chromium_other=83612 ws.gpu=67812 ws.host=168232 ws.main=281308 ws.renderer_main=208456 ws.scheduler=165260
+<out> 
+<out> [2026-10-31 08:42:17.172] [pid:20967] [main] [renderer-action-trace] config refreshed { enabled: true, configVersion: 'ttft-2026-09-18' }
+<out> 
+<out> [2026-10-31 08:42:18.408] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:42:18.410] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:42:18.408] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:42:18.426] [pid:21047] [zcode-host] [memory] role=utility_host reason=first rssKb=167168 heapUsedKb=26221 heapTotalKb=27392 externalKb=5245 arrayBuffersKb=0 agent.pendingPermissions=0 agent.pendingUserInputs=0 agent.seqStates=0 agent.sessionEmitters=0 bots.liveStatusProgress=0 bots.runningTasks=0 bots.streamSubs=0 bots.typingIntervals=0 fileWatcher.open=0 task.overlays=0 task.runtimeCommands=0 task.taskEmitters=0 task.toolMemoryTasks=0 terminal.open=0
+<out> 
+<out> [2026-10-31 08:42:18.428] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:42:18.426] [pid:21047] [zcode-host] [memory] role=utility_host reason=first rssKb=167168 heapUsedKb=26221 heapTotalKb=27392 externalKb=5245 arrayBuffersKb=0 agent.pendingPermissions=0 agent.pendingUserInputs=0 agent.seqStates=0 agent.sessionEmitters=0 bots.liveStatusProgress=0 bots.runningTasks=0 bots.streamSubs=0 bots.typingIntervals=0 fileWatcher.open=0 task.overlays=0 task.runtimeCommands=0 task.taskEmitters=0 task.toolMemoryTasks=0 terminal.open=0
+<out> 
+<out> [2026-10-31 08:42:19.909] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:42:19.910] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:42:19.909] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:42:21.410] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:42:21.411] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:42:21.410] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:42:22.911] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.4ms)
+<out> 
+<out> [2026-10-31 08:42:22.912] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:42:22.911] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.4ms)
+<out> 
+<out> [2026-10-31 08:42:24.412] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.4ms)
+<out> 
+<out> [2026-10-31 08:42:24.413] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:42:24.412] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.4ms)
+<out> 
+<out> [2026-10-31 08:42:25.912] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:42:25.913] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:42:25.912] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:42:27.413] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:42:27.413] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:42:27.413] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:42:28.913] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:42:28.914] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:42:28.913] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:42:30.414] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:42:30.415] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:42:30.414] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:42:31.914] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.4ms)
+<out> 
+<out> [2026-10-31 08:42:31.915] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:42:31.914] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.4ms)
+<out> 
+<out> [2026-10-31 08:42:33.415] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:42:33.416] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:42:33.415] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:42:34.916] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.4ms)
+<out> 
+<out> [2026-10-31 08:42:34.916] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:42:34.916] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.4ms)
+<out> 
+<out> [2026-10-31 08:42:36.416] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:42:36.417] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:42:36.416] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:42:37.917] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:42:37.918] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:42:37.917] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:42:39.417] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.4ms)
+<out> 
+<out> [2026-10-31 08:42:39.418] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:42:39.417] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.4ms)
+<out> 
+<out> [2026-10-31 08:42:40.918] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.4ms)
+<out> 
+<out> [2026-10-31 08:42:40.919] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:42:40.918] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.4ms)
+<out> 
+<out> [2026-10-31 08:42:42.419] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.4ms)
+<out> 
+<out> [2026-10-31 08:42:42.420] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:42:42.419] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.4ms)
+<out> 
+<out> [2026-10-31 08:42:43.920] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:42:43.920] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:42:43.920] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:42:45.420] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:42:45.421] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:42:45.420] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:42:46.921] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:42:46.922] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:42:46.921] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:42:48.421] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:42:48.422] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:42:48.421] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:42:49.922] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:42:49.923] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:42:49.922] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:42:51.422] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.4ms)
+<out> 
+<out> [2026-10-31 08:42:51.424] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:42:51.422] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.4ms)
+<out> 
+<out> [2026-10-31 08:42:52.923] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.4ms)
+<out> 
+<out> [2026-10-31 08:42:52.924] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:42:52.923] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.4ms)
+<out> 
+<out> [2026-10-31 08:42:54.424] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.4ms)
+<out> 
+<out> [2026-10-31 08:42:54.425] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:42:54.424] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.4ms)
+<out> 
+<out> [2026-10-31 08:42:55.924] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:42:55.925] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:42:55.924] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:42:57.425] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:42:57.425] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:42:57.425] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:42:58.925] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:42:58.926] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:42:58.925] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:43:00.426] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.4ms)
+<out> 
+<out> [2026-10-31 08:43:00.427] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:43:00.426] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.4ms)
+<out> 
+<out> [2026-10-31 08:43:01.928] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.4ms)
+<out> 
+<out> [2026-10-31 08:43:01.929] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:43:01.928] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.4ms)
+<out> 
+<out> [2026-10-31 08:43:03.427] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.2ms)
+<out> 
+<out> [2026-10-31 08:43:03.428] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:43:03.427] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.2ms)
+<out> 
+<out> [2026-10-31 08:43:04.928] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:43:04.929] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:43:04.928] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:43:06.428] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:43:06.429] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:43:06.428] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:43:07.929] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.2ms)
+<out> 
+<out> [2026-10-31 08:43:07.929] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:43:07.929] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.2ms)
+<out> 
+<out> [2026-10-31 08:43:09.429] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:43:09.430] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:43:09.429] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:43:10.930] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.2ms)
+<out> 
+<out> [2026-10-31 08:43:10.930] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:43:10.930] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.2ms)
+<out> 
+<out> [2026-10-31 08:43:12.431] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:43:12.432] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:43:12.431] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:43:13.932] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:43:13.933] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:43:13.932] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:43:15.433] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.5ms)
+<out> 
+<out> [2026-10-31 08:43:15.434] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:43:15.433] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.5ms)
+<out> 
+<out> [2026-10-31 08:43:16.933] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:43:16.934] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:43:16.933] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:43:17.122] [pid:20967] [main] [memory] role=main reason=changed rssKb=281880 heapUsedKb=29851 heapTotalKb=32084 externalKb=5821 arrayBuffersKb=0 app.willDownloadListeners=0 app.windows=1 broadcast.claims=0 broadcast.processes=1 guest.closedTabIds=0 guest.tabs=0 taskBus.leases=0 taskBus.sessionRoutes=0 taskBus.streamBatches=0 ws.chromium_other=83680 ws.gpu=67812 ws.host=171692 ws.main=281880 ws.renderer_main=206564 ws.scheduler=142696
+<out> 
+<out> [2026-10-31 08:43:18.427] [pid:21047] [zcode-host] [memory] role=utility_host reason=changed rssKb=171692 heapUsedKb=28147 heapTotalKb=32152 externalKb=5276 arrayBuffersKb=0 agent.pendingPermissions=0 agent.pendingUserInputs=0 agent.seqStates=0 agent.sessionEmitters=0 bots.liveStatusProgress=0 bots.runningTasks=0 bots.streamSubs=0 bots.typingIntervals=0 fileWatcher.open=0 task.overlays=0 task.runtimeCommands=0 task.taskEmitters=0 task.toolMemoryTasks=0 terminal.open=0
+<out> 
+<out> [2026-10-31 08:43:18.427] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:43:18.427] [pid:21047] [zcode-host] [memory] role=utility_host reason=changed rssKb=171692 heapUsedKb=28147 heapTotalKb=32152 externalKb=5276 arrayBuffersKb=0 agent.pendingPermissions=0 agent.pendingUserInputs=0 agent.seqStates=0 agent.sessionEmitters=0 bots.liveStatusProgress=0 bots.runningTasks=0 bots.streamSubs=0 bots.typingIntervals=0 fileWatcher.open=0 task.overlays=0 task.runtimeCommands=0 task.taskEmitters=0 task.toolMemoryTasks=0 terminal.open=0
+<out> 
+<out> [2026-10-31 08:43:18.433] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:43:18.434] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:43:18.433] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:43:19.934] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.5ms)
+<out> 
+<out> [2026-10-31 08:43:19.935] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:43:19.934] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.5ms)
+<out> 
+<out> [2026-10-31 08:43:21.435] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.4ms)
+<out> 
+<out> [2026-10-31 08:43:21.436] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:43:21.435] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.4ms)
+<out> 
+<err> [2026-10-31 08:43:22.233] [pid:21047] [provider-config] ZCode Built-in Config 远端刷新失败 {
+<err>   error: Error: ZCode Built-in cdn: invalid schema at providerRules.8.config.access.mode (invalid_value)
+<err>       at downloadZCodeBuiltinRelease (file:///home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-6a315eb/composer/deb/deb-tree/opt/WebFlix/resources/app.asar/out/host/index.js:2:71461)
+<err>       at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+<err>       at async #r (file:///home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-6a315eb/composer/deb/deb-tree/opt/WebFlix/resources/app.asar/out/host/index.js:2:73689)
+<err>       at async Promise.allSettled (index 0)
+<err> }
+<err> 
+<err> [2026-10-31 08:43:22.234] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:43:22.233] [pid:21047] [provider-config] ZCode Built-in Config 远端刷新失败 {"error":{}}
+<err> 
+<out> [2026-10-31 08:43:22.935] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.4ms)
+<out> 
+<out> [2026-10-31 08:43:22.936] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:43:22.935] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.4ms)
+<out> 
+<out> [2026-10-31 08:43:24.436] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:43:24.437] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:43:24.436] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:43:25.936] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.4ms)
+<out> 
+<out> [2026-10-31 08:43:25.937] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:43:25.936] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.4ms)
+<out> 
+<out> [2026-10-31 08:43:27.437] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.4ms)
+<out> 
+<out> [2026-10-31 08:43:27.438] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:43:27.437] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.4ms)
+<out> 
+<out> [2026-10-31 08:43:28.937] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:43:28.938] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:43:28.937] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:43:30.438] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:43:30.439] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:43:30.438] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:43:31.939] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.4ms)
+<out> 
+<out> [2026-10-31 08:43:31.940] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:43:31.939] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.4ms)
+<out> 
+<out> [2026-10-31 08:43:33.439] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:43:33.440] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:43:33.439] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:43:34.940] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.4ms)
+<out> 
+<out> [2026-10-31 08:43:34.941] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:43:34.940] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.4ms)
+<out> 
+<out> [2026-10-31 08:43:36.440] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:43:36.441] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:43:36.440] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:43:37.941] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:43:37.942] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:43:37.941] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:43:39.442] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:43:39.443] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:43:39.442] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:43:40.943] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.4ms)
+<out> 
+<out> [2026-10-31 08:43:40.944] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:43:40.943] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.4ms)
+<out> 
+<out> [2026-10-31 08:43:42.444] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.4ms)
+<out> 
+<out> [2026-10-31 08:43:42.445] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:43:42.444] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.4ms)
+<out> 
+<out> [2026-10-31 08:43:43.944] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:43:43.945] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:43:43.944] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:43:45.445] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (1.1ms)
+<out> 
+<out> [2026-10-31 08:43:45.446] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:43:45.445] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (1.1ms)
+<out> 
+<out> [2026-10-31 08:43:46.945] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:43:46.946] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:43:46.945] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.3ms)
+<out> 
+<out> [2026-10-31 08:43:48.446] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.2ms)
+<out> 
+<out> [2026-10-31 08:43:48.446] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:43:48.446] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.2ms)
+<out> 
+<out> [2026-10-31 08:43:49.946] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.4ms)
+<out> 
+<out> [2026-10-31 08:43:49.947] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:43:49.946] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.4ms)
+<out> 
+<out> [2026-10-31 08:43:51.447] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.6ms)
+<out> 
+<out> [2026-10-31 08:43:51.448] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:43:51.447] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.6ms)
+<out> 
+<out> [2026-10-31 08:43:52.947] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.4ms)
+<out> 
+<out> [2026-10-31 08:43:52.948] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:43:52.947] [pid:21047] [zcode-host] [rpc:call] file.readdir OK (0.4ms)
+<out> 
+<err> [20967:1031/084353.875886:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+<err> [20967:1031/084353.875941:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+<err> 
+<err> [20967:1031/084353.875981:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+<err> [20967:1031/084353.876001:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+<err> 
+<out> [2026-10-31 08:43:54.044] [pid:20967] [main] [app-quit] forceQuit enabled (app-before-quit)
+<out> 
+<out> [2026-10-31 08:43:54.045] [pid:20967] [main] [stability] perf_app_exit reported { scene: 'app_quit', exitCode: 0 }
+<out> 
+<out> [2026-10-31 08:43:54.046] [pid:20967] [main] [app-quit] waiting for host process cleanup (app-before-quit), kind=normal, hosts=1, forceKillDelayMs=7500, waitTimeoutMs=9000
+<out> [2026-10-31 08:43:54.047] [pid:20967] [main] [disposeHostProcess] disposing host process (app-before-quit-1), pid=21047
+<out> 
+<out> [2026-10-31 08:43:54.048] [pid:21047] [zcode-host] disposing host resources, reason=parent dispose
+<out> 
+<out> [2026-10-31 08:43:54.053] [pid:20967] [main] [cron-scheduler] scheduler process exited code=0
+<out> 
+<out> [2026-10-31 08:43:54.053] [pid:20967] [main] [host-log] (local-1) [host] [2026-10-31 08:43:54.048] [pid:21047] [zcode-host] disposing host resources, reason=parent dispose
+<out> 
+<out> [2026-10-31 08:43:54.054] [pid:20967] [main] [task-realtime] unregistered host { hostId: 'ddf192b7-d606-440d-9e55-1378e13558cc', windowId: 1 }
+<out> 
+<out> [2026-10-31 08:43:54.055] [pid:20967] [main] [spawnHostProcess] host process (local-1) exited with code 0
+<out> 
+<out> [2026-10-31 08:43:54.055] [pid:20967] [main] [app-quit] host process cleanup completed (app-before-quit)
+<out> 
+<out> [2026-10-31 08:43:54.055] [pid:20967] [main] [app-quit] preparation finished, resuming quit with windows=1
+<out> 
+<out> [2026-10-31 08:43:54.072] [pid:20967] [main] [createWindow] window closed, killing host process (local-1)
+<out> 
+<out> [2026-10-31 08:43:54.073] [pid:20967] [main] [app-quit] all windows closed after preparation, exiting app
+<out> 
+<out> [2026-10-31 08:43:54.073] [pid:20967] [main] [app-quit] exiting prepared app (all-windows-closed-after-preparation)
+<out> 

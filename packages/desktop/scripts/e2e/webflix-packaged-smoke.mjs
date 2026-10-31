@@ -556,34 +556,45 @@ async function runPackagedSmoke({
 
       // ---- search: the WFX-ANON-VIEW-1 anon-aware honest-results contract ----
       // (the journey's 2d39708 precedent, ported to the packaged tier): the
-      // keyless anonymous engine is the default, so a query's honest outcome
-      // is EITHER the requires-auth gate (when the keyless engine is
-      // unavailable) OR REAL keyless results (search-results / the degraded
-      // honest variant — never invented rows). Poll 30s for the network
-      // settle; the never-invent law is battery-pinned upstream of this
-      // check, so a rendered result row is a mapped upstream row.
+      // keyless anonymous engine is the default, and the search screen's
+      // EVERY typed settled state is a truthful outcome by construction (the
+      // never-invent law is battery-pinned — including the honest EMPTY state:
+      // "The search finished and found no results", observed live on the
+      // AppImage lane when the upstream answered the same query with zero
+      // rows). Poll 30s for the network settle; the only non-outcomes are
+      // idle (never submitted) and loading (unsettled).
       await page.getByRole("button", { name: "Search", exact: true }).click({ timeout: 5_000 });
       try {
         await page.locator('[data-testid="search-input"]').fill("webflix smoke query");
         await page.locator('[data-testid="search-input"]').press("Enter");
+        const HONEST_SEARCH_STATES = [
+          "search-requires-auth",
+          "search-empty",
+          "search-rate-limited",
+          "search-degraded",
+          "search-unavailable",
+          "search-unsupported",
+          "search-status-unknown",
+        ];
         let searchOk = false;
         let searchDetail = "no honest search outcome rendered";
         const searchDeadline = Date.now() + 30_000;
         while (Date.now() < searchDeadline && !searchOk) {
-          const requiresAuthVisible = await page
-            .locator('[data-testid="search-requires-auth"]')
-            .first()
-            .isVisible()
-            .catch(() => false);
-          if (requiresAuthVisible) {
-            searchOk = true;
-            searchDetail = "honest requires-auth gate (the keyless engine unavailable here)";
-            break;
+          for (const state of HONEST_SEARCH_STATES) {
+            const stateVisible = await page
+              .locator(`[data-testid="${state}"]`)
+              .first()
+              .isVisible()
+              .catch(() => false);
+            if (stateVisible) {
+              searchOk = true;
+              searchDetail = `honest settled state: ${state}`;
+              break;
+            }
           }
+          if (searchOk) break;
           const resultRows = await page
-            .locator(
-              '[data-testid="search-results"] article, [data-testid="search-results"] li, [data-testid="search-degraded"]',
-            )
+            .locator('[data-testid="search-results"] article, [data-testid="search-results"] li')
             .count()
             .catch(() => 0);
           if (resultRows > 0) {

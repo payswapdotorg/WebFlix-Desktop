@@ -1,0 +1,52 @@
+{
+  "results": [
+    {
+      "name": "composer:deb:launch",
+      "ok": true,
+      "blocked": false,
+      "detail": "primary window + renderer dom-ready (packaged log markers)"
+    },
+    {
+      "name": "composer:deb:cdp-attached",
+      "ok": true,
+      "blocked": false,
+      "detail": "packaged renderer page file:///home/z/webflix-desktop/packages/desktop/scripts/e2e/evid…"
+    },
+    {
+      "name": "composer:deb:panel-open",
+      "ok": true,
+      "blocked": false,
+      "detail": "the agent panel opened: \"Agent panel | ✕ | Agent | connecting to the agent runtime… | Close | Connecting to the ZCode agent runtime… |  | W…\""
+    },
+    {
+      "name": "composer:deb:chat-surface",
+      "ok": true,
+      "blocked": false,
+      "detail": "the lazy @zcode/ui chat surface root mounted (runtime admission paired + prebuilt chunk loaded)"
+    },
+    {
+      "name": "composer:deb:composer-mounted",
+      "ok": false,
+      "blocked": false,
+      "detail": "the composer did not mount within 150s — honest states seen: [none]; panel text: \"Agent panel | ✕ | Agent | /home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-6a315eb/composer/deb/home-deb/.webflix/agent-workspace | Close | The app ra…\""
+    },
+    {
+      "name": "composer:deb:reopen-cache",
+      "ok": false,
+      "blocked": false,
+      "detail": "not attempted"
+    },
+    {
+      "name": "composer:deb:host-spawn-marker",
+      "ok": true,
+      "blocked": false,
+      "detail": "the packaged main log records the host utility process fork"
+    },
+    {
+      "name": "composer:deb:shutdown",
+      "ok": true,
+      "blocked": false,
+      "detail": "exit=0"
+    }
+  ]
+}
