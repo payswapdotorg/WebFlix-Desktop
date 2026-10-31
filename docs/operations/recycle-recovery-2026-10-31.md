@@ -118,11 +118,18 @@ keeps its state on `globalThis`, runs a single re-bindable watchdog tick and
 serializes every stack transition through a mutex (recorded as THE
 HOT-RELOAD LAW in the bridge source and the harness WORKLOG).
 
-## Standing residuals (unchanged by this wave)
+## Standing residuals (updated by WFX-PACKAGED-REBASE-1, 2026-10-31)
 
 - The OAuth consent round-trip BLOCKED on the operator's Cloud Console
   redirect registration (see wfx-parity-evidence.md C.4 — narrowed, zero code
   changes once registered).
-- The packaged-tier composer mount + live provider round-trips (P9 packaging
-  venue).
+- ~~The packaged-tier composer mount~~ CLOSED at `7fbb055` (the
+  WFX-PACKAGED-REBASE-1 wave: the new packaged-tier composer harness
+  `webflix-packaged-composer.mjs` proves the real V4ChatPane composer mounts
+  over the prebuilt bundle in BOTH lanes — 8/8 deb, 8/8 AppImage,
+  VLM-verified; the wave also caught and fixed the provider-chain omission
+  `f832aa7` the gate was hiding, and closed the reopened F2b identity leak
+  `5ef27f9` — full record in docs/operations/ubuntu-release-evidence.md).
+  What remains of this slice: live provider round-trips (need provider
+  credentials in the profile — the standing honest BLOCKED).
 - The durable local-library/history bridge (later order).

@@ -1,0 +1,52 @@
+{
+  "results": [
+    {
+      "name": "composer:appimage:launch",
+      "ok": true,
+      "blocked": false,
+      "detail": "primary window + renderer dom-ready (packaged log markers)"
+    },
+    {
+      "name": "composer:appimage:cdp-attached",
+      "ok": true,
+      "blocked": false,
+      "detail": "packaged renderer page file:///home/z/webflix-desktop/packages/desktop/scripts/e2e/evid…"
+    },
+    {
+      "name": "composer:appimage:panel-open",
+      "ok": true,
+      "blocked": false,
+      "detail": "the agent panel opened: \"Agent panel | ✕ | Agent | connecting to the agent runtime… | Close | Connecting to the ZCode agent runtime… |  | W…\""
+    },
+    {
+      "name": "composer:appimage:chat-surface",
+      "ok": true,
+      "blocked": false,
+      "detail": "the lazy @zcode/ui chat surface root mounted (runtime admission paired + prebuilt chunk loaded)"
+    },
+    {
+      "name": "composer:appimage:composer-mounted",
+      "ok": true,
+      "blocked": false,
+      "detail": "the real chat composer mounted (1 input) — visible=true enabled=true (live round-trips stay BLOCKED: provider credentials)"
+    },
+    {
+      "name": "composer:appimage:reopen-cache",
+      "ok": true,
+      "blocked": false,
+      "detail": "the composer remounted within 20s of the reopen (the admission cache law: closing never disposes the runtime)"
+    },
+    {
+      "name": "composer:appimage:host-spawn-marker",
+      "ok": true,
+      "blocked": false,
+      "detail": "the packaged main log records the host utility process fork"
+    },
+    {
+      "name": "composer:appimage:shutdown",
+      "ok": true,
+      "blocked": false,
+      "detail": "exit=0"
+    }
+  ]
+}

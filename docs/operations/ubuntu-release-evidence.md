@@ -12,17 +12,83 @@ artifacts on the QA machine. The first lane (P9-QA-1) ran on candidate
 lane merged, and P9-QA-2 re-ran the entire packaged smoke on the fresh
 `0125462` build. The `33681f7` record is retained below as superseded history.
 
-**Current candidate status: RELEASE CANDIDATE (0125462), with one standing
-BLOCKED slice.** On the fresh CI build of the P9-FIX-1 merge head, both
-packaged lanes are fully green — deb 35/35 assertions, AppImage 33/33 — and
-both prior identity-leak findings are CLOSED on the packaged process itself
-(F1/F2 below, with the closing assertions quoted). What is **not** claimed:
-external YouTube authorized-account flows remain BLOCKED by standing operator
-order (no authorized test-account credentials exist in this lane; recorded,
-never counted as passed), and the CLI session-store positive path is pinned
-by merged unit tests rather than by this smoke (the smoke does not exercise
-the CLI session store — see F2). Read _BLOCKED_ and _Limitations_ before
-treating this as shippable.
+## The final-tree re-verification (WFX-PACKAGED-REBASE-1, 2026-10-31)
+
+The `0125462` RC evidence was 15 days and 27 commits stale — the anon
+engine (WFX-ANON-VIEW-1), the Netflix hub, the P45 redesign and the
+agent-bridge waves had never been exercised on a packaged artifact. This
+wave re-ran the full packaged verification on the final tree, found and
+closed two real defects the stale evidence was hiding, and closed the
+journey's long-standing composer gate in its proper venue.
+
+**Current candidate: `7fbb055`** (CI run `41186596494`, SUCCESS,
+digests: deb `c9db1f2e…`, AppImage `586448b7…`, manifest sourceSha
+verified). The verified set at this exact SHA — tier-6 packaged smoke:
+**deb 35/35, AppImage 33/33**; the NEW packaged-tier composer harness
+(`webflix-packaged-composer.mjs`): **deb 8/8, AppImage 8/8** — the real
+V4ChatPane composer mounts over the prebuilt bundle (VLM-verified:
+the "Ask ZCode anything…" input, the greeting bubble, the composer's own
+model picker honestly showing "Loading plans…" without credentials),
+the reopen-cache law holds (remount within 20s), and live provider
+round-trips stay the standing BLOCKED (credentials — never counted as
+passed). The CLI session store now lands at the PINNED
+`~/.webflix/cli/db/db.sqlite` with `database-startup ready` in BOTH lanes
+(`~/.zcode` absent entirely) — the F2 closure is no longer vacuous.
+
+The wave's own record (three CI builds, two findings opened and closed):
+
+- **F2b — F2 reopened at the final tree, then CLOSED at `5ef27f9`.** The
+  fresh `9e2c8a2` build (run `41181389083`) caught the deb lane writing
+  `~/.zcode/cli/db/db.sqlite` again. Root cause: the `0125462` closure was
+  partially vacuous on the packaged process — that run's own log shows
+  `database-startup failed: unsupported_runtime` (481ms), so the CLI
+  session store was never actually exercised (the QA-2 record honestly
+  noted this scope). The WFX agent runtime since made the packaged tier
+  resolve the bundled CLI, the host's storage-preparation Worker (the CLI
+  bundle) began really running — and its env never carried the
+  `ZCODE_SESSION_DB_PATH` pin (that pin lived only on the agent spawn
+  path). Fix `5ef27f9`: the same identity-scoped builder applied at the
+  prep Worker's env seam (`buildSessionStoragePreparationWorkerEnv`),
+  6 unit pins, verified non-vacuously at `6a315eb` and `7fbb055` (the
+  pinned store materializes; `~/.zcode` absent; `database-startup ready`).
+- **F3 — the agent chat surface missed Root's provider chain, opened and
+  CLOSED at `f832aa7`.** The composer harness proved the admission + lazy
+  prebuilt chunk mount (chat-surface root PASS), then V4ChatPane's tree
+  threw `Tooltip must be used within TooltipProvider` (caught by the
+  honest error boundary — VLM-verified evidence under
+  `evidence/ubuntu-6a315eb/composer/deb`). The dev journey never reached
+  this (the lazy chunk under vite's on-demand compilation never mounted
+  in the journey window), and the renderer battery mocks V4ChatPane — the
+  packaged venue is exactly where this class of defect surfaces. Fix
+  `f832aa7`: AgentChatSurface now mirrors Root.tsx's EXACT chain
+  (Lucide > Tooltip > Services > Platform > Store > TabStore >
+  DiffsWorkerPool > AssistantCodeComment > CodingPlanUpgradeDialog >
+  the pane); the ui package exports the chain piecemeal (additive).
+- **The smoke's anon-aware re-pin** (`6a315eb` + `7fbb055`): home accepts
+  an honest phase panel OR the ready anon feed with real cards (20 real
+  cards observed in every lane); search accepts every typed settled state
+  or real keyless rows (32 real rows on deb; the honest EMPTY state
+  observed and VLM-verified on an AppImage pass — both branches live).
+- Station note (honest): the final AppImage smoke pass ran after a
+  disk-space cleanup on the QA station (extraction trees are
+  reproducible artifacts; the artifact digests were unchanged throughout —
+  verified against the same sidecars before and after).
+
+Evidence: `packages/desktop/scripts/e2e/evidence/ubuntu-7fbb055/`
+(`{deb,appimage}/results.json` + logs + screenshots,
+`composer/{deb,appimage}/` the same schema) and the finding evidence under
+`ubuntu-9e2c8a2/` (the F2b leak) and `ubuntu-6a315eb/` (the F3 throw).
+
+**Current candidate status: RELEASE CANDIDATE (7fbb055), with one standing
+BLOCKED slice.** Both packaged lanes fully green (tier-6 smoke + the
+composer harness, 8/8 both lanes); F1/F2/F2b/F3 all CLOSED on the packaged
+process itself; the composer gate closed in its proper venue. What is
+**not** claimed: external YouTube authorized-account flows and live
+model/provider chat round-trips remain BLOCKED by the standing operator
+orders (no authorized test-account credentials and no provider credentials
+exist in this lane; recorded, never counted as passed). Read _BLOCKED_ and
+_Limitations_ before treating this as shippable. The `0125462` record below
+is retained as superseded history.
 
 ## Candidate build under evidence
 
