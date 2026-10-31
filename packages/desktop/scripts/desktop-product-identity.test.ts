@@ -252,6 +252,18 @@ describe("T-6 / R3 (build-config half) + R4 — identity-sourced packaging value
       ),
     ).toBe(true);
   });
+
+  // WFX-DIST-1（run 41228318598 的发现）：NSIS 安装包的 PE FileDescription 取自
+  // desktop package.json 的 description（electron-builder NsisTarget 的
+  // appInfo.description），不走 identity 模块——此前继承的 "ZCode Desktop App"
+  // 泄漏进 webflix 安装包的版本资源，被 Windows 发布道的 fail-closed 断言拦下。
+  // 这里把该面钉到 WebFlix 身份值，回归会立刻响。
+  it("the desktop package.json description feeds the NSIS FileDescription identity-safely (WFX-DIST-1)", async () => {
+    const packageJson = JSON.parse(await readRepoFile("../package.json")) as {
+      description?: string;
+    };
+    expect(packageJson.description).toBe(desktopProductIdentities.webflix.desktopEntryDescription);
+  });
 });
 
 describe("T-7 (unit half) — WebFlix/ZCode identity separation at the switch point", () => {

@@ -8,6 +8,7 @@ import {
   ZCODE_BUILD_TIME,
   ZCODE_COMMIT,
   ZCODE_ENV,
+  ZCODE_PRODUCT_FLAVOR,
   ZCODE_VERSION,
 } from "@zcode/shared";
 import { createCustomAboutDialogHtml } from "./aboutWindow.js";
@@ -52,12 +53,20 @@ interface AboutSnapshotOptions {
   };
 }
 
-const ABOUT_APPLICATION_NAME = "ZCode Desktop App";
+// WFX-DIST-1（run 41228318598 的发现）：About 面随产品身份走。此前 webflix 包里
+// Help→About 打开的是完整 ZCode 品牌窗口（标题/版权/应用名），与 NSIS 安装包
+// FileDescription 泄漏同一缺陷类（P9-LINUX-1 在 Linux 面已闭环过同源问题）。
+// 品牌字符串（产品名/应用名/标题/版权）全部按烤入 flavor 分支；test seam 导出供 pin。
+const IS_WEBFLIX_FLAVOR = ZCODE_PRODUCT_FLAVOR === "webflix";
+const ABOUT_PRODUCT_NAME = IS_WEBFLIX_FLAVOR ? "WebFlix" : "ZCode";
+export const ABOUT_APPLICATION_NAME = IS_WEBFLIX_FLAVOR
+  ? "WebFlix Desktop App"
+  : "ZCode Desktop App";
 // 自定义 About 内容本体是 256x280；原生窗口如果同尺寸会让内容贴满透明窗口边界。
 // 这里给 BrowserWindow 额外留出背景呼吸空间，避免正式 About 看起来比 demo 更局促。
 const ABOUT_WINDOW_WIDTH = 256;
 const ABOUT_WINDOW_HEIGHT = 312;
-const ABOUT_MESSAGES: Record<
+export const ABOUT_MESSAGES: Record<
   Locale,
   {
     aboutTitle: string;
@@ -68,18 +77,18 @@ const ABOUT_MESSAGES: Record<
   }
 > = {
   "zh-CN": {
-    aboutTitle: "关于 ZCode",
+    aboutTitle: `关于 ${ABOUT_PRODUCT_NAME}`,
     versionLabel: "版本",
     okButtonLabel: "确定",
     optimizedForAppleSilicon: "已针对 Apple Silicon 优化。",
-    copyright: (year) => `版权所有 © ${year} ZCode。`,
+    copyright: (year) => `版权所有 © ${year} ${ABOUT_PRODUCT_NAME}。`,
   },
   "en-US": {
-    aboutTitle: "About ZCode",
+    aboutTitle: `About ${ABOUT_PRODUCT_NAME}`,
     versionLabel: "version",
     okButtonLabel: "OK",
     optimizedForAppleSilicon: "Optimized for Apple Silicon.",
-    copyright: (year) => `Copyright © ${year} ZCode.`,
+    copyright: (year) => `Copyright © ${year} ${ABOUT_PRODUCT_NAME}.`,
   },
 };
 
