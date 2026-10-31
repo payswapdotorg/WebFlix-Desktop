@@ -243,13 +243,33 @@ Companion gates, same tree: the journey **18 PASS / 0 FAIL / 2 BLOCKED**
 the credentials round-trip) and the dev smoke **11/11** (exit 0), both
 under the exclusive-port protocol.
 
-Packaged tier: the smoke's restart step re-pinned
-(`restart:durable-library-restored` + `restart:durable-history-restored`,
-bridge-status-driven with honest BLOCKED when no engine is live — never a
-fake pass); better-sqlite3 pruned from the packaged app by the native
-policy (the adapter's node:sqlite fallback is the packaged engine — the
-same engine the dev tier live-runs). The CI packaged run verifies on push;
-its result is recorded at merge.
+Packaged tier (VERIFIED on the station against the CI artifacts —
+run 41205642822 @ 30cf8ac, completed success; the workflow builds the
+artifacts, the tier-6 smokes run against them on-station per the
+established protocol): **deb 37/37 + AppImage 35/35**, the restart
+durability gates PASSING in BOTH lanes — `durable-library-restored` (the
+entry re-lists; engine=node:sqlite live in the packaged app) and
+`durable-history-restored` (positionMs 1213 deb / 1184 AppImage restored
+across the same-HOME restart, playback through the authorized
+zcode-media:// preview URL). better-sqlite3 pruned from the packaged app
+by the native policy — the adapter's node:sqlite fallback is the
+packaged engine (the same engine the dev tier live-runs).
+
+Two smoke-harness findings fixed on the way (the product code was
+correct — a raw-CDP probe against the packaged app proved the durable
+import works before either harness change):
+- Playwright's setInputFiles over a connectOverCDP session attaches
+  DataTransfer-built Files that carry NO OS path (webUtils answers
+  null; the durable import honestly degraded session-only) — the smoke
+  now attaches via raw CDP DOM.setFileInputFiles, the SAME path-backed
+  File a real picker produces (commit 05bd293).
+- The first shutdown raced the ~1s playhead heartbeat — the smoke now
+  polls the REAL durable row (bounded, never a blind sleep) before
+  shutting down, recorded as `local-media:durable-progress`.
+
+Evidence: scripts/e2e/evidence/ubuntu-30cf8ac (the first run's honest
+failure set — the null-path metadata is the finding's before-evidence)
+and ubuntu-30cf8ac-rerun (the verified sets: both lanes green).
 
 Honest scope notes (unchanged from the order): provider (IFrame-embed)
 positions stay unreported (no JS API by design); collections durability UI
