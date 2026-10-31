@@ -49,7 +49,6 @@ Consent law: no account mutation action exists in the frozen union (contract-pin
 - **The F2 dev-path leak** (found by the dev smoke, 2026-10-23): with the monorepo zcode CLI bundle present, the dev app's agent warmup writes `~/.zcode/cli/db/db.sqlite` despite the identity env. The packaged tier owns the no-zcode-root gate and CLOSED it in P9-QA-2 (F1/F2). The dev smoke's assertion is now gate-aware (only that exact artifact is tolerated; anything else still fails). Follow-up lane candidate: thread the identity-scoped CLI home through the dev agent spawn env chain.
 - Subscriptions OAuth transport (`subscriptions.list mine=true`) is a later order (the account seam is injected).
 - The federated `SearchOutcome` vocabulary lacks a rate-limited class (W2's recorded freeze-deviation proposal: rate-limited maps to `partial-failure` with the honest reason).
-- Session-scoped history (the durable local-library bridge is a later order — stated in the UI).
 
 ## E. Commands (exact, with exit codes)
 

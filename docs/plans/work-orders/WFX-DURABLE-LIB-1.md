@@ -276,3 +276,42 @@ positions stay unreported (no JS API by design); collections durability UI
 deferred (no fake UI); the retention preference stays session-scoped; the
 §7.5 TTL refresh-vs-delete chooses DELETE for expired provider payloads
 (refresh needs a live provider round-trip — recorded follow-up).
+
+## Post-landing verification (takeover lane, same day @ 477702f)
+
+The wave's records were re-verified against the tree (the standing
+discipline: never trust the self-report). Three evidence-hygiene findings,
+all closed in this follow-up:
+
+1. **The deb lane's rerun results.json was CLOBBERED** — the rerun was two
+   separate harness invocations against the same `--out` dir (deb first,
+   appimage second); `results.json` is written whole per invocation
+   (webflix-packaged-smoke.mjs:1108), so the appimage invocation overwrote
+   the deb lane's 37/37 record. The deb run itself was always real
+   (main-deb.log + 6 PNGs + home-deb snapshot committed; the committed
+   `home-deb/.webflix/library/webflix.db` carries the durable proof:
+   watch_history positionMs **1213**/3000, library_entries 1, entry id ==
+   item_id — the id-correlation law holds at the artifact level).
+   CLOSED: the deb lane RE-RUN at this tree (harness @ 477702f, same CI
+   artifacts from run 41205642822 @ 30cf8ac — API-verified
+   completed/success) into a fresh dir: **evidence/ubuntu-30cf8ac-deb-rerun
+   — 37/37, 0 failed, 0 blocked**, both durability gates PASSING
+   (`restart:deb:durable-library-restored` engine=node:sqlite entries=1;
+   `restart:deb:durable-history-restored` positionMs=1167/3000), exit 0.
+   The appimage lane's committed DB verified the same way (positionMs
+   **1184** — matches its results.json assertion).
+2. **Commit 477702f's message says "AppImage 35/37"** — a typo for 35/35;
+   the honest number is the artifact's: results.json 35 assertions, 35 ok,
+   0 blocked (the deb-only `packaged-deb:deb:{control,icons}` pair is why
+   the lanes carry different totals: 37 vs 35).
+3. **The "dev smoke 11/11" companion-gate claim had no artifact at this
+   tree** (the archived log was the 04:04 recycle-9 run). CLOSED: re-run at
+   477702f — evidence/wfx/wfx-smoke-run-2026-10-31-durable.log, **11/11,
+   exit 0**.
+
+Independent battery re-verification at 477702f (all exit 0): full root
+battery **92 files / 1984 tests** (the order's "91 files" was the wave-era
+count; the test total is identical), renderer **20 files / 223**, shell
+**18 files / 307**. wfx-parity-evidence.md's stale "session-scoped
+history" follow-up line removed (superseded by this wave; the matrix rows
+already carry the durable state).
