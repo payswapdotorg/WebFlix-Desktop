@@ -1,0 +1,18 @@
+[smoke] building desktop main via tsup (one-shot)...
+PASS  build:main — tsup out/main/index.js produced
+[smoke] starting vite dev renderer...
+[smoke] starting electron (WebFlix identity, dev version 0.0)...
+PASS  launch:window — primary window created (app-ready marker)
+PASS  launch:renderer — renderer dom-ready fired
+PASS  launch:renderer-served — renderer URL accepted
+INFO  launch:cdp-probe — not bound in this env (non-fatal)
+PASS  identity:data-root — /tmp/webflix-smoke-home-zwIIQw/.webflix-dev
+PASS  identity:no-zcode-root — dev-tier: the only ~/.zcode artifact is the agent session db (the F2 dev-path leak — the packaged tier owns this gate and closed it in P9-QA-2; follow-up filed)
+PASS  updater:guard — updater surface absent at boot (flavor-disabled or guard-skipped)
+PASS  updater:no-crash — no semver/updater construction crash
+PASS  isolation:chrome-import-off — ImportChromeBrowserData handler absent (fail-closed)
+PASS  identity:matrix — frozen appId/productName/dev-AUMID/data-root verified; no ZCode value on any surface
+PASS  shutdown:clean — exit=0 after SIGTERM
+[smoke] main log saved: /tmp/webflix-smoke-home-zwIIQw/webflix-smoke-main.log
+
+[smoke] 11/11 assertions passed

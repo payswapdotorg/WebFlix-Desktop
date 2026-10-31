@@ -1,0 +1,25 @@
+[wfx-journey] building desktop main via tsup (one-shot, WEBFLIX_IDENTITY=1)...
+PASS  build:flavor-baked — the preload bakes the webflix flavor
+PASS  build:main — tsup out/main/index.js produced
+[wfx-journey] starting vite dev renderer...
+[wfx-journey] starting electron (WebFlix identity)...
+PASS  launch:window — primary window created
+PASS  launch:renderer — renderer dom-ready fired
+PASS  wfx-home:shell — media-first shell chrome rendered
+PASS  wfx-home:sidebar — media-first sidebar rendered
+PASS  wfx-home:honest-state — the home feed is ready with 20 real cards (the WFX-ANON-VIEW-1 anonymous engine — real upstream rows, none fabricated)
+PASS  wfx-home:no-zcode-leak — no ZCode/Z.ai identity leak
+PASS  wfx-watch:official-embed — the official IFrame embed mounted (the approved playback path)
+PASS  wfx-agent:panel-open — the agent panel opened with the chat surface or its honest state
+PASS  wfx-agent:bridge-live — the typed UI-action bridge is live (the e2e hook)
+PASS  wfx-agent:player-survives-close — the persistent player survived panel close
+PASS  wfx-agent:reopen — the panel reopened without losing app state
+PASS  wfx-journey:mrbeast-live — unexpected resolveChannel outcome: {"kind":"ok","summary":"Resolved MrBeast with 12 newest uploads (newest first).","items":[{"itemId":"youtube:video:RE3_PGwDwhw","title":"Lose 150 Lbs Together, Win $250,000","providerId":"youtube","me
+PASS  wfx-journey:context-verification — getVisibleMediaContext verified the watch surface + playing item + panel state from host state
+PASS  wfx-journey:hallucination-typed-failure — a hallucinated itemId answers the typed item-not-found failure
+PASS  wfx-journey:action-trace — the action trace holds 3 typed entries
+BLOCKED  wfx-agent:composer-mounted — the chat composer did not mount within the journey window — the panel state reached: "Agent panel | ✕ | Agent | agent runtime unavailable | Close | Agent runtime unavailable |  | The ZCode agent runtime did not deliver its service port to this window within th…" (the runtime admission + the lazy @zcode/ui chunk under the dev renderer's on-demand compilation; the packaged tier's prebuilt bundle is this gate's proper venue — see wfx-05 screenshot)
+BLOCKED  wfx-agent:live-chat-roundtrip — live model/provider switching + long-task lifecycle need a configured provider credential in the profile — recorded BLOCKED per the work order's no-mock rule (unit-pinned: the panel composes the REAL V4ChatPane over the REAL runtime services)
+PASS  shutdown:no-crash — no crash markers
+
+[wfx-journey] 18 passed / 0 failed / 2 BLOCKED

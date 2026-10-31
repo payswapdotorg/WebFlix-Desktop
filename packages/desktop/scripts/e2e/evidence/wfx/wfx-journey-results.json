@@ -32,7 +32,7 @@
   {
     "name": "wfx-home:honest-state",
     "ok": true,
-    "detail": "the home feed renders an honest phase state (no fabricated rows)"
+    "detail": "the home feed is ready with 20 real cards (the WFX-ANON-VIEW-1 anonymous engine — real upstream rows, none fabricated)"
   },
   {
     "name": "wfx-home:no-zcode-leak",
@@ -66,9 +66,8 @@
   },
   {
     "name": "wfx-journey:mrbeast-live",
-    "ok": null,
-    "detail": "resolveChannel answered the typed honest BLOCKED gate (No official YouTube Data API v3 key is configured — every Data-API-backed surface answers requires-auth until one is. Co…) — the full path is wired and unit-pinned; it goes live the moment the operator provisions the official Data API key (env WEBFLIX_YOUTUBE_API_KEY or <dataRoot>/youtube-api-key), zero code changes needed",
-    "blocked": true
+    "ok": true,
+    "detail": "unexpected resolveChannel outcome: {\"kind\":\"ok\",\"summary\":\"Resolved MrBeast with 12 newest uploads (newest first).\",\"items\":[{\"itemId\":\"youtube:video:RE3_PGwDwhw\",\"title\":\"Lose 150 Lbs Together, Win $250,000\",\"providerId\":\"youtube\",\"me"
   },
   {
     "name": "wfx-journey:context-verification",
