@@ -7,7 +7,16 @@ export {
   AssistantCodeCommentFeatureProvider,
   useAssistantCodeCommentFeatureEnabled,
 } from "./AssistantCodeCommentFeatureProvider.js";
-export { Root } from "./Root.js";
+export { Root, DEFAULT_LUCIDE_STROKE_WIDTH } from "./Root.js";
+// WFX-PACKAGED-COMPOSER-1: the Root provider chain, exported piecemeal so the
+// desktop's lazy agent chat surface can mirror Root's exact composition
+// around V4ChatPane (the packaged-tier composer gate caught the omission
+// live: V4ChatPane's tree threw "Tooltip must be used within TooltipProvider"
+// the moment the prebuilt chunk mounted). Additive re-exports only.
+export { LucideProvider } from "lucide-react";
+export { TooltipProvider } from "./components/ui/tooltip.js";
+export { DiffsWorkerPoolProvider } from "./root/DiffsWorkerPoolProvider.js";
+export { CodingPlanUpgradeDialogProvider } from "./settings/CodingPlanUpgradeDialogProvider.js";
 export { UpdateStatusWindowRoot } from "./UpdateStatusWindowRoot.js";
 export { ConfirmDialogHost } from "./ConfirmDialog.js";
 export { Terminal } from "./Terminal.js";

@@ -18,17 +18,27 @@
  * list is untouched across panel mount/unmount.
  *
  * Composition (the closest supported composition of the REAL chat surface —
- * the same provider nesting Root.tsx uses, scoped to the pane):
+ * Root.tsx's EXACT provider nesting mirrored around the pane; the packaged-
+ * tier composer gate caught the original omission live — V4ChatPane's tree
+ * threw "Tooltip must be used within TooltipProvider" the moment the
+ * prebuilt chunk mounted inside the panel, WFX-PACKAGED-COMPOSER-1):
  *
  *   AppErrorBoundary
  *     > ZCodeIntlProvider (settingService + broadcastService + system locale)
- *       > ServiceProvider(services from the admitted runtime)
- *         > PlatformProvider(createDesktopPlatform())
- *           > StoreProvider(broadcastService)
- *             > TabStoreProvider
- *               > AgentTaskStrip (the honest minimal task/session surface)
- *               > V4ChatPane(workspacePath, sessionId, isDesktop,
- *                            onSessionCreated/onSessionDeleted selection)
+ *       > LucideProvider (strokeWidth 1.5 — Root's law)
+ *         > TooltipProvider (the shared root provider — V4ChatPane's
+ *            tooltips + the composer toolbar ride it)
+ *           > ServiceProvider(services from the admitted runtime)
+ *             > PlatformProvider(createDesktopPlatform())
+ *               > StoreProvider(broadcastService)
+ *                 > TabStoreProvider
+ *                   > DiffsWorkerPoolProvider (chat turns render diffs)
+ *                     > AssistantCodeCommentFeatureProvider (enabled —
+ *                        the desktop boot's own flag)
+ *                       > CodingPlanUpgradeDialogProvider
+ *                         > AgentTaskStrip (the honest minimal task/session surface)
+ *                         > V4ChatPane(workspacePath, sessionId, isDesktop,
+ *                                      onSessionCreated/onSessionDeleted selection)
  *
  * Model/provider switching: the composer's own model picker renders inside
  * V4ChatPane's composer toolbar (V4ComposerToolbar reads the host
@@ -49,21 +59,24 @@ import "@zcode/ui/styles.css";
 import { useCallback, useMemo, useState } from "react";
 import {
   AppErrorBoundary,
+  AssistantCodeCommentFeatureProvider,
   BackgroundTaskElapsedLabel,
+  CodingPlanUpgradeDialogProvider,
+  DEFAULT_LUCIDE_STROKE_WIDTH,
+  DiffsWorkerPoolProvider,
+  LucideProvider,
   PlatformProvider,
   ServiceProvider,
   StoreProvider,
   TabStoreProvider,
+  TooltipProvider,
   useWorkspaceTaskLists,
   useZCodeSessionStore,
   V4ChatPane,
   ZCodeIntlProvider,
 } from "@zcode/ui";
 import { createDesktopPlatform } from "../desktopPlatform.js";
-import {
-  AGENT_ZCODE_THEME_ROOT_CLASSNAMES,
-  type AgentChatSurfaceProps,
-} from "./AgentPanel.js";
+import { AGENT_ZCODE_THEME_ROOT_CLASSNAMES, type AgentChatSurfaceProps } from "./AgentPanel.js";
 
 /** The one synthesized workspace tab the strip queries (the agent workspace). */
 const AGENT_WORKSPACE_TAB_ID = "webflix-agent-workspace";
@@ -108,7 +121,13 @@ const surfaceStyles: Record<string, import("react").CSSProperties> = {
     padding: "3px 6px",
   },
   stripRowActive: { background: "rgba(255,255,255,0.08)", color: "#ffffff" },
-  stripTitle: { flex: "1 1 auto", minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
+  stripTitle: {
+    flex: "1 1 auto",
+    minWidth: 0,
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+  },
   stripStatus: { flex: "0 0 auto", color: "#9a9aa3" },
   chat: { flex: "1 1 auto", minHeight: 0, display: "flex", flexDirection: "column" },
 };
@@ -154,29 +173,44 @@ export function AgentChatSurface({ workspacePath, runtime, header }: AgentChatSu
           broadcastService={runtime.services.broadcastService}
           resolveSystemLocale={platform.getSystemLocale}
         >
-          <ServiceProvider services={runtime.services}>
-            <PlatformProvider platform={platform}>
-              <StoreProvider broadcastService={runtime.services.broadcastService}>
-                <TabStoreProvider>
-                  {header ?? null}
-                  <AgentTaskStrip
-                    workspacePath={workspacePath}
-                    selectedSessionId={sessionId}
-                    onSelectSession={setSessionId}
-                  />
-                  <div style={surfaceStyles.chat}>
-                    <V4ChatPane
-                      workspacePath={workspacePath}
-                      sessionId={sessionId}
-                      isDesktop
-                      onSessionCreated={handleSessionCreated}
-                      onSessionDeleted={handleSessionDeleted}
-                    />
-                  </div>
-                </TabStoreProvider>
-              </StoreProvider>
-            </PlatformProvider>
-          </ServiceProvider>
+          {/* Root's provider chain, mirrored verbatim (WFX-PACKAGED-COMPOSER-1):
+              the packaged-tier composer gate caught the omission live — the
+              prebuilt V4ChatPane chunk threw "Tooltip must be used within
+              TooltipProvider" the moment it mounted, and the honest error
+              boundary answered instead of the composer. */}
+          <LucideProvider strokeWidth={DEFAULT_LUCIDE_STROKE_WIDTH}>
+            <TooltipProvider>
+              <ServiceProvider services={runtime.services}>
+                <PlatformProvider platform={platform}>
+                  <StoreProvider broadcastService={runtime.services.broadcastService}>
+                    <TabStoreProvider>
+                      <DiffsWorkerPoolProvider>
+                        <AssistantCodeCommentFeatureProvider enabled>
+                          <CodingPlanUpgradeDialogProvider>
+                            {header ?? null}
+                            <AgentTaskStrip
+                              workspacePath={workspacePath}
+                              selectedSessionId={sessionId}
+                              onSelectSession={setSessionId}
+                            />
+                            <div style={surfaceStyles.chat}>
+                              <V4ChatPane
+                                workspacePath={workspacePath}
+                                sessionId={sessionId}
+                                isDesktop
+                                onSessionCreated={handleSessionCreated}
+                                onSessionDeleted={handleSessionDeleted}
+                              />
+                            </div>
+                          </CodingPlanUpgradeDialogProvider>
+                        </AssistantCodeCommentFeatureProvider>
+                      </DiffsWorkerPoolProvider>
+                    </TabStoreProvider>
+                  </StoreProvider>
+                </PlatformProvider>
+              </ServiceProvider>
+            </TooltipProvider>
+          </LucideProvider>
         </ZCodeIntlProvider>
       </AppErrorBoundary>
     </div>
@@ -220,9 +254,7 @@ function AgentTaskStrip({
   });
   // Stable bucket reference (getDefaultWorkspaceState returns a stable
   // singleton), so this selector never thrashes.
-  const workspaceState = useZCodeSessionStore((state) =>
-    state.getWorkspaceState(workspacePath),
-  );
+  const workspaceState = useZCodeSessionStore((state) => state.getWorkspaceState(workspacePath));
   const activeTaskId = workspaceState.activeTaskId;
   const draftSessionId = workspaceState.draftSessionId;
   const activeRuntime =
@@ -237,9 +269,7 @@ function AgentTaskStrip({
     <div style={surfaceStyles.strip} data-testid="agent-task-strip">
       <div style={surfaceStyles.stripHeader} data-testid="agent-task-strip-header">
         Tasks{loading ? " — loading…" : tasks.length > 0 ? ` (${tasks.length})` : " — none yet"}
-        {runningJobs != null && runningJobs.length > 0
-          ? ` · ${runningJobs.length} running`
-          : ""}
+        {runningJobs != null && runningJobs.length > 0 ? ` · ${runningJobs.length} running` : ""}
       </div>
       {runningJobs != null &&
         runningJobs.map((job) => (
@@ -260,22 +290,22 @@ function AgentTaskStrip({
           <button
             key={task.taskId}
             type="button"
-            style={isActive ? { ...surfaceStyles.stripRow, ...surfaceStyles.stripRowActive } : surfaceStyles.stripRow}
+            style={
+              isActive
+                ? { ...surfaceStyles.stripRow, ...surfaceStyles.stripRowActive }
+                : surfaceStyles.stripRow
+            }
             onClick={() => onSelectSession(task.taskId)}
             data-testid="agent-task-strip-task"
             aria-current={isActive ? "true" : undefined}
           >
             <span style={surfaceStyles.stripTitle}>{task.title || "Untitled task"}</span>
-            <span style={surfaceStyles.stripStatus}>
-              {task.status ?? "—"}
-            </span>
+            <span style={surfaceStyles.stripStatus}>{task.status ?? "—"}</span>
           </button>
         );
       })}
       {draftSessionId == null && tasks.length === 0 && !loading ? (
-        <div style={{ color: "#9a9aa3" }}>
-          No sessions yet — the first message creates one.
-        </div>
+        <div style={{ color: "#9a9aa3" }}>No sessions yet — the first message creates one.</div>
       ) : null}
     </div>
   );

@@ -248,7 +248,13 @@ describe("AgentPanel — the lazy REAL-chat mount contract (freeze §9.3)", () =
         expect(deps.bridge).toBeTruthy();
         return {
           stop: () => stops.push("stopped"),
-          stats: () => ({ running: false, scannedDirs: 0, dispatched: 0, responded: 0, lastError: null }),
+          stats: () => ({
+            running: false,
+            scannedDirs: 0,
+            dispatched: 0,
+            responded: 0,
+            lastError: null,
+          }),
         };
       },
     );
@@ -333,10 +339,31 @@ describe("AgentPanel — the lazy boundary is structural (source pins)", () => {
     const source = readModuleSource("../agentChatSurface.tsx");
     // styles.css loads WITH the panel (freeze §9.4 — lazy, panel-scoped).
     expect(source).toContain('import "@zcode/ui/styles.css"');
-    // The full provider stack (the closest supported composition).
-    for (const provider of ["AppErrorBoundary", "ZCodeIntlProvider", "ServiceProvider", "PlatformProvider", "StoreProvider", "TabStoreProvider", "V4ChatPane"]) {
+    // The full provider stack — Root.tsx's EXACT chain mirrored around the
+    // pane (WFX-PACKAGED-COMPOSER-1: the packaged-tier composer gate caught
+    // the omission live — V4ChatPane's tree threw "Tooltip must be used
+    // within TooltipProvider" the moment the prebuilt chunk mounted; the
+    // surface now mirrors Root: Lucide > Tooltip > Services > Platform >
+    // Store > TabStore > DiffsWorkerPool > AssistantCodeComment(enabled) >
+    // CodingPlanUpgradeDialog > the pane).
+    for (const provider of [
+      "AppErrorBoundary",
+      "ZCodeIntlProvider",
+      "LucideProvider",
+      "TooltipProvider",
+      "ServiceProvider",
+      "PlatformProvider",
+      "StoreProvider",
+      "TabStoreProvider",
+      "DiffsWorkerPoolProvider",
+      "AssistantCodeCommentFeatureProvider",
+      "CodingPlanUpgradeDialogProvider",
+      "V4ChatPane",
+    ]) {
       expect(source).toContain(provider);
     }
+    // Root's stroke-width law rides along (never a bare LucideProvider).
+    expect(source).toContain("DEFAULT_LUCIDE_STROKE_WIDTH");
     // The theme classes are applied to the PANEL container via the shared constant.
     expect(source).toContain("AGENT_ZCODE_THEME_ROOT_CLASSNAMES.join");
     // …and the document root is never written programmatically (zcodeBoot's
