@@ -178,3 +178,52 @@ Windows host (the lane verifies build + PE identity + checksums); the
 static index.html `<title>ZCode</title>` pre-boot transient and the Linux
 deep-link ownership marker string are recorded follow-ups (F6/F7), not
 shipped-surface leaks — the settled surfaces are verified clean.
+
+## Post-landing verification (takeover lane, 2026-10-31 @ b196ab3)
+
+The incoming handoff summary again lagged the tree (third occurrence of
+the pattern): it recorded the distribution task as not-started, while
+the wave had already landed and pushed through b196ab3. Item-by-item
+re-verification against the tree and the live GitHub state — every claim
+held:
+
+- **Release v1.0.0** (API): stable, published 2026-10-31T19:14:48Z, 10
+  assets with byte sizes exactly as the table above (deb 141,036,828 /
+  AppImage 192,196,842 / exe 150,645,713, plus the three .sha256
+  sidecars, latest.json, install.sh, install.ps1, release-notes.md).
+  `releases/latest` redirects to v1.0.0; the live latest.json is
+  BYTE-IDENTICAL to the evidence copy and its sha256 values match the
+  work-order table.
+- **All four CI runs** (API): 41227162474 failure @ d86159f (the honest
+  windows-2025 finding), 41228318598 failure @ c62e5e3 (the fail-closed
+  FileDescription catch), 41230767456 success @ e5b648d (both lanes
+  green), 41232423713 success @ d9a0844 (push event — the v1.0.0 tag,
+  the release run). Head SHAs, events and conclusions all match.
+- **In-tree surface**: webflix-release.yml (ubuntu-24.04 + windows-2022
+  + tag-gated release job + fail-closed identity gates on both lanes),
+  install.sh carrying the FUSE-aware shim and the symlink-removal
+  upgrade fix, README/README.en Download & install sections, root
+  package.json 1.0.0.
+- **On-station**: the installed ~/.local/bin artifacts persist
+  (exact-size AppImage + the webflix shim); the live stack healthy
+  (phase up, 0 consecutive crashes); the console serving 200s.
+
+Two takeover-lane closures:
+
+1. **The handoff package's visual references are now in-tree.** The
+   operator's TL handoff zip (re-supplied with the go) was the only
+   carrier of the four ZCode protected-page screenshots — the handoff's
+   designated visual authority (never the HTML concept prototype). All
+   four SHA-256s re-verified at import; committed to
+   `docs/design/reference-screenshots/` with the provenance README +
+   import record. The two missing references (automations.png,
+   plugin-marketplace.png) remain an open recovery item recorded in that
+   README. The HTML prototype is deliberately NOT imported (the handoff
+   marks it a disposable concept artifact, forbidden as an
+   implementation/styling source).
+2. **Evidence hygiene**: transient SQLite WAL/SHM sidecars (created by
+   the previous session's artifact-level DB reads) removed from the
+   ubuntu-30cf8ac-rerun evidence homes; the committed .db files are the
+   durable record and are untouched.
+
+No product defect found; nothing in the shipped surface changed.
