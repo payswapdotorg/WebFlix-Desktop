@@ -1,0 +1,12 @@
+{
+  "version": "1.0.0",
+  "tag": "v1.0.0",
+  "channel": "stable",
+  "releasedAt": "2026-10-31T19:14:38Z",
+  "debName": "WebFlix-1.0.0-linux-amd64.deb",
+  "debSha256": "8459ea331d3e5e20cf26317df6413b03243a8f7f84e0b4efd20d7fbe31073a05",
+  "appimageName": "WebFlix-1.0.0-linux-x86_64.AppImage",
+  "appimageSha256": "caef6883e068674bb41aa2cd0998264fa0b4c12bdcaaac8e14b30e28b9ec36ef",
+  "nsisName": "WebFlix-1.0.0-win-x64.exe",
+  "nsisSha256": "7262a996352f2fa8ba2916370793867f0ce67c44136f2e23b78df31f6f1692a2"
+}

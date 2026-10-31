@@ -151,7 +151,24 @@ else
   mkdir -p "$BIN_DIR"
   mv "$TMP_DIR/$APPIMAGE_NAME" "$BIN_DIR/$APPIMAGE_NAME"
   chmod +x "$BIN_DIR/$APPIMAGE_NAME"
-  ln -sf "$BIN_DIR/$APPIMAGE_NAME" "$BIN_DIR/webflix"
+  # The launcher is a shim, not a bare symlink: on systems without libfuse2
+  # (minimal containers, some Arch/base images) AppImageKit cannot mount and
+  # dies with "dlopen(): error loading libfuse.so.2" — the shim detects that
+  # and rides the documented --appimage-extract-and-run fallback instead
+  # (verified live on the release station: WebFlix 1.0.0, 2026-10-31).
+  # rm first: an older install may have left `webflix` as a SYMLINK to the
+  # versioned AppImage, and `cat >` through a symlink would truncate the
+  # image itself (caught live on the upgrade path, 2026-10-31).
+  rm -f "$BIN_DIR/webflix"
+  cat > "$BIN_DIR/webflix" <<SHIM
+#!/bin/sh
+IMG="\$(dirname "\$0")/$APPIMAGE_NAME"
+if command -v ldconfig >/dev/null 2>&1 && ! ldconfig -p 2>/dev/null | grep -q 'libfuse\.so\.2'; then
+  exec "\$IMG" --appimage-extract-and-run "\$@"
+fi
+exec "\$IMG" "\$@"
+SHIM
+  chmod +x "$BIN_DIR/webflix"
   echo ""
   echo "WebFlix $TAG installed (AppImage, no root used)."
   echo "Launch it with: webflix"

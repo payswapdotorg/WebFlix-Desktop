@@ -116,6 +116,65 @@ the deb field assertions carried over from the ubuntu lane).
      Windows host is available.
 5. Evidence + WORKLOG + push.
 
-## Verification record (executed, 2026-10-31)
+## Verification record (executed, 2026-10-31 — the honest numbers)
 
-(to be filled as the gates run — the honest numbers, never a forecast)
+**The pipeline** (three dispatch iterations + the real tag):
+
+1. Dry-run 1 (run 41227162474 @ d86159f): Linux ✓; **Windows FAILED at
+   pnpm install** — the windows-2025 image carries no usable Visual Studio,
+   and better-sqlite3/cpu-features have no win32 prebuilds for node 24
+   (node-gyp source builds). Fixed: the lane rides **windows-2022**
+   (commit c62e5e3).
+2. Dry-run 2 (run 41228318598 @ c62e5e3): Linux ✓; Windows build ✓ but the
+   verify step's fail-closed leak assertion FAILED — **the NSIS installer's
+   PE FileDescription was "ZCode Desktop App"** (electron-builder NsisTarget
+   stamps it from appInfo.description = the desktop package.json
+   description, which no identity module drove). The sibling scan the same
+   wave: Help→About opened a fully ZCode-branded window. Both CLOSED in
+   commit e5b648d (package.json description → the identity value + the
+   about.ts flavor branch + two battery pins); full battery 1988/1988,
+   typecheck 0.
+3. Dry-run 3 (run 41230767456 @ e5b648d): **both lanes GREEN**, the release
+   job correctly skipped (tag-gated).
+4. **The real release**: the fork cannot reuse the inherited v3.14.3 tag
+   (it belongs to the upstream zcode history on the remote) → WebFlix
+   Desktop takes its own version line **1.0.0** (commit d9a0844, root
+   package.json is the single version source). Tag v1.0.0 pushed → pipeline
+   run 41232423713: build-linux ✓ + build-windows ✓ + **release ✓** —
+   https://github.com/payswapdotorg/WebFlix-Desktop/releases/tag/v1.0.0
+   (stable, 2026-10-31T19:14:48Z).
+
+**The release payload** (all checksum-verified on-station after download):
+
+| artifact | bytes | sha256 (head) |
+| --- | --- | --- |
+| WebFlix-1.0.0-linux-amd64.deb | 141,036,828 | 8459ea33… OK |
+| WebFlix-1.0.0-linux-x86_64.AppImage | 192,196,842 | caef6883… OK |
+| WebFlix-1.0.0-win-x64.exe (NSIS) | 150,645,713 | 7262a996… OK |
+
+Plus per-artifact `.sha256` sidecars, `latest.json` (the install manifest),
+`install.sh`, `install.ps1`, `release-notes.md`. The deb's dpkg fields:
+Package=webflix-desktop, Version=1.0.0, Description="WebFlix Desktop App",
+Homepage=https://webflix.org, Maintainer="WebFlix <dev@webflix.org>".
+
+**The one-liner, end-to-end on-station** (a FUSE-less, keyring-less Linux
+box — the harshest honest environment): resolve v1.0.0 over the
+releases/latest redirect → download → sha256 OK → install into
+~/.local/bin → launch → **title=WebFlix, product-mark=1, zero ZCode/Z.ai
+strings, the honest fail-closed vault banner, clean SIGTERM exit**. Two
+install.sh findings were caught live and closed (see the evidence record):
+the FUSE-less launcher (now a FUSE-aware shim riding the documented
+--appimage-extract-and-run fallback — verified by launching through the
+`webflix` command itself) and the upgrade-path symlink truncation
+(`cat >` through a leftover symlink wrote into the AppImage; the shim
+write now removes the old link first).
+
+Evidence: `packages/desktop/scripts/e2e/evidence/distribution/v1.0.0/`
+(boot/settled/shim-launch captures, latest.json, verification-record.md
+with the full findings list F1–F7).
+
+Honest limits (unchanged from the plan): Windows runtime QA needs a
+Windows host (the lane verifies build + PE identity + checksums); the
+static index.html `<title>ZCode</title>` pre-boot transient and the Linux
+deep-link ownership marker string are recorded follow-ups (F6/F7), not
+shipped-surface leaks — the settled surfaces are verified clean.
