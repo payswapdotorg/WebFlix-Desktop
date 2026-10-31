@@ -1,0 +1,817 @@
+<err> [12078:1031/075029.870654:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/dbus/system_bus_socket: No such file or directory
+<err> 
+<out> [2026-10-31 07:50:30.582] [pid:12078] [main] [crash-capture] configured remoteCrashReporterEnabled=true stagingDir=/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-9e2c8a2/deb/home-deb/.webflix/v2/crash/live archiveDir=/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-9e2c8a2/deb/home-deb/.webflix/v2/crash/archive
+<out> 
+<err> LaunchProcess: failed to execvp:
+<err> xdg-settings
+<err> 
+<err> [2026-10-31 07:50:30.604] [pid:12078] [main] [deep-link] 注册协议失败 { scheme: 'webflix' }
+<err> 
+<err> [2026-10-31 07:50:30.614] [pid:12078] [main] [deep-link] Linux 用户级协议注册失败 {
+<err>   desktopFilePath: '/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-9e2c8a2/deb/home-deb/.local/share/applications/webflix.desktop',
+<err>   desktopFileName: 'webflix.desktop',
+<err>   executablePath: '/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-9e2c8a2/deb/deb-tree/opt/WebFlix/webflix',
+<err>   args: [],
+<err>   status: null,
+<err>   signal: null,
+<err>   timeoutMs: undefined,
+<err>   error: 'spawnSync xdg-mime ENOENT',
+<err>   stderr: undefined
+<err> }
+<err> 
+<err> [2026-10-31 07:50:30.615] [pid:12078] [main] [deep-link] update-desktop-database 不可用，已跳过 {
+<err>   desktopFilePath: '/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-9e2c8a2/deb/home-deb/.local/share/applications/webflix.desktop',
+<err>   message: 'spawnSync update-desktop-database ENOENT'
+<err> }
+<err> 
+<err> (node:12078) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+<err> (Use `webflix --trace-warnings ...` to show where the warning was created)
+<err> 
+<err> [12078:1031/075031.390472:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+<err> 
+<err> [12078:1031/075031.390856:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/dbus/system_bus_socket: No such file or directory
+<err> [12078:1031/075031.390880:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/dbus/system_bus_socket: No such file or directory
+<err> 
+<out> [2026-10-31 07:50:31.398] [pid:12078] [main] [startup] runtime process env prepared asynchronously id=1 in 810ms
+<out> 
+<err> 
+<err> DevTools listening on ws://127.0.0.1:37763/devtools/browser/803f25ce-e205-4717-94ff-e8374b9f7e66
+<err> 
+<err> [12078:1031/075031.427397:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+<err> 
+<err> [12078:1031/075031.427626:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+<err> 
+<err> [12078:1031/075031.443426:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+<err> 
+<out> [2026-10-31 07:50:31.493] [pid:12078] [main] [desktop-network] renderer proxy mode=direct bypass=disabled customCa=disabled insecureCerts=rejected
+<out> 
+<out> [2026-10-31 07:50:31.494] [pid:12078] [main] [desktop-network] renderer proxy mode=system bypass=disabled customCa=disabled insecureCerts=rejected
+<out> 
+<out> [2026-10-31 07:50:31.496] [pid:12078] [main] [auto-update] refused (disabled for this desktop product flavor): WebFlix runtime product identity is active (H1 fail-closed; freeze §6.1 defers the WebFlix update feed — the ZCode manifest feed must never serve a WebFlix build)
+<out> 
+<out> [2026-10-31 07:50:31.497] [pid:12078] [main] [browser-data] chrome import IPC not registered: chromeImportEnabled flag is OFF (default, fail-closed)
+<out> 
+<out> [2026-10-31 07:50:31.499] [pid:12078] [main] [cua-permission-ipc] CUA permission IPC not registered: webflixProductSurface flag is OFF (default, fail-closed)
+<out> 
+<out> [2026-10-31 07:50:31.500] [pid:12078] [main] [webflix-accounts] account IPC registered (webflix flavor) {
+<out>   channels: [
+<out>     'webflix:accounts:get-status',
+<out>     'webflix:accounts:connect',
+<out>     'webflix:accounts:disconnect'
+<out>   ]
+<out> }
+<out> 
+<out> [2026-10-31 07:50:31.501] [pid:12078] [main] [remote-ipc] SSH/Docker/WSL remote IPC not registered: webflixProductSurface flag is OFF (default, fail-closed)
+<out> 
+<out> [2026-10-31 07:50:31.502] [pid:12078] [main] [resource] sampling started interval=10000ms report=300000ms
+<out> 
+<out> [2026-10-31 07:50:31.504] [pid:12078] [main] [network] reporting started interval=300000ms
+<out> 
+<out> [2026-10-31 07:50:31.504] [pid:12078] [main] [force-update] 当前产品身份（webflix，webflix-never-consults-the-zcode-kill-switch）跳过远端强制升级检查
+<out> 
+<out> [2026-10-31 07:50:31.504] [pid:12078] [main] [startup] 创建主窗口
+<out> 
+<out> [2026-10-31 07:50:31.505] [pid:12078] [main] [primary-window] creating main window (app-ready)
+<out> 
+<out> [2026-10-31 07:50:31.510] [pid:12078] [main] [startup-workspace] using conversation workspace: /home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-9e2c8a2/deb/home-deb/.webflix/workspace/default
+<out> 
+<err> [12078:1031/075031.585902:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+<err> 
+<err> [12078:1031/075031.665266:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+<err> 
+<out> [2026-10-31 07:50:31.764] [pid:12078] [main] [desktop-context-prompt] config refreshed { enabled: true, configVersion: 'desktop-sp-v1' }
+<out> 
+<out> [2026-10-31 07:50:32.023] [pid:12078] [main] [createWindow] dom-ready fired (local-1)
+<out> 
+<out> [2026-10-31 07:50:32.023] [pid:12078] [main] [desktop-context-prompt] first host spawn decision resolved { enabled: true, configVersion: 'desktop-sp-v1' }
+<out> 
+<out> [2026-10-31 07:50:32.034] [pid:12078] [main] [spawnHostProcess] forked host process for (local-1), pid=undefined
+<out> 
+<out> [2026-10-31 07:50:32.034] [pid:12078] [main] [spawnHostProcess] host module path: /home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-9e2c8a2/deb/deb-tree/opt/WebFlix/resources/app.asar/out/host/index.js
+<out> [2026-10-31 07:50:32.034] [pid:12078] [main] [spawnHostProcess] glm binary path: <not found>
+<out> 
+<out> [2026-10-31 07:50:32.035] [pid:12078] [main] [spawnHostProcess] BIGMODEL_OAUTH_APP_SECRET source: fallback
+<out> 
+<out> [2026-10-31 07:50:32.038] [pid:12078] [main] [task-realtime] registered host {
+<out>   hostId: '64e23eb9-d325-43cd-a47e-8a9da07f626e',
+<out>   windowId: 1,
+<out>   workspaceKeyCount: 0,
+<out>   deliveryKind: 'desktop_window'
+<out> }
+<out> 
+<err> [2026-10-31 07:50:32.186] [pid:12078] [main] [webflix-accounts] OS secure storage unavailable — reporting the typed fail-closed status
+<err> 
+<out> [2026-10-31 07:50:32.189] [pid:12078] [main] [webflix-agent-workspace] ensured /home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-9e2c8a2/deb/home-deb/.webflix/agent-workspace (2 files, node=/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-9e2c8a2/deb/deb-tree/opt/WebFlix/webflix (as-node))
+<out> 
+<out> [2026-10-31 07:50:32.194] [pid:12078] [main] [webflix-agent-workspace] wrote 2 config files
+<out> 
+<err> (node:12159) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+<err> (Use `exe --trace-warnings ...` to show where the warning was created)
+<err> [2026-10-31 07:50:32.902] [pid:12159] [zcode-host] ExperimentalWarning: SQLite is an experimental feature and might change at any time
+<err> [2026-10-31 07:50:32.911] [pid:12159] [zcode-host] [cua-pip-session] focus event dropped: service unavailable
+<err> [2026-10-31 07:50:32.918] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:32.902] [pid:12159] [zcode-host] ExperimentalWarning: SQLite is an experimental feature and might change at any time
+<err> [2026-10-31 07:50:32.928] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:32.911] [pid:12159] [zcode-host] [cua-pip-session] focus event dropped: service unavailable
+<err> (node:12159) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+<err> (Use `exe --trace-warnings ...` to show where the warning was created)
+<err> 
+<out> [2026-10-31 07:50:35.267] [pid:12078] [main] [stability] perf_app_start reported
+<out> 
+<out> [2026-10-31 07:50:35.945] [pid:12159] [zcode-host] initializing local services
+<out> 
+<out> [2026-10-31 07:50:35.947] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:35.945] [pid:12159] [zcode-host] initializing local services
+<out> 
+<out> [2026-10-31 07:50:36.112] [pid:12159] [cua-pip-session] [cua-pip-session] wiring resolved {
+<out>   enabled: false,
+<out>   platform: 'linux',
+<out>   serviceAuthorityMode: 'desktop-local',
+<out>   lifecycleWired: true
+<out> }
+<out> 
+<out> [2026-10-31 07:50:36.114] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.112] [pid:12159] [cua-pip-session] [cua-pip-session] wiring resolved {"enabled":false,"platform":"linux","serviceAuthorityMode":"desktop-local","lifecycleWired":true}
+<out> 
+<out> [2026-10-31 07:50:36.120] [pid:12159] [zcode-agent-service] 开始初始化 ZCode agent {
+<out>   workspaceKey: '/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-9e2c8a2/deb/home-deb/.webflix/workspace/default',
+<out>   workspacePath: '/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-9e2c8a2/deb/home-deb/.webflix/workspace/default'
+<out> }
+<out> 
+<out> [2026-10-31 07:50:36.121] [pid:12159] [zcode-host] exposing services on ChannelServer...
+<out> 
+<out> [2026-10-31 07:50:36.121] [pid:12159] [zcode-host] creating ChannelServer (deferInit=false)
+<out> 
+<out> [2026-10-31 07:50:36.121] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.120] [pid:12159] [zcode-agent-service] 开始初始化 ZCode agent {"workspaceKey":"/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-9e2c8a2/deb/home-deb/.webflix/workspace/default","workspacePath":"/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-9e2c8a2/deb/home-deb/.webflix/workspace/default"}
+<out> 
+<out> [2026-10-31 07:50:36.122] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.121] [pid:12159] [zcode-host] exposing services on ChannelServer...
+<out> 
+<out> [2026-10-31 07:50:36.122] [pid:12159] [zcode-host] [rpc:register] channel "file"
+<out> 
+<out> [2026-10-31 07:50:36.123] [pid:12159] [zcode-host] [rpc:register] channel "media-preview"
+<out> 
+<out> [2026-10-31 07:50:36.123] [pid:12159] [zcode-host] [rpc:register] channel "git"
+<out> 
+<out> [2026-10-31 07:50:36.123] [pid:12159] [zcode-host] [rpc:register] channel "git-checkpoint"
+<out> 
+<out> [2026-10-31 07:50:36.123] [pid:12159] [zcode-host] [rpc:register] channel "system"
+<out> 
+<out> [2026-10-31 07:50:36.123] [pid:12159] [zcode-host] [rpc:register] channel "terminal"
+<out> 
+<out> [2026-10-31 07:50:36.123] [pid:12159] [zcode-host] [rpc:register] channel "setting"
+<out> 
+<out> [2026-10-31 07:50:36.123] [pid:12159] [zcode-host] [rpc:register] channel "onboarding-record"
+<out> 
+<out> [2026-10-31 07:50:36.123] [pid:12159] [zcode-host] [rpc:register] channel "credential"
+<out> 
+<out> [2026-10-31 07:50:36.123] [pid:12159] [zcode-host] [rpc:register] channel "broadcast"
+<out> 
+<out> [2026-10-31 07:50:36.123] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.121] [pid:12159] [zcode-host] creating ChannelServer (deferInit=false)
+<out> 
+<out> [2026-10-31 07:50:36.123] [pid:12159] [zcode-host] [rpc:register] channel "zcode-task"
+<out> 
+<out> [2026-10-31 07:50:36.123] [pid:12159] [zcode-host] [rpc:register] channel "zcode-agent"
+<out> 
+<out> [2026-10-31 07:50:36.123] [pid:12159] [zcode-host] [rpc:register] channel "zcode-session"
+<out> 
+<out> [2026-10-31 07:50:36.123] [pid:12159] [zcode-host] [rpc:register] channel "cua-permission"
+<out> 
+<out> [2026-10-31 07:50:36.124] [pid:12159] [zcode-host] [rpc:register] channel "cua-pip-session"
+<out> 
+<out> [2026-10-31 07:50:36.124] [pid:12159] [zcode-host] [rpc:register] channel "conversation-share"
+<out> 
+<out> [2026-10-31 07:50:36.124] [pid:12159] [zcode-host] [rpc:register] channel "bots"
+<out> 
+<out> [2026-10-31 07:50:36.124] [pid:12159] [zcode-host] [rpc:register] channel "file-watcher"
+<out> 
+<out> [2026-10-31 07:50:36.124] [pid:12159] [zcode-host] [rpc:register] channel "oauth"
+<out> 
+<out> [2026-10-31 07:50:36.124] [pid:12159] [zcode-host] [rpc:register] channel "usage-stats"
+<out> 
+<out> [2026-10-31 07:50:36.124] [pid:12159] [zcode-host] [rpc:register] channel "coding-plan-subscription"
+<out> [2026-10-31 07:50:36.124] [pid:12159] [zcode-host] [rpc:register] channel "client-config"
+<out> [2026-10-31 07:50:36.124] [pid:12159] [zcode-host] [rpc:register] channel "client-scenes"
+<out> [2026-10-31 07:50:36.124] [pid:12159] [zcode-host] [rpc:register] channel "off-peak-task"
+<out> [2026-10-31 07:50:36.124] [pid:12159] [zcode-host] [rpc:register] channel "skills"
+<out> [2026-10-31 07:50:36.124] [pid:12159] [zcode-host] [rpc:register] channel "skill-sync"
+<out> [2026-10-31 07:50:36.124] [pid:12159] [zcode-host] [rpc:register] channel "mcp-sync"
+<out> [2026-10-31 07:50:36.124] [pid:12159] [zcode-host] [rpc:register] channel "plugin-sync"
+<out> [2026-10-31 07:50:36.124] [pid:12159] [zcode-host] [rpc:register] channel "plugins"
+<out> [2026-10-31 07:50:36.124] [pid:12159] [zcode-host] [rpc:register] channel "plugin-management"
+<out> [2026-10-31 07:50:36.124] [pid:12159] [zcode-host] [rpc:register] channel "subagents"
+<out> [2026-10-31 07:50:36.124] [pid:12159] [zcode-host] [rpc:register] channel "commands"
+<out> 
+<out> [2026-10-31 07:50:36.124] [pid:12159] [zcode-host] [rpc:register] channel "hooks"
+<out> 
+<out> [2026-10-31 07:50:36.124] [pid:12159] [zcode-host] [rpc:register] channel "memory"
+<out> 
+<out> [2026-10-31 07:50:36.124] [pid:12159] [zcode-host] [rpc:register] channel "settings-sync"
+<out> 
+<out> [2026-10-31 07:50:36.124] [pid:12159] [zcode-host] [rpc:register] channel "feedback"
+<out> [2026-10-31 07:50:36.124] [pid:12159] [zcode-host] [rpc:register] channel "prompt-attachment-transfer"
+<out> 
+<out> [2026-10-31 07:50:36.124] [pid:12159] [zcode-host] [rpc:register] channel "provider-settings"
+<out> 
+<out> [2026-10-31 07:50:36.124] [pid:12159] [zcode-host] [rpc:register] channel "model-selection"
+<out> 
+<out> [2026-10-31 07:50:36.124] [pid:12159] [zcode-host] [rpc:register] channel "window-controller"
+<out> 
+<out> [2026-10-31 07:50:36.124] [pid:12159] [zcode-host] service connection ready mode=desktop-continuous
+<out> 
+<out> [2026-10-31 07:50:36.124] [pid:12159] [zcode-host] window Host topology, reason=base-attachment-ready, pid=12159, connections=0, logicalSessions=0, attachments=1
+<out> 
+<out> [2026-10-31 07:50:36.124] [pid:12159] [zcode-host] local services ready, all channels registered
+<out> 
+<out> [2026-10-31 07:50:36.125] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.122] [pid:12159] [zcode-host] [rpc:register] channel "file"
+<out> 
+<out> [2026-10-31 07:50:36.125] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.123] [pid:12159] [zcode-host] [rpc:register] channel "media-preview"
+<out> 
+<out> [2026-10-31 07:50:36.126] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.123] [pid:12159] [zcode-host] [rpc:register] channel "git"
+<out> 
+<out> [2026-10-31 07:50:36.127] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.123] [pid:12159] [zcode-host] [rpc:register] channel "git-checkpoint"
+<out> 
+<out> [2026-10-31 07:50:36.129] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.123] [pid:12159] [zcode-host] [rpc:register] channel "system"
+<out> 
+<out> [2026-10-31 07:50:36.129] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.123] [pid:12159] [zcode-host] [rpc:register] channel "terminal"
+<out> 
+<out> [2026-10-31 07:50:36.130] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.123] [pid:12159] [zcode-host] [rpc:register] channel "setting"
+<out> 
+<out> [2026-10-31 07:50:36.131] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.123] [pid:12159] [zcode-host] [rpc:register] channel "onboarding-record"
+<out> 
+<out> [2026-10-31 07:50:36.132] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.123] [pid:12159] [zcode-host] [rpc:register] channel "credential"
+<out> 
+<out> [2026-10-31 07:50:36.132] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.123] [pid:12159] [zcode-host] [rpc:register] channel "broadcast"
+<out> 
+<out> [2026-10-31 07:50:36.133] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.123] [pid:12159] [zcode-host] [rpc:register] channel "zcode-task"
+<out> 
+<out> [2026-10-31 07:50:36.133] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.123] [pid:12159] [zcode-host] [rpc:register] channel "zcode-agent"
+<out> 
+<out> [2026-10-31 07:50:36.134] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.123] [pid:12159] [zcode-host] [rpc:register] channel "zcode-session"
+<out> 
+<out> [2026-10-31 07:50:36.134] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.123] [pid:12159] [zcode-host] [rpc:register] channel "cua-permission"
+<out> 
+<out> [2026-10-31 07:50:36.135] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.124] [pid:12159] [zcode-host] [rpc:register] channel "cua-pip-session"
+<out> 
+<out> [2026-10-31 07:50:36.135] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.124] [pid:12159] [zcode-host] [rpc:register] channel "conversation-share"
+<out> 
+<out> [2026-10-31 07:50:36.136] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.124] [pid:12159] [zcode-host] [rpc:register] channel "bots"
+<out> 
+<out> [2026-10-31 07:50:36.136] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.124] [pid:12159] [zcode-host] [rpc:register] channel "file-watcher"
+<out> 
+<out> [2026-10-31 07:50:36.136] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.124] [pid:12159] [zcode-host] [rpc:register] channel "oauth"
+<out> 
+<out> [2026-10-31 07:50:36.137] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.124] [pid:12159] [zcode-host] [rpc:register] channel "usage-stats"
+<out> 
+<out> [2026-10-31 07:50:36.137] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.124] [pid:12159] [zcode-host] [rpc:register] channel "coding-plan-subscription"
+<out> 
+<out> [2026-10-31 07:50:36.138] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.124] [pid:12159] [zcode-host] [rpc:register] channel "client-config"
+<out> 
+<out> [2026-10-31 07:50:36.138] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.124] [pid:12159] [zcode-host] [rpc:register] channel "client-scenes"
+<out> 
+<out> [2026-10-31 07:50:36.138] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.124] [pid:12159] [zcode-host] [rpc:register] channel "off-peak-task"
+<out> 
+<out> [2026-10-31 07:50:36.140] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.124] [pid:12159] [zcode-host] [rpc:register] channel "skills"
+<out> 
+<out> [2026-10-31 07:50:36.140] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.124] [pid:12159] [zcode-host] [rpc:register] channel "skill-sync"
+<out> 
+<out> [2026-10-31 07:50:36.141] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.124] [pid:12159] [zcode-host] [rpc:register] channel "mcp-sync"
+<out> 
+<out> [2026-10-31 07:50:36.141] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.124] [pid:12159] [zcode-host] [rpc:register] channel "plugin-sync"
+<out> 
+<out> [2026-10-31 07:50:36.142] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.124] [pid:12159] [zcode-host] [rpc:register] channel "plugins"
+<out> 
+<out> [2026-10-31 07:50:36.142] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.124] [pid:12159] [zcode-host] [rpc:register] channel "plugin-management"
+<out> 
+<out> [2026-10-31 07:50:36.143] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.124] [pid:12159] [zcode-host] [rpc:register] channel "subagents"
+<out> 
+<out> [2026-10-31 07:50:36.143] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.124] [pid:12159] [zcode-host] [rpc:register] channel "commands"
+<out> 
+<out> [2026-10-31 07:50:36.144] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.124] [pid:12159] [zcode-host] [rpc:register] channel "hooks"
+<out> 
+<out> [2026-10-31 07:50:36.144] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.124] [pid:12159] [zcode-host] [rpc:register] channel "memory"
+<out> 
+<out> [2026-10-31 07:50:36.144] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.124] [pid:12159] [zcode-host] [rpc:register] channel "settings-sync"
+<out> 
+<out> [2026-10-31 07:50:36.145] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.124] [pid:12159] [zcode-host] [rpc:register] channel "feedback"
+<out> 
+<out> [2026-10-31 07:50:36.145] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.124] [pid:12159] [zcode-host] [rpc:register] channel "prompt-attachment-transfer"
+<out> 
+<out> [2026-10-31 07:50:36.145] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.124] [pid:12159] [zcode-host] [rpc:register] channel "provider-settings"
+<out> 
+<out> [2026-10-31 07:50:36.153] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.124] [pid:12159] [zcode-host] [rpc:register] channel "model-selection"
+<out> 
+<out> [2026-10-31 07:50:36.154] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.124] [pid:12159] [zcode-host] [rpc:register] channel "window-controller"
+<out> 
+<out> [2026-10-31 07:50:36.154] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.124] [pid:12159] [zcode-host] service connection ready mode=desktop-continuous
+<out> 
+<out> [2026-10-31 07:50:36.154] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.124] [pid:12159] [zcode-host] window Host topology, reason=base-attachment-ready, pid=12159, connections=0, logicalSessions=0, attachments=1
+<out> 
+<out> [2026-10-31 07:50:36.154] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.124] [pid:12159] [zcode-host] local services ready, all channels registered
+<out> 
+<out> [2026-10-31 07:50:36.155] [pid:12078] [main] [database-startup] terminal {
+<out>   attemptId: '197bfc22-1e77-4a31-a189-61716aaf63c9',
+<out>   status: 'ready',
+<out>   durationMs: 3216,
+<out>   errorCode: undefined,
+<out>   disk: [
+<out>     {
+<out>       scopeId: '44cb730c420480a0477b505ae68af508fb90f96cf0ec54c6ad16949dd427f13a',
+<out>       observedAvailableDropPeakBytes: 610304,
+<out>       minAvailableBytes: 2640756736,
+<out>       quality: 'complete',
+<out>       sampledAt: 1793433034914
+<out>     }
+<out>   ]
+<out> }
+<out> 
+<out> [2026-10-31 07:50:36.160] [pid:12078] [main] [cron-scheduler] forked scheduler process pid=undefined
+<out> 
+<out> [2026-10-31 07:50:36.258] [pid:12159] [zcode-host] creating ChannelServer (deferInit=false)
+<out> 
+<out> [2026-10-31 07:50:36.259] [pid:12159] [zcode-host] [rpc:register] channel "file"
+<out> 
+<out> [2026-10-31 07:50:36.259] [pid:12159] [zcode-host] [rpc:register] channel "media-preview"
+<out> 
+<out> [2026-10-31 07:50:36.260] [pid:12159] [zcode-host] [rpc:register] channel "git"
+<out> 
+<out> [2026-10-31 07:50:36.259] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.258] [pid:12159] [zcode-host] creating ChannelServer (deferInit=false)
+<out> [2026-10-31 07:50:36.260] [pid:12159] [zcode-host] [rpc:register] channel "git-checkpoint"
+<out> [2026-10-31 07:50:36.260] [pid:12159] [zcode-host] [rpc:register] channel "system"
+<out> [2026-10-31 07:50:36.260] [pid:12159] [zcode-host] [rpc:register] channel "terminal"
+<out> [2026-10-31 07:50:36.260] [pid:12159] [zcode-host] [rpc:register] channel "setting"
+<out> [2026-10-31 07:50:36.260] [pid:12159] [zcode-host] [rpc:register] channel "onboarding-record"
+<out> [2026-10-31 07:50:36.260] [pid:12159] [zcode-host] [rpc:register] channel "credential"
+<out> [2026-10-31 07:50:36.260] [pid:12159] [zcode-host] [rpc:register] channel "broadcast"
+<out> [2026-10-31 07:50:36.260] [pid:12159] [zcode-host] [rpc:register] channel "zcode-task"
+<out> [2026-10-31 07:50:36.260] [pid:12159] [zcode-host] [rpc:register] channel "zcode-agent"
+<out> [2026-10-31 07:50:36.260] [pid:12159] [zcode-host] [rpc:register] channel "zcode-session"
+<out> [2026-10-31 07:50:36.260] [pid:12159] [zcode-host] [rpc:register] channel "cua-permission"
+<out> [2026-10-31 07:50:36.260] [pid:12159] [zcode-host] [rpc:register] channel "cua-pip-session"
+<out> [2026-10-31 07:50:36.260] [pid:12159] [zcode-host] [rpc:register] channel "conversation-share"
+<out> [2026-10-31 07:50:36.260] [pid:12159] [zcode-host] [rpc:register] channel "bots"
+<out> [2026-10-31 07:50:36.260] [pid:12159] [zcode-host] [rpc:register] channel "file-watcher"
+<out> [2026-10-31 07:50:36.260] [pid:12159] [zcode-host] [rpc:register] channel "oauth"
+<out> [2026-10-31 07:50:36.260] [pid:12159] [zcode-host] [rpc:register] channel "usage-stats"
+<out> [2026-10-31 07:50:36.260] [pid:12159] [zcode-host] [rpc:register] channel "coding-plan-subscription"
+<out> [2026-10-31 07:50:36.260] [pid:12159] [zcode-host] [rpc:register] channel "client-config"
+<out> [2026-10-31 07:50:36.260] [pid:12159] [zcode-host] [rpc:register] channel "client-scenes"
+<out> [2026-10-31 07:50:36.260] [pid:12159] [zcode-host] [rpc:register] channel "off-peak-task"
+<out> 
+<out> [2026-10-31 07:50:36.261] [pid:12159] [zcode-host] [rpc:register] channel "skills"
+<out> [2026-10-31 07:50:36.261] [pid:12159] [zcode-host] [rpc:register] channel "skill-sync"
+<out> [2026-10-31 07:50:36.261] [pid:12159] [zcode-host] [rpc:register] channel "mcp-sync"
+<out> [2026-10-31 07:50:36.261] [pid:12159] [zcode-host] [rpc:register] channel "plugin-sync"
+<out> [2026-10-31 07:50:36.261] [pid:12159] [zcode-host] [rpc:register] channel "plugins"
+<out> [2026-10-31 07:50:36.261] [pid:12159] [zcode-host] [rpc:register] channel "plugin-management"
+<out> [2026-10-31 07:50:36.261] [pid:12159] [zcode-host] [rpc:register] channel "subagents"
+<out> [2026-10-31 07:50:36.261] [pid:12159] [zcode-host] [rpc:register] channel "commands"
+<out> [2026-10-31 07:50:36.261] [pid:12159] [zcode-host] [rpc:register] channel "hooks"
+<out> [2026-10-31 07:50:36.261] [pid:12159] [zcode-host] [rpc:register] channel "memory"
+<out> [2026-10-31 07:50:36.261] [pid:12159] [zcode-host] [rpc:register] channel "settings-sync"
+<out> [2026-10-31 07:50:36.261] [pid:12159] [zcode-host] [rpc:register] channel "feedback"
+<out> [2026-10-31 07:50:36.261] [pid:12159] [zcode-host] [rpc:register] channel "prompt-attachment-transfer"
+<out> [2026-10-31 07:50:36.261] [pid:12159] [zcode-host] [rpc:register] channel "provider-settings"
+<out> [2026-10-31 07:50:36.261] [pid:12159] [zcode-host] [rpc:register] channel "model-selection"
+<out> [2026-10-31 07:50:36.261] [pid:12159] [zcode-host] [rpc:register] channel "window-controller"
+<out> [2026-10-31 07:50:36.261] [pid:12159] [zcode-host] service connection ready mode=desktop-continuous
+<out> [2026-10-31 07:50:36.261] [pid:12159] [zcode-host] attached scoped service port, attachmentId=3a2b02de-602c-47ef-a939-451c050c688d, scope=local, clientMode=desktop-continuous
+<out> [2026-10-31 07:50:36.261] [pid:12159] [zcode-host] window Host topology, reason=attachment-added, pid=12159, connections=0, logicalSessions=0, attachments=1
+<out> [2026-10-31 07:50:36.261] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.259] [pid:12159] [zcode-host] [rpc:register] channel "file"
+<out> 
+<out> [2026-10-31 07:50:36.263] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.259] [pid:12159] [zcode-host] [rpc:register] channel "media-preview"
+<out> 
+<out> [2026-10-31 07:50:36.263] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.260] [pid:12159] [zcode-host] [rpc:register] channel "git"
+<out> [2026-10-31 07:50:36.263] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.260] [pid:12159] [zcode-host] [rpc:register] channel "git-checkpoint"
+<out> 
+<out> [2026-10-31 07:50:36.264] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.260] [pid:12159] [zcode-host] [rpc:register] channel "system"
+<out> 
+<out> [2026-10-31 07:50:36.264] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.260] [pid:12159] [zcode-host] [rpc:register] channel "terminal"
+<out> 
+<out> [2026-10-31 07:50:36.265] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.260] [pid:12159] [zcode-host] [rpc:register] channel "setting"
+<out> 
+<out> [2026-10-31 07:50:36.265] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.260] [pid:12159] [zcode-host] [rpc:register] channel "onboarding-record"
+<out> 
+<out> [2026-10-31 07:50:36.266] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.260] [pid:12159] [zcode-host] [rpc:register] channel "credential"
+<out> 
+<out> [2026-10-31 07:50:36.266] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.260] [pid:12159] [zcode-host] [rpc:register] channel "broadcast"
+<out> 
+<out> [2026-10-31 07:50:36.267] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.260] [pid:12159] [zcode-host] [rpc:register] channel "zcode-task"
+<out> 
+<out> [2026-10-31 07:50:36.269] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.260] [pid:12159] [zcode-host] [rpc:register] channel "zcode-agent"
+<out> 
+<out> [2026-10-31 07:50:36.270] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.260] [pid:12159] [zcode-host] [rpc:register] channel "zcode-session"
+<out> 
+<out> [2026-10-31 07:50:36.271] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.260] [pid:12159] [zcode-host] [rpc:register] channel "cua-permission"
+<out> 
+<out> [2026-10-31 07:50:36.281] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.260] [pid:12159] [zcode-host] [rpc:register] channel "cua-pip-session"
+<out> 
+<out> [2026-10-31 07:50:36.296] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.260] [pid:12159] [zcode-host] [rpc:register] channel "conversation-share"
+<out> 
+<out> [2026-10-31 07:50:36.297] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.260] [pid:12159] [zcode-host] [rpc:register] channel "bots"
+<out> 
+<out> [2026-10-31 07:50:36.298] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.260] [pid:12159] [zcode-host] [rpc:register] channel "file-watcher"
+<out> 
+<out> [2026-10-31 07:50:36.299] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.260] [pid:12159] [zcode-host] [rpc:register] channel "oauth"
+<out> 
+<out> [2026-10-31 07:50:36.300] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.260] [pid:12159] [zcode-host] [rpc:register] channel "usage-stats"
+<out> 
+<out> [2026-10-31 07:50:36.301] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.260] [pid:12159] [zcode-host] [rpc:register] channel "coding-plan-subscription"
+<out> 
+<out> [2026-10-31 07:50:36.301] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.260] [pid:12159] [zcode-host] [rpc:register] channel "client-config"
+<out> 
+<out> [2026-10-31 07:50:36.302] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.260] [pid:12159] [zcode-host] [rpc:register] channel "client-scenes"
+<out> 
+<out> [2026-10-31 07:50:36.303] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.260] [pid:12159] [zcode-host] [rpc:register] channel "off-peak-task"
+<out> 
+<out> [2026-10-31 07:50:36.304] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.261] [pid:12159] [zcode-host] [rpc:register] channel "skills"
+<out> 
+<out> [2026-10-31 07:50:36.304] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.261] [pid:12159] [zcode-host] [rpc:register] channel "skill-sync"
+<out> 
+<out> [2026-10-31 07:50:36.306] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.261] [pid:12159] [zcode-host] [rpc:register] channel "mcp-sync"
+<out> 
+<out> [2026-10-31 07:50:36.306] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.261] [pid:12159] [zcode-host] [rpc:register] channel "plugin-sync"
+<out> 
+<out> [2026-10-31 07:50:36.307] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.261] [pid:12159] [zcode-host] [rpc:register] channel "plugins"
+<out> 
+<out> [2026-10-31 07:50:36.308] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.261] [pid:12159] [zcode-host] [rpc:register] channel "plugin-management"
+<out> 
+<out> [2026-10-31 07:50:36.309] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.261] [pid:12159] [zcode-host] [rpc:register] channel "subagents"
+<out> 
+<out> [2026-10-31 07:50:36.309] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.261] [pid:12159] [zcode-host] [rpc:register] channel "commands"
+<out> 
+<out> [2026-10-31 07:50:36.310] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.261] [pid:12159] [zcode-host] [rpc:register] channel "hooks"
+<out> 
+<out> [2026-10-31 07:50:36.311] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.261] [pid:12159] [zcode-host] [rpc:register] channel "memory"
+<out> 
+<out> [2026-10-31 07:50:36.311] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.261] [pid:12159] [zcode-host] [rpc:register] channel "settings-sync"
+<out> 
+<out> [2026-10-31 07:50:36.312] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.261] [pid:12159] [zcode-host] [rpc:register] channel "feedback"
+<out> 
+<out> [2026-10-31 07:50:36.312] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.261] [pid:12159] [zcode-host] [rpc:register] channel "prompt-attachment-transfer"
+<out> 
+<out> [2026-10-31 07:50:36.313] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.261] [pid:12159] [zcode-host] [rpc:register] channel "provider-settings"
+<out> 
+<out> [2026-10-31 07:50:36.313] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.261] [pid:12159] [zcode-host] [rpc:register] channel "model-selection"
+<out> 
+<out> [2026-10-31 07:50:36.317] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.261] [pid:12159] [zcode-host] [rpc:register] channel "window-controller"
+<out> 
+<out> [2026-10-31 07:50:36.357] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.261] [pid:12159] [zcode-host] service connection ready mode=desktop-continuous
+<out> 
+<out> [2026-10-31 07:50:36.363] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.261] [pid:12159] [zcode-host] attached scoped service port, attachmentId=3a2b02de-602c-47ef-a939-451c050c688d, scope=local, clientMode=desktop-continuous
+<out> 
+<out> [2026-10-31 07:50:36.368] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.261] [pid:12159] [zcode-host] window Host topology, reason=attachment-added, pid=12159, connections=0, logicalSessions=0, attachments=1
+<out> 
+<out> [2026-10-31 07:50:36.654] [pid:12159] [provider-runtime][trace:Provider Registry 已就绪] {
+<out>   configRevision: '["zcode-builtin:30:1ba25d91914bc6e6de0f32914275ceed186b481875c37a10fe1784831daa6e7d","2915b997aefbd6c7fe8ccfc87153713dc11851987034eec5a515e9660ac81b0e"]',
+<out>   providerCount: 0
+<out> }
+<out> 
+<out> [2026-10-31 07:50:36.654] [pid:12159] [zcode-agent-service] provider/model 尚未就绪，ZCode agent 保持未启动 {
+<out>   providerCount: 0,
+<out>   revision: 'model-selection:1',
+<out>   workspaceKey: '/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-9e2c8a2/deb/home-deb/.webflix/workspace/default',
+<out>   workspacePath: '/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-9e2c8a2/deb/home-deb/.webflix/workspace/default'
+<out> }
+<out> [2026-10-31 07:50:36.655] [pid:12159] [zcode-agent-service] ZCode agent 等待 provider/model 就绪 {
+<out>   durationMs: 535,
+<out>   message: '当前没有可用的模型供应商和模型，请先登录或配置 API Key。',
+<out>   workspaceKey: '/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-9e2c8a2/deb/home-deb/.webflix/workspace/default',
+<out>   workspacePath: '/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-9e2c8a2/deb/home-deb/.webflix/workspace/default'
+<out> }
+<out> [2026-10-31 07:50:36.655] [pid:12159] [zcode-host] ZCode agent warmup waiting for provider/model (local host init (1/1)) workspace=/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-9e2c8a2/deb/home-deb/.webflix/workspace/default
+<out> [2026-10-31 07:50:36.655] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.654] [pid:12159] [provider-runtime][trace:Provider Registry 已就绪] {"configRevision":"[\"zcode-builtin:30:1ba25d91914bc6e6de0f32914275ceed186b481875c37a10fe1784831daa6e7d\",\"2915b997aefbd6c7fe8ccfc87153713dc11851987034eec5a515e9660ac81b0e\"]","providerCount":0}
+<out> 
+<out> [2026-10-31 07:50:36.656] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.654] [pid:12159] [zcode-agent-service] provider/model 尚未就绪，ZCode agent 保持未启动 {"providerCount":0,"revision":"model-selection:1","workspaceKey":"/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-9e2c8a2/deb/home-deb/.webflix/workspace/default","workspacePath":"/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-9e2c8a2/deb/home-deb/.webflix/workspace/default"}
+<out> 
+<out> [2026-10-31 07:50:36.656] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.655] [pid:12159] [zcode-agent-service] ZCode agent 等待 provider/model 就绪 {"durationMs":535,"message":"当前没有可用的模型供应商和模型，请先登录或配置 API Key。","workspaceKey":"/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-9e2c8a2/deb/home-deb/.webflix/workspace/default","workspacePath":"/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-9e2c8a2/deb/home-deb/.webflix/workspace/default"}
+<out> 
+<out> [2026-10-31 07:50:36.656] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.655] [pid:12159] [zcode-host] ZCode agent warmup waiting for provider/model (local host init (1/1)) workspace=/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-9e2c8a2/deb/home-deb/.webflix/workspace/default
+<out> 
+<err> [2026-10-31 07:50:36.865] [pid:12159] [provider-config] ZCode Built-in Config 远端刷新失败 {
+<err>   error: Error: ZCode Built-in cdn: invalid schema at providerRules.8.config.access.mode (invalid_value)
+<err>       at downloadZCodeBuiltinRelease (file:///home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-9e2c8a2/deb/deb-tree/opt/WebFlix/resources/app.asar/out/host/index.js:3:71461)
+<err>       at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+<err>       at async #r (file:///home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-9e2c8a2/deb/deb-tree/opt/WebFlix/resources/app.asar/out/host/index.js:3:73689)
+<err>       at async Promise.allSettled (index 0)
+<err> }
+<err> [2026-10-31 07:50:36.869] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:50:36.865] [pid:12159] [provider-config] ZCode Built-in Config 远端刷新失败 {"error":{}}
+<err> 
+<err> (node:12185) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+<err> (Use `exe --trace-warnings ...` to show where the warning was created)
+<err> 
+<out> [2026-10-31 07:50:37.715] [pid:12078] [main] [cron-scheduler] cron scheduler started
+<out> 
+<err> [12078:1031/075109.121660:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+<err> [12078:1031/075109.121716:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+<err> [12078:1031/075109.121771:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+<err> 
+<err> [12078:1031/075109.121797:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+<err> 
+<err> [2026-10-31 07:51:09.358] [pid:12078] [main] [webflix-accounts] connect refused: OS secure storage unavailable (fail-closed; no flow starts) { providerId: 'youtube' }
+<err> 
+<err> [12078:1031/075109.398414:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+<err> 
+<err> [12078:1031/075109.398634:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+<err> 
+<err> [12078:1031/075109.398681:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+<err> 
+<err> [12078:1031/075109.398715:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+<err> 
+<out> [2026-10-31 07:51:31.524] [pid:12078] [main] [memory] role=main reason=first rssKb=285796 heapUsedKb=30239 heapTotalKb=32120 externalKb=6353 arrayBuffersKb=0 app.willDownloadListeners=0 app.windows=1 broadcast.claims=0 broadcast.processes=1 guest.closedTabIds=0 guest.tabs=0 taskBus.leases=0 taskBus.sessionRoutes=0 taskBus.streamBatches=0 ws.chromium_other=84452 ws.gpu=66356 ws.host=168156 ws.main=285796 ws.renderer_main=215780 ws.scheduler=164236
+<out> 
+<out> [2026-10-31 07:51:31.586] [pid:12078] [main] [renderer-action-trace] config refreshed { enabled: true, configVersion: 'ttft-2026-09-18' }
+<out> 
+<out> [2026-10-31 07:51:32.901] [pid:12159] [zcode-host] [memory] role=utility_host reason=first rssKb=167216 heapUsedKb=25689 heapTotalKb=27392 externalKb=5228 arrayBuffersKb=0 agent.pendingPermissions=0 agent.pendingUserInputs=0 agent.seqStates=0 agent.sessionEmitters=0 bots.liveStatusProgress=0 bots.runningTasks=0 bots.streamSubs=0 bots.typingIntervals=0 fileWatcher.open=0 task.overlays=0 task.runtimeCommands=0 task.taskEmitters=0 task.toolMemoryTasks=0 terminal.open=0
+<out> 
+<out> [2026-10-31 07:51:32.903] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:51:32.901] [pid:12159] [zcode-host] [memory] role=utility_host reason=first rssKb=167216 heapUsedKb=25689 heapTotalKb=27392 externalKb=5228 arrayBuffersKb=0 agent.pendingPermissions=0 agent.pendingUserInputs=0 agent.seqStates=0 agent.sessionEmitters=0 bots.liveStatusProgress=0 bots.runningTasks=0 bots.streamSubs=0 bots.typingIntervals=0 fileWatcher.open=0 task.overlays=0 task.runtimeCommands=0 task.taskEmitters=0 task.toolMemoryTasks=0 terminal.open=0
+<out> 
+<err> [12078:1031/075139.589611:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+<err> 
+<err> [12078:1031/075139.589669:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+<err> [12078:1031/075139.589713:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+<err> [12078:1031/075139.589735:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+<err> 
+<err> [2026-10-31 07:51:39.919] [pid:12159] [cua-pip-session] [cua-pip-session] event delivery dropped {
+<err>   kind: 'focus-changed',
+<err>   revision: 3,
+<err>   sessionId: null,
+<err>   sourceWindowId: 'window-1',
+<err>   skipReason: 'service-disabled'
+<err> }
+<err> 
+<err> 
+<err> (webflix:12078): dconf-WARNING **: 07:51:39.922: failed to commit changes to dconf: Unknown or unsupported transport “disabled” for address “disabled:”
+<err> 
+<err> [2026-10-31 07:51:39.930] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:51:39.919] [pid:12159] [cua-pip-session] [cua-pip-session] event delivery dropped {"kind":"focus-changed","revision":3,"sessionId":null,"sourceWindowId":"window-1","skipReason":"service-disabled"}
+<err> 
+<err> 
+<err> (webflix:12078): dconf-WARNING **: 07:51:39.936: failed to commit changes to dconf: Unknown or unsupported transport “disabled” for address “disabled:”
+<err> 
+<err> 
+<err> (webflix:12078): dconf-WARNING **: 07:51:39.955: failed to commit changes to dconf: Unknown or unsupported transport “disabled” for address “disabled:”
+<err> 
+<err> 
+<err> (webflix:12078): dconf-WARNING **: 07:51:39.970: failed to commit changes to dconf: Unknown or unsupported transport “disabled” for address “disabled:”
+<err> 
+<err> 
+<err> (webflix:12078): dconf-WARNING **: 07:51:39.987: failed to commit changes to dconf: Unknown or unsupported transport “disabled” for address “disabled:”
+<err> 
+<err> 
+<err> (webflix:12078): dconf-WARNING **: 07:51:40.003: failed to commit changes to dconf: Unknown or unsupported transport “disabled” for address “disabled:”
+<err> 
+<err> 
+<err> (webflix:12078): dconf-WARNING **: 07:51:40.051: failed to commit changes to dconf: Unknown or unsupported transport “disabled” for address “disabled:”
+<err> 
+<err> 
+<err> (webflix:12078): dconf-WARNING **: 07:51:40.056: failed to commit changes to dconf: Unknown or unsupported transport “disabled” for address “disabled:”
+<err> 
+<err> 
+<err> (webflix:12078): dconf-WARNING **: 07:51:40.082: failed to commit changes to dconf: Unknown or unsupported transport “disabled” for address “disabled:”
+<err> 
+<err> (webflix:12078): dconf-WARNING **: 07:51:40.090: failed to commit changes to dconf: Unknown or unsupported transport “disabled” for address “disabled:”
+<err> 
+<err> 
+<err> (webflix:12078): dconf-WARNING **: 07:51:40.107: failed to commit changes to dconf: Unknown or unsupported transport “disabled” for address “disabled:”
+<err> 
+<err> [12078:1031/075140.120335:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+<err> [12078:1031/075140.120372:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+<err> [12078:1031/075140.120402:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+<err> [12078:1031/075140.120422:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+<err> 
+<err> 
+<err> (webflix:12078): dconf-WARNING **: 07:51:40.123: failed to commit changes to dconf: Unknown or unsupported transport “disabled” for address “disabled:”
+<err> 
+<err> 
+<err> (webflix:12078): dconf-WARNING **: 07:51:40.140: failed to commit changes to dconf: Unknown or unsupported transport “disabled” for address “disabled:”
+<err> 
+<err> 
+<err> (webflix:12078): dconf-WARNING **: 07:51:40.155: failed to commit changes to dconf: Unknown or unsupported transport “disabled” for address “disabled:”
+<err> 
+<err> 
+<err> (webflix:12078): dconf-WARNING **: 07:51:40.205: failed to commit changes to dconf: Unknown or unsupported transport “disabled” for address “disabled:”
+<err> 
+<err> [12078:1031/075140.313805:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+<err> 
+<err> [12078:1031/075140.314812:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+<err> [12078:1031/075140.314893:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+<err> [12078:1031/075140.316036:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+<err> 
+<err> ALSA lib confmisc.c:855:(parse_card) cannot find card '0'
+<err> ALSA lib conf.c:5205:(_snd_config_evaluate) function snd_func_card_inum returned error: No such file or directory
+<err> ALSA lib confmisc.c:422:(snd_func_concat) error evaluating strings
+<err> ALSA lib conf.c:5205:(_snd_config_evaluate) function snd_func_concat returned error: No such file or directory
+<err> ALSA lib confmisc.c:1342:(snd_func_refer) error evaluating name
+<err> ALSA lib conf.c:5205:(_snd_config_evaluate) function snd_func_refer returned error: No such file or directory
+<err> ALSA lib conf.c:5728:(snd_config_expand) Evaluate error: No such file or directory
+<err> 
+<err> ALSA lib pcm.c:2722:(snd_pcm_open_noupdate) Unknown PCM default
+<err> [12219:1031/075140.367558:ERROR:media/audio/alsa/alsa_util.cc:204] PcmOpen: default,No such file or directory
+<err> 
+<err> ALSA lib confmisc.c:855:(parse_card) cannot find card '0'
+<err> ALSA lib conf.c:5205:(_snd_config_evaluate) function snd_func_card_inum returned error: No such file or directory
+<err> ALSA lib confmisc.c:422:(snd_func_concat) error evaluating strings
+<err> ALSA lib conf.c:5205:(_snd_config_evaluate) function snd_func_concat returned error: No such file or directory
+<err> ALSA lib confmisc.c:1342:(snd_func_refer) error evaluating name
+<err> ALSA lib conf.c:5205:(_snd_config_evaluate) function snd_func_refer returned error: No such file or directory
+<err> ALSA lib conf.c:5728:(snd_config_expand) Evaluate error: No such file or directory
+<err> 
+<err> ALSA lib pcm.c:2722:(snd_pcm_open_noupdate) Unknown PCM default
+<err> [12219:1031/075140.367732:ERROR:media/audio/alsa/alsa_util.cc:204] PcmOpen: plug:default,No such file or directory
+<err> 
+<err> [12078:1031/075140.409150:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+<err> [12078:1031/075140.409199:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+<err> [12078:1031/075140.409229:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+<err> [12078:1031/075140.409251:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+<err> 
+<err> [12078:1031/075140.437495:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+<err> [12078:1031/075140.437532:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+<err> [12078:1031/075140.437558:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+<err> [12078:1031/075140.437580:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+<err> 
+<out> [2026-10-31 07:51:40.573] [pid:12078] [main] [app-quit] forceQuit enabled (app-before-quit)
+<out> 
+<out> [2026-10-31 07:51:40.574] [pid:12078] [main] [stability] perf_app_exit reported { scene: 'app_quit', exitCode: 0 }
+<out> 
+<out> [2026-10-31 07:51:40.574] [pid:12078] [main] [app-quit] waiting for host process cleanup (app-before-quit), kind=normal, hosts=1, forceKillDelayMs=7500, waitTimeoutMs=9000
+<out> 
+<out> [2026-10-31 07:51:40.579] [pid:12078] [main] [disposeHostProcess] disposing host process (app-before-quit-1), pid=12159
+<out> [2026-10-31 07:51:40.579] [pid:12078] [main] [cron-scheduler] scheduler process exited code=0
+<out> 
+<out> [2026-10-31 07:51:40.580] [pid:12159] [zcode-host] disposing host resources, reason=parent dispose
+<out> 
+<out> [2026-10-31 07:51:40.581] [pid:12078] [main] [host-log] (local-1) [host] [2026-10-31 07:51:40.580] [pid:12159] [zcode-host] disposing host resources, reason=parent dispose
+<out> 
+<out> [2026-10-31 07:51:40.591] [pid:12078] [main] [task-realtime] unregistered host { hostId: '64e23eb9-d325-43cd-a47e-8a9da07f626e', windowId: 1 }
+<out> 
+<out> [2026-10-31 07:51:40.594] [pid:12078] [main] [spawnHostProcess] host process (local-1) exited with code 0
+<out> 
+<out> [2026-10-31 07:51:40.595] [pid:12078] [main] [app-quit] host process cleanup completed (app-before-quit)
+<out> 
+<out> [2026-10-31 07:51:40.595] [pid:12078] [main] [app-quit] preparation finished, resuming quit with windows=1
+<out> 
+<out> [2026-10-31 07:51:40.603] [pid:12078] [main] [createWindow] window closed, killing host process (local-1)
+<out> 
+<out> [2026-10-31 07:51:40.603] [pid:12078] [main] [app-quit] all windows closed after preparation, exiting app
+<out> 
+<out> [2026-10-31 07:51:40.604] [pid:12078] [main] [app-quit] exiting prepared app (all-windows-closed-after-preparation)
+<out> 
+--- restart ---
+<err> [12233:1031/075140.928022:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/dbus/system_bus_socket: No such file or directory
+<err> 
+<out> [2026-10-31 07:51:41.648] [pid:12233] [main] [crash-capture] configured remoteCrashReporterEnabled=true stagingDir=/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-9e2c8a2/deb/home-deb/.webflix/v2/crash/live archiveDir=/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-9e2c8a2/deb/home-deb/.webflix/v2/crash/archive
+<out> 
+<err> LaunchProcess: failed to execvp:
+<err> xdg-settings
+<err> 
+<err> [2026-10-31 07:51:41.669] [pid:12233] [main] [deep-link] 注册协议失败 { scheme: 'webflix' }
+<err> 
+<err> [2026-10-31 07:51:41.679] [pid:12233] [main] [deep-link] Linux 用户级协议注册失败 {
+<err>   desktopFilePath: '/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-9e2c8a2/deb/home-deb/.local/share/applications/webflix.desktop',
+<err>   desktopFileName: 'webflix.desktop',
+<err>   executablePath: '/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-9e2c8a2/deb/deb-tree/opt/WebFlix/webflix',
+<err>   args: [],
+<err>   status: null,
+<err>   signal: null,
+<err>   timeoutMs: undefined,
+<err>   error: 'spawnSync xdg-mime ENOENT',
+<err>   stderr: undefined
+<err> }
+<err> 
+<err> [2026-10-31 07:51:41.679] [pid:12233] [main] [deep-link] update-desktop-database 不可用，已跳过 {
+<err>   desktopFilePath: '/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-9e2c8a2/deb/home-deb/.local/share/applications/webflix.desktop',
+<err>   message: 'spawnSync update-desktop-database ENOENT'
+<err> }
+<err> 
+<err> (node:12233) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+<err> (Use `webflix --trace-warnings ...` to show where the warning was created)
+<err> 
+<err> [12233:1031/075141.754301:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+<err> [12233:1031/075141.754353:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/dbus/system_bus_socket: No such file or directory
+<err> [12233:1031/075141.754364:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/dbus/system_bus_socket: No such file or directory
+<err> 
+<out> [2026-10-31 07:51:41.773] [pid:12233] [main] [startup] runtime process env prepared asynchronously id=1 in 119ms
+<out> 
+<err> 
+<err> DevTools listening on ws://127.0.0.1:37763/devtools/browser/6cf2506e-bff5-44b5-9568-02a6d8aefe71
+<err> 
+<err> [12233:1031/075141.795349:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+<err> 
+<err> [12233:1031/075141.795524:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+<err> 
+<err> [12233:1031/075141.798585:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+<err> 
+<out> [2026-10-31 07:51:41.823] [pid:12233] [main] [desktop-network] renderer proxy mode=direct bypass=disabled customCa=disabled insecureCerts=rejected
+<out> 
+<out> [2026-10-31 07:51:41.823] [pid:12233] [main] [desktop-network] renderer proxy mode=system bypass=disabled customCa=disabled insecureCerts=rejected
+<out> 
+<out> [2026-10-31 07:51:41.824] [pid:12233] [main] [auto-update] refused (disabled for this desktop product flavor): WebFlix runtime product identity is active (H1 fail-closed; freeze §6.1 defers the WebFlix update feed — the ZCode manifest feed must never serve a WebFlix build)
+<out> 
+<out> [2026-10-31 07:51:41.825] [pid:12233] [main] [browser-data] chrome import IPC not registered: chromeImportEnabled flag is OFF (default, fail-closed)
+<out> 
+<out> [2026-10-31 07:51:41.826] [pid:12233] [main] [cua-permission-ipc] CUA permission IPC not registered: webflixProductSurface flag is OFF (default, fail-closed)
+<out> 
+<out> [2026-10-31 07:51:41.827] [pid:12233] [main] [webflix-accounts] account IPC registered (webflix flavor) {
+<out>   channels: [
+<out>     'webflix:accounts:get-status',
+<out>     'webflix:accounts:connect',
+<out>     'webflix:accounts:disconnect'
+<out>   ]
+<out> }
+<out> 
+<out> [2026-10-31 07:51:41.828] [pid:12233] [main] [remote-ipc] SSH/Docker/WSL remote IPC not registered: webflixProductSurface flag is OFF (default, fail-closed)
+<out> 
+<out> [2026-10-31 07:51:41.829] [pid:12233] [main] [resource] sampling started interval=10000ms report=300000ms
+<out> 
+<out> [2026-10-31 07:51:41.829] [pid:12233] [main] [network] reporting started interval=300000ms
+<out> 
+<out> [2026-10-31 07:51:41.829] [pid:12233] [main] [force-update] 当前产品身份（webflix，webflix-never-consults-the-zcode-kill-switch）跳过远端强制升级检查
+<out> 
+<out> [2026-10-31 07:51:41.829] [pid:12233] [main] [startup] 创建主窗口
+<out> [2026-10-31 07:51:41.829] [pid:12233] [main] [primary-window] creating main window (app-ready)
+<out> 
+<out> [2026-10-31 07:51:41.832] [pid:12233] [main] [startup-workspace] using conversation workspace: /home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-9e2c8a2/deb/home-deb/.webflix/workspace/default
+<out> 
+<err> [12233:1031/075141.885040:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+<err> 
+<err> [12233:1031/075141.911459:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+<err> 
+<out> [2026-10-31 07:51:41.999] [pid:12233] [main] [desktop-context-prompt] config refreshed { enabled: true, configVersion: 'desktop-sp-v1' }
+<out> 
+<out> [2026-10-31 07:51:42.152] [pid:12233] [main] [createWindow] dom-ready fired (local-1)
+<out> [2026-10-31 07:51:42.153] [pid:12233] [main] [desktop-context-prompt] first host spawn decision resolved { enabled: true, configVersion: 'desktop-sp-v1' }
+<out> 
+<out> [2026-10-31 07:51:42.168] [pid:12233] [main] [spawnHostProcess] forked host process for (local-1), pid=undefined
+<out> 
+<out> [2026-10-31 07:51:42.168] [pid:12233] [main] [spawnHostProcess] host module path: /home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-9e2c8a2/deb/deb-tree/opt/WebFlix/resources/app.asar/out/host/index.js
+<out> [2026-10-31 07:51:42.168] [pid:12233] [main] [spawnHostProcess] glm binary path: <not found>
+<out> 
+<out> [2026-10-31 07:51:42.168] [pid:12233] [main] [spawnHostProcess] BIGMODEL_OAUTH_APP_SECRET source: fallback
+<out> 
+<out> [2026-10-31 07:51:42.169] [pid:12233] [main] [task-realtime] registered host {
+<out>   hostId: 'd020c734-44b1-492b-a0a8-0dfc9bf263a0',
+<out>   windowId: 1,
+<out>   workspaceKeyCount: 0,
+<out>   deliveryKind: 'desktop_window'
+<out> }
+<out> 
+<err> [2026-10-31 07:51:42.308] [pid:12233] [main] [webflix-accounts] OS secure storage unavailable — reporting the typed fail-closed status
+<err> 
+<out> [2026-10-31 07:51:42.311] [pid:12233] [main] [webflix-agent-workspace] ensured /home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-9e2c8a2/deb/home-deb/.webflix/agent-workspace (2 files, node=/home/z/webflix-desktop/packages/desktop/scripts/e2e/evidence/ubuntu-9e2c8a2/deb/deb-tree/opt/WebFlix/webflix (as-node))
+<out> 
+<out> [2026-10-31 07:51:42.317] [pid:12233] [main] [webflix-agent-workspace] wrote 2 config files
+<out> 
+<err> [12233:1031/075142.893890:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+<err> [12233:1031/075142.893936:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+<err> 
+<err> [12233:1031/075142.894047:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+<err> 
+<err> [12233:1031/075142.894070:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+<err> 
+<err> (node:12312) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+<err> (Use `exe --trace-warnings ...` to show where the warning was created)
+<err> 
+<err> [2026-10-31 07:51:43.008] [pid:12312] [zcode-host] ExperimentalWarning: SQLite is an experimental feature and might change at any time
+<err> 
+<err> [2026-10-31 07:51:43.022] [pid:12312] [zcode-host] [cua-pip-session] focus event dropped: service unavailable
+<err> 
+<err> [2026-10-31 07:51:43.110] [pid:12233] [main] [host-log] (local-1) [host] [2026-10-31 07:51:43.008] [pid:12312] [zcode-host] ExperimentalWarning: SQLite is an experimental feature and might change at any time
+<err> 
+<err> [2026-10-31 07:51:43.121] [pid:12233] [main] [host-log] (local-1) [host] [2026-10-31 07:51:43.022] [pid:12312] [zcode-host] [cua-pip-session] focus event dropped: service unavailable
+<err> 
+<out> [2026-10-31 07:51:43.171] [pid:12233] [main] [app-quit] forceQuit enabled (app-before-quit)
+<out> 
+<out> [2026-10-31 07:51:43.172] [pid:12233] [main] [stability] perf_app_exit reported { scene: 'app_quit', exitCode: 0 }
+<out> 
+<out> [2026-10-31 07:51:43.173] [pid:12233] [main] [app-quit] waiting for host process cleanup (app-before-quit), kind=normal, hosts=1, forceKillDelayMs=7500, waitTimeoutMs=9000
+<out> 
+<out> [2026-10-31 07:51:43.173] [pid:12233] [main] [disposeHostProcess] disposing host process (app-before-quit-1), pid=12312
+<out> 
+<out> [2026-10-31 07:51:43.175] [pid:12312] [zcode-host] disposing host resources, reason=parent dispose
+<out> 
+<out> [2026-10-31 07:51:43.175] [pid:12233] [main] [host-log] (local-1) [host] [2026-10-31 07:51:43.175] [pid:12312] [zcode-host] disposing host resources, reason=parent dispose
+<out> 
+<out> [2026-10-31 07:51:43.177] [pid:12233] [main] [database-startup] terminal {
+<out>   attemptId: '5063f183-7b17-453a-92eb-07d7155fe216',
+<out>   status: 'failed',
+<out>   durationMs: 164,
+<out>   errorCode: 'transport_closed',
+<out>   disk: [
+<out>     {
+<out>       scopeId: '44cb730c420480a0477b505ae68af508fb90f96cf0ec54c6ad16949dd427f13a',
+<out>       observedAvailableDropPeakBytes: 0,
+<out>       minAvailableBytes: 2639364096,
+<out>       quality: 'complete',
+<out>       sampledAt: 1793433103024
+<out>     }
+<out>   ]
+<out> }
+<out> 
+<out> [2026-10-31 07:51:43.178] [pid:12233] [main] [task-realtime] unregistered host { hostId: 'd020c734-44b1-492b-a0a8-0dfc9bf263a0', windowId: 1 }
+<out> [2026-10-31 07:51:43.178] [pid:12233] [main] [spawnHostProcess] host process (local-1) exited with code 0
+<out> 
+<out> [2026-10-31 07:51:43.178] [pid:12233] [main] [app-quit] host process cleanup completed (app-before-quit)
+<out> 
+<out> [2026-10-31 07:51:43.178] [pid:12233] [main] [app-quit] preparation finished, resuming quit with windows=1
+<out> 
+<out> [2026-10-31 07:51:43.181] [pid:12233] [main] [createWindow] window closed, killing host process (local-1)
+<out> 
+<out> [2026-10-31 07:51:43.182] [pid:12233] [main] [app-quit] all windows closed after preparation, exiting app
+<out> 
+<out> [2026-10-31 07:51:43.182] [pid:12233] [main] [app-quit] exiting prepared app (all-windows-closed-after-preparation)
+<out> 

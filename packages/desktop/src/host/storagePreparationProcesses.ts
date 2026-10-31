@@ -12,6 +12,7 @@ import {
   type DatabaseStartupState,
 } from "@zcode/shared";
 import { resolveDefaultZCodeAgentCommand } from "@zcode/services/storage-startup";
+import { buildIdentityScopedCliSessionDbSpawnEnv } from "@zcode/services/node";
 
 type Phase = NonNullable<DatabaseStartupState["databasePhase"]>;
 const workerMessageSchema = z.discriminatedUnion("type", [
@@ -106,6 +107,43 @@ export function prepareHostStorage(
   });
 }
 
+/**
+ * P9-FIX-1 F2b — the storage-preparation Worker's identity-scoped env.
+ *
+ * The WFX agent runtime made the packaged tier resolve the bundled CLI
+ * (resolveDefaultZCodeAgentCommand → supportsStorageStartup), so this Worker
+ * now really runs on packaged boots (at the 0125462 RC it fast-failed
+ * `unsupported_runtime`, which is why the packaged no-zcode-root gate passed
+ * vacuously there). The CLI bundle resolves its session store from its OWN
+ * default home (`~/.zcode/cli/db/db.sqlite`) unless the env contract
+ * `ZCODE_SESSION_DB_PATH` moves it — the agent spawn path has carried that pin
+ * since P9-FIX-1 (services node.ts), but this Worker's env did not, and the
+ * 9e2c8a2 packaged smoke caught the leak live
+ * (evidence/ubuntu-9e2c8a2: `~/.webflix/v2/tasks-index.sqlite` present — the
+ * host itself held the identity env — while ONLY the spawned CLI worker wrote
+ * `~/.zcode/cli/db/db.sqlite`).
+ *
+ * Same law as the agent-spawn pin: explicit ZCODE_SESSION_DB_* overrides keep
+ * winning (the builder checks the merged env first and steps aside); ZCode
+ * flavor is a byte-identical no-op; an illegal identity state fails typed and
+ * logged inside the builder, never a silent fallback to ~/.zcode.
+ */
+export function buildSessionStoragePreparationWorkerEnv(overrides: {
+  processEnv: NodeJS.ProcessEnv;
+  optionsEnv?: Record<string, string>;
+  commandEnv?: Record<string, string>;
+}): Record<string, string | undefined> {
+  const merged: Record<string, string | undefined> = {
+    ...overrides.processEnv,
+    ...overrides.optionsEnv,
+    ...overrides.commandEnv,
+  };
+  return {
+    ...merged,
+    ...buildIdentityScopedCliSessionDbSpawnEnv(merged),
+  };
+}
+
 /** 在 Host 所属 Worker 运行同一 CLI bundle 的存储入口；Host 退出不会留下持锁孤儿进程。 */
 export async function prepareSessionStorage(options: {
   cwd: string;
@@ -129,7 +167,11 @@ export async function prepareSessionStorage(options: {
   await new Promise<void>((resolve, reject) => {
     const child = new Worker(entry, {
       argv: ["app-server", "--stdio", "--prepare-storage", "--cwd", command.cwd ?? options.cwd],
-      env: { ...process.env, ...options.env, ...command.env },
+      env: buildSessionStoragePreparationWorkerEnv({
+        processEnv: process.env,
+        optionsEnv: options.env,
+        commandEnv: command.env,
+      }),
       stdin: true,
       stdout: true,
       stderr: true,
