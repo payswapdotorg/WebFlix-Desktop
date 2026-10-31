@@ -219,18 +219,40 @@ async function main() {
     record("wfx-home:shell", shellVisible > 0, "media-first shell chrome rendered");
     const sidebarVisible = await page.locator('[data-testid="sidebar"]').count();
     record("wfx-home:sidebar", sidebarVisible > 0, "media-first sidebar rendered");
-    const homeHonest = await page
-      .locator(
-        '[data-testid="home-feed-requires-auth"], [data-testid="home-feed-loading"], [data-testid="home-feed-empty"], [data-testid="home-feed-unavailable"], [data-testid="home-feed-rate-limited"], [data-testid="home-feed-degraded"]',
-      )
-      .first()
-      .isVisible({ timeout: 30_000 })
-      .catch(() => false);
-    record(
-      "wfx-home:honest-state",
-      homeHonest,
-      homeHonest ? "the home feed renders an honest phase state (no fabricated rows)" : "no honest home state visible",
-    );
+    // The WFX-ANON-VIEW-1 tree: the anonymous keyless engine is the default,
+    // so the honest home outcome is EITHER a phase panel OR the ready feed
+    // carrying REAL upstream rows (the producers' never-invent law is
+    // battery-pinned — a rendered card is a mapped upstream row, never a
+    // fabrication). Poll briefly so a transient loading skeleton doesn't
+    // answer vacuously before the public engine settles.
+    const HONEST_HOME_PHASE =
+      '[data-testid="home-feed-requires-auth"], [data-testid="home-feed-loading"], [data-testid="home-feed-empty"], [data-testid="home-feed-unavailable"], [data-testid="home-feed-rate-limited"], [data-testid="home-feed-degraded"]';
+    let homeHonest = false;
+    let homeDetail = "no honest home state visible";
+    const homeDeadline = Date.now() + 30_000;
+    while (Date.now() < homeDeadline && !homeHonest) {
+      const phaseVisible = await page
+        .locator(HONEST_HOME_PHASE)
+        .first()
+        .isVisible()
+        .catch(() => false);
+      if (phaseVisible) {
+        homeHonest = true;
+        homeDetail = "the home feed renders an honest phase state (no fabricated rows)";
+        break;
+      }
+      const realRows = await page
+        .locator('[data-testid="home-feed-root"] article')
+        .count()
+        .catch(() => 0);
+      if (realRows > 0) {
+        homeHonest = true;
+        homeDetail = `the home feed is ready with ${realRows} real cards (the WFX-ANON-VIEW-1 anonymous engine — real upstream rows, none fabricated)`;
+        break;
+      }
+      await sleep(1200);
+    }
+    record("wfx-home:honest-state", homeHonest, homeDetail);
     await page.screenshot({ path: join(EVIDENCE_DIR, "wfx-01-home.png") });
 
     // The ZCode leak scan (the whole rendered surface).
